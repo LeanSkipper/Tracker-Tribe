@@ -60,8 +60,8 @@ export async function POST(req: Request) {
             }
             case "invoice.payment_succeeded": {
                 // Subscription renewed
-                const subscriptionId = (event.data.object as Stripe.Invoice).subscription as string;
-                const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+                const subscriptionId = (event.data.object as any).subscription as string;
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
                 // Find user by subscription ID
                 const user = await prisma.user.findUnique({
@@ -81,7 +81,7 @@ export async function POST(req: Request) {
             }
             case "customer.subscription.deleted": {
                 // Subscription canceled/expired
-                const subscriptionId = (event.data.object as Stripe.Subscription).id;
+                const subscriptionId = (event.data.object as any).id;
 
                 await prisma.user.update({
                     where: { stripeSubscriptionId: subscriptionId },
