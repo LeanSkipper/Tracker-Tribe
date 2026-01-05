@@ -71,8 +71,7 @@ export async function POST(req: Request) {
                 maxMembers: maxMembers || 10,
                 creatorId: user.id,
                 isPaid: isPaid || false,
-                monthlyPrice: isPaid ? (monthlyPrice || 0) : 0,
-                platformFeePercentage: 30, // 30% platform fee
+                subscriptionPrice: isPaid ? (monthlyPrice || 0) : 0,
                 members: {
                     create: {
                         userId: user.id,
