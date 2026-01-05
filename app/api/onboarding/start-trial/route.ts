@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { SubscriptionPlan, UserProfile } from '@prisma/client';
+import { SubscriptionPlan, SubscriptionStatus, UserProfile } from '@prisma/client';
 
 export async function POST(request: NextRequest) {
     try {
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
             user = await prisma.user.update({
                 where: { id: user.id },
                 data: {
-                    subscriptionStatus: 'TRIAL',
-                    subscriptionPlan: SubscriptionPlan.ENGAGED_TRIAL as SubscriptionPlan,
+                    subscriptionStatus: SubscriptionStatus.TRIAL,
+                    subscriptionPlan: SubscriptionPlan.ENGAGED_TRIAL,
                     userProfile: UserProfile.ENGAGED,
                     maxGoals: -1, // Unlimited
                     trialStartDate: trialStart,
@@ -59,8 +59,8 @@ export async function POST(request: NextRequest) {
             user = await prisma.user.create({
                 data: {
                     email,
-                    subscriptionStatus: 'TRIAL',
-                    subscriptionPlan: SubscriptionPlan.ENGAGED_TRIAL as SubscriptionPlan,
+                    subscriptionStatus: SubscriptionStatus.TRIAL,
+                    subscriptionPlan: SubscriptionPlan.ENGAGED_TRIAL,
                     userProfile: UserProfile.ENGAGED,
                     maxGoals: -1, // Unlimited
                     trialStartDate: trialStart,

@@ -83,7 +83,7 @@ export const canCreateTribes = (user: User): boolean => {
  * Note: This is a basic check. Additional checks should be done
  * to verify tribe membership or peer matching status.
  */
-export const canViewPeerGPS = (user: User, peer: User): boolean => {
+export const canViewPeerGPS = (user: User, peer?: User): boolean => {
     if (!canJoinTribes(user)) return false;
 
     // Additional checks for tribe membership or peer matching
@@ -182,7 +182,8 @@ export const getProfileDisplayName = (profile: UserProfile): string => {
  * Get subscription status display name
  */
 export const getSubscriptionStatusDisplayName = (status: SubscriptionStatus): string => {
-    const names = {
+    const names: Record<SubscriptionStatus, string> = {
+        FREE: 'Free',
         TRIAL: 'Free Trial',
         ACTIVE: 'Active',
         GRACE_PERIOD: 'Grace Period',

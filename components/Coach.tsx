@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Bot, Sparkles, BrainCircuit, Target } from 'lucide-react';
+import { X, Send, Sparkles, BrainCircuit } from 'lucide-react';
 
-type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; };
 type GoalCategory = { id: string; category: string; title: string; rows: any[]; };
 
 interface CoachProps {
@@ -52,9 +51,9 @@ export default function Coach({ goals, className = '' }: CoachProps) {
                 responseText = "That's a powerful vision. Now, let's break it down. What is the ONE main result metric (OKR) that proves you achieved this? (e.g., 'Race Time', 'Net Worth')";
             } else if (lowerInput.includes('analyze') || lowerInput.includes('progress')) {
                 // Holistic Analysis of Props
-                const redMetrics = goals.flatMap(g => g.rows.filter(r => 'monthlyData' in r)).flatMap(r => {
+                const redMetrics = goals.flatMap((g: GoalCategory) => g.rows.filter((r: any) => 'monthlyData' in r)).flatMap((r: any) => {
                     // Simplified check for last active month
-                    const lastData = r.monthlyData.find(d => d.actual !== null);
+                    const lastData = r.monthlyData.find((d: any) => d.actual !== null);
                     if (lastData && lastData.target && ((r.targetValue > r.startValue && lastData.actual! < lastData.target) || (r.targetValue < r.startValue && lastData.actual! > lastData.target))) {
                         return `${r.label}`;
                     }

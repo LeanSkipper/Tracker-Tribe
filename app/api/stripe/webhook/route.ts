@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = 'force-dynamic';
 import Stripe from "stripe";
 
 export async function POST(req: Request) {

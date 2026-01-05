@@ -23,8 +23,8 @@ export async function getUserRank(userId: string): Promise<string> {
 
     // 2. Find the highest Rank badge
     const rankBadges = user.achievements
-        .filter(a => a.badge.type === "Rank")
-        .map(a => a.badge.name);
+        .filter((a: any) => a.badge.type === "Rank")
+        .map((a: any) => a.badge.name);
 
     let highestRank = "Scout";
     let highestIndex = 0;

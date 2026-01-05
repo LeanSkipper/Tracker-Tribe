@@ -77,6 +77,7 @@ export default function SelectTemplatePage() {
                     <InspirationModal
                         onClose={() => setIsModalOpen(false)}
                         onSelectTemplate={handleSelectTemplate}
+                        onCreateFromScratch={handleCreateFromScratch}
                     />
                 )}
             </div>

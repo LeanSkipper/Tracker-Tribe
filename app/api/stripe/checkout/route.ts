@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: Request) {
     try {
         console.log('Stripe Key Loaded:', !!process.env.STRIPE_SECRET_KEY, 'Length:', process.env.STRIPE_SECRET_KEY?.length);

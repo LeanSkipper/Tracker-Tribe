@@ -13,7 +13,7 @@ export async function checkAndAwardAchievements(userId: string) {
     if (!user) return;
 
     const existingBadges = new Set(user.achievements.map(a => a.badge.name));
-    const newlyAwarded = [];
+    const newlyAwarded: string[] = [];
 
     // --- Helper to award badge ---
     const award = async (badgeName: string) => {
