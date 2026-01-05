@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* LAPIS Brand Palette - From Logo */
+  --background: #fafafa;
+  /* Softer white */
+  --foreground: #2c2c2c;
+  /* Softer black */
+
+  --primary: #2E5AAC;
+  /* Royal Blue - Logo Primary */
+  --primary-light: #4A73C3;
+  --primary-dark: #1D3D7A;
+  --primary-foreground: #ffffff;
+
+  --secondary: #eef2f6;
+  /* Cool light gray */
+  --secondary-foreground: #1a1a1a;
+
+  --accent: #C85A3C;
+  /* Burnt Orange - Logo Accent */
+  --accent-foreground: #ffffff;
+
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+
+  --border: #e4e4e7;
+  --input: #e4e4e7;
+
+  --success: #10b981;
+  /* Vibrantly clean green */
+  --error: #ef4444;
+  /* Clean red */
+  --warning: #f59e0b;
+
+  --radius: 0.75rem;
+  /* Rounder corners */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+  font-size: 17px;
+  /* Slightly larger text for readability */
+}
+
+/* Enhanced Micro-Framework */
+.container {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl font-medium transition-all duration-200 active:scale-95;
+    padding: 0.75rem 1.5rem;
+    /* Larger touch targets */
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+    box-shadow: 0 4px 6px -1px rgba(0, 51, 102, 0.2);
+  }
+
+  .btn-primary:hover {
+    background-color: var(--primary-light);
+    box-shadow: 0 6px 8px -1px rgba(0, 51, 102, 0.3);
+  }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    /* Subtle shadow */
+  }
+
+  .input-field {
+    @apply w-full p-4 rounded-xl border border-gray-200 outline-none transition-all;
+  }
+
+  .input-field:focus {
+    @apply border-[var(--primary)] ring-2 ring-[var(--primary)]/10;
+  }
+}
+
+/* Status Utilities */
+.status-pill {
+  @apply px-3 py-1 rounded-full text-sm font-semibold;
+}

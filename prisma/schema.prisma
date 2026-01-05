@@ -1,0 +1,454 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BadgeType {
+  Rank
+  Service
+  Merit
+  Monthly_Honor
+}
+
+enum TribeRole {
+  ADMIN
+  MODERATOR
+  PLAYER
+}
+
+enum Visibility {
+  PRIVATE
+  PUBLIC
+  TRIBE
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  IGNORED
+}
+
+enum UserProfile {
+  SOFT      // Free tier - 1 goal forever
+  ENGAGED   // Paid tier - Unlimited goals, can join tribes
+  HARD      // Creator tier - Can create & monetize tribes
+}
+
+enum SubscriptionStatus {
+  FREE            // Free tier (1 goal, no trial)
+  TRIAL           // Free trial period (60 days for ENGAGED users)
+  ACTIVE          // Active paid subscription
+  GRACE_PERIOD    // Grace period after trial/subscription expiry (30 days)
+  EXPIRED         // Subscription expired
+  CANCELLED       // User cancelled
+  PAYMENT_FAILED  // Payment issue
+}
+
+enum SubscriptionPlan {
+  SOFT_FREE          // Free forever - 1 goal
+  ENGAGED_TRIAL      // 60-day trial - unlimited goals
+  ENGAGED_MONTHLY    // $25/month ($20 with trial discount)
+  ENGAGED_ANNUAL     // $250/year ($200 with trial discount)
+  HARD_MONTHLY       // Creator tier (TBD)
+  HARD_ANNUAL        // Creator tier (TBD)
+}
+
+model User {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  username    String?  @unique
+  password    String?  // In a real app, use hashed passwords
+  name        String?
+  bio         String?
+  avatarUrl   String?
+  
+  // Ranking & Gamification
+  level       Int      @default(1)
+  experience  Int      @default(0)
+  totalReliability Float @default(0) // Average of last calculations
+  
+  // Gamification Module (Grit System)
+  grit             Int      @default(0)
+  sessionsAttended Int      @default(0)
+  taskCompletionRate Float  @default(0)
+  totalSponsorship   Float  @default(0)
+  manualRank         String? // For Commander/Admin override
+  projectROI         Float?  // For ROI King medal
+  
+  // "Skill Matrix"
+  skills      String?  // JSON string: {"marketing": 4, "sales": 3}
+  
+  lifeVision  String?
+  
+  // Creator Stats
+  totalCommissions Float @default(0)
+
+  // User Profile System
+  userProfile       UserProfile @default(SOFT)
+  subscriptionStatus SubscriptionStatus @default(FREE)
+  subscriptionPlan  SubscriptionPlan @default(SOFT_FREE)
+  
+  // Goal Limits
+  maxGoals          Int @default(1) // Free: 1, Trial/Paid: unlimited (-1)
+  
+  // Trial & Subscription Dates
+  trialStartDate    DateTime? // When trial started
+  trialEndDate      DateTime? // When trial ends (60 days from start)
+  trialDiscountUsed Boolean @default(false) // Whether 20% discount was used
+  graceStartDate    DateTime? // When grace period started
+  graceEndDate      DateTime? // When grace period ends (30 days from grace start)
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  
+  // Stripe Integration
+  stripeCustomerId  String? @unique
+  stripeSubscriptionId String? @unique
+  
+  // Creator Stats (for HARD users)
+  totalRevenue      Float @default(0) // Total earned from tribes
+  platformFees      Float @default(0) // 30% taken by platform
+  netRevenue        Float @default(0) // What creator actually receives
+  
+  // Badge Reputation Score
+  reputationScore   Float @default(0) // Calculated from badges
+  profileCompleteness Float @default(0) // % of profile filled out (0-100)
+
+  // Relations
+  memberships  TribeMember[]
+  createdTribes Tribe[]           @relation("TribeCreator")
+  applications TribeApplication[]
+  goals        Goal[]
+  rituals      Ritual[]
+  actions      Action[]
+  achievements UserAchievement[]
+  actionPlans  ActionPlan[]
+  votesGiven   MonthlyVote[]      @relation("VotesGiven")
+  votesReceived MonthlyVote[]     @relation("VotesReceived")
+  subscriptions Subscription[]
+  payments     Payment[]
+  
+  // Peer Matching
+  sentMatches     Match[]         @relation("MatchInitiator")
+  receivedMatches Match[]         @relation("MatchTarget")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model BadgeCatalog {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  type          BadgeType
+  iconName      String
+  description   String?
+  criteriaLogic String?  // For admin reference
+
+  // Reputation System
+  reputationValue  Float   @default(0) // How much this badge contributes to reputation
+  isVerified       Boolean @default(false) // Verified badges have more weight
+  requiredForProfile UserProfile? // Some badges may be required for profile upgrades
+
+  achievements  UserAchievement[]
+
+  createdAt     DateTime @default(now())
+
+  @@map("Badges_Catalog")
+}
+
+model UserAchievement {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  badgeId   String
+  badge     BadgeCatalog @relation(fields: [badgeId], references: [id])
+
+  earnedAt  DateTime @default(now())
+  metadata  String?  // JSON for context
+
+  @@unique([userId, badgeId])
+}
+
+model MonthlyVote {
+  id          String   @id @default(cuid())
+  voterId     String
+  voter       User     @relation("VotesGiven", fields: [voterId], references: [id])
+  nomineeId   String
+  nominee     User     @relation("VotesReceived", fields: [nomineeId], references: [id])
+  category    String   // Altruism, Overcoming Struggle, Positive Energy
+  month       Int      // 1-12
+  year        Int
+
+  createdAt   DateTime @default(now())
+}
+
+model Tribe {
+  id          String   @id @default(cuid())
+  name        String
+  topic       String?
+  meetingTime String?  // e.g. "Friday 10:00 AM"
+  maxMembers  Int      @default(10)
+  reliabilityRate Float @default(0) // 0-100 percentage
+  
+  // Matchmaking & Monetization
+  matchmakingCriteria String? // e.g. "SaaS Focus, $5k+ MRR"
+  affiliateCommission Float    @default(0)
+  
+  // Monetization (for HARD user tribes)
+  isPaid              Boolean  @default(false)
+  subscriptionPrice   Float?   // Monthly price for members (set by HARD user)
+  currency            String   @default("USD")
+  
+  // Creator revenue tracking
+  totalRevenue        Float    @default(0)
+  platformFees        Float    @default(0) // 30% commission
+  creatorRevenue      Float    @default(0) // 70% to creator
+  
+  // Access control based on reputation
+  requiresSubscription Boolean @default(true)
+  minReputationScore   Float?  // Minimum badge reputation to join
+  minBadgeCount        Int?    // Minimum number of badges required
+  
+  creatorId   String
+  creator     User     @relation("TribeCreator", fields: [creatorId], references: [id])
+
+  members     TribeMember[]
+  applications TribeApplication[]
+  sessions    Session[]
+  actionPlans ActionPlan[]
+  payments    Payment[]
+  
+  // Granular OKR Sharing
+  sharedOKRs  OKR[]    @relation("OKRSharing")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model TribeMember {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tribeId   String
+  tribe     Tribe     @relation(fields: [tribeId], references: [id])
+  role      TribeRole @default(PLAYER)
+  
+  joinedAt  DateTime  @default(now())
+
+  @@unique([userId, tribeId])
+}
+
+model TribeApplication {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  tribeId     String
+  tribe       Tribe    @relation(fields: [tribeId], references: [id])
+  
+  status      String   @default("PENDING") // PENDING, APPROVED, DECLINED
+  message     String?  // Optional message from applicant
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  // Vision GROW
+  vision      String   // G: Goal/Vision
+  reality     String?  // R: Reality
+  options     String?  // O: Options
+  will        String?  // W: Will/Way Forward
+  
+  status      String   @default("ACTIVE") // ACTIVE, ACHIEVED, ARCHIVED
+  // isShared    Boolean  @default(false)    // Shared with Tribe DEPRECATED in favor of visibility
+  visibility  Visibility @default(PRIVATE)
+  category    String?  // Life area: Health, Wealth, Family, etc.
+  
+  // Relations
+  okrs        OKR[]
+  actionPlans ActionPlan[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Match {
+  id          String      @id @default(cuid())
+  initiatorId String
+  initiator   User        @relation("MatchInitiator", fields: [initiatorId], references: [id])
+  targetId    String
+  target      User        @relation("MatchTarget", fields: [targetId], references: [id])
+  status      MatchStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([initiatorId, targetId])
+}
+
+model OKR {
+  id          String   @id @default(cuid())
+  goalId      String
+  goal        Goal     @relation(fields: [goalId], references: [id])
+  
+  metricName  String
+  type        String   @default("OKR") // "OKR" or "KPI"
+  targetValue Float
+  currentValue Float   @default(0)
+  
+  // Monthly tracking data (JSON array of {monthId, year, target, actual})
+  monthlyData String?  // JSON string
+  
+  // Date range for the metric
+  startYear   Int?
+  startMonth  Int?
+  deadlineYear Int?
+  deadlineMonth Int?
+  
+  // Relations
+  actions     Action[]
+  sharedTribes Tribe[] @relation("OKRSharing")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Action {
+  id          String   @id @default(cuid())
+  okrId       String?
+  okr         OKR?     @relation(fields: [okrId], references: [id])
+  
+  // Can also be loosely linked to user for "Poker" table week
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+
+  description String
+  status      String   @default("NOT_DONE") // DONE, NOT_DONE, STUCK
+  dueDate     DateTime // The "coming Friday"
+  weekDate    DateTime // Identifier for the week (e.g. start of week date or end of week date)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Ritual {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  date        DateTime @default(now()) // Submission date
+  
+  win         String?  // Weekly Win
+  stuckPoint  String?  // Weekly Stuck point
+  mood        Int?     // 1-5
+  attendance  Boolean  @default(false)
+  
+  planVsActual String? // "Plan vs Actual" input
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  tribeId     String
+  tribe       Tribe    @relation(fields: [tribeId], references: [id])
+  
+  title       String
+  description String?
+  scheduledAt DateTime
+  duration    Int      @default(60) // minutes
+  status      String   @default("SCHEDULED") // SCHEDULED, ACTIVE, COMPLETED, CANCELLED
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ActionPlan {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  goalId      String?
+  goal        Goal?    @relation(fields: [goalId], references: [id])
+  tribeId     String?
+  tribe       Tribe?   @relation(fields: [tribeId], references: [id])
+  
+  title       String
+  description String?
+  dueDate     DateTime
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, COMPLETED
+  sharedWith  String   @default("PRIVATE") // PRIVATE, TRIBE
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Subscription {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  plan        SubscriptionPlan
+  status      SubscriptionStatus
+  
+  startDate   DateTime
+  endDate     DateTime?
+  cancelledAt DateTime?
+  
+  // Stripe
+  stripeSubscriptionId String? @unique
+  stripePriceId        String?
+  
+  // Pricing
+  amount      Float    // Monthly or annual amount in dollars
+  currency    String   @default("USD")
+  interval    String   // "month" or "year"
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Payment {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  amount      Float    // Amount in dollars
+  currency    String   @default("USD")
+  status      String   // "succeeded", "pending", "failed"
+  
+  // Stripe
+  stripePaymentIntentId String? @unique
+  stripeChargeId        String?
+  
+  // For tribe creator payments
+  tribeId     String?
+  tribe       Tribe?   @relation(fields: [tribeId], references: [id])
+  
+  // Platform fee (30% for HARD users)
+  platformFee Float    @default(0)
+  netAmount   Float    // Amount after platform fee
+  
+  description String?
+  metadata    String?  // JSON for additional data
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Feedback {
+  id          String   @id @default(cuid())
+  content     String   // The feedback/suggestion text
+  email       String?  // Optional email for follow-up
+  page        String?  // Which page the feedback was submitted from
+  userId      String?  // User email if authenticated
+  
+  createdAt   DateTime @default(now())
+}

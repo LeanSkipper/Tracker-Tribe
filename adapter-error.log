@@ -1,0 +1,38 @@
+﻿Creating LibSQL client...
+Creating Prisma adapter...
+node : C:\Users\tiago\Mon 
+Drive\Business\Mastermind Seed of 
+Success\lapis-platform\test-prisma.js:11
+Au caractère Ligne:1 : 1
++ node test-prisma.js 2>&1 | Out-File -FilePath 
+"adapter-error.log" -En ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\ 
+   Users\tiago\...st-prisma.js:11:String) [], R  
+  emoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+const adapter = new PrismaLibSQL(libsql);
+                ^
+
+TypeError: PrismaLibSQL is not a constructor
+    at Object.<anonymous> (C:\Users\tiago\Mon 
+Drive\Business\Mastermind Seed of 
+Success\lapis-platform\test-prisma.js:11:17)
+    at Module._compile 
+(node:internal/modules/cjs/loader:1730:14)
+    at Object..js 
+(node:internal/modules/cjs/loader:1895:10)
+    at Module.load 
+(node:internal/modules/cjs/loader:1465:32)
+    at Function._load 
+(node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync 
+(node:diagnostics_channel:322:14)
+    at wrapModuleLoad 
+(node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as 
+runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+Node.js v22.17.0
