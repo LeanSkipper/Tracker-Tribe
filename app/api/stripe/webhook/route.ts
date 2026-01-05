@@ -44,7 +44,7 @@ export async function POST(req: Request) {
                 }
 
                 // Get subscription details to know end date
-                const subscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
                 await prisma.user.update({
                     where: { id: userId },
