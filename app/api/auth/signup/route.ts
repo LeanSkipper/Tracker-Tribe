@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { SubscriptionPlan } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -34,12 +35,6 @@ export async function POST(req: Request) {
                 { status: 409 }
             );
         }
-        import { SubscriptionPlan } from "@prisma/client";
-
-        // ... (keep existing imports)
-
-        // ...
-
         // Calculate trial/subscription dates based on profile
         const now = new Date();
         let trialStartDate: Date | null = null;
