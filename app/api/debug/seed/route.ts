@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { BadgeType } from "@prisma/client";
 
 export async function GET() {
     try {
         // 1. Create Badge Catalog (Idempotent)
         const badges = [
-            { name: "Scout", type: "Rank", iconName: "Bronze Chevron", description: "Default Entry Level", criteriaLogic: "Sessions < 10" },
-            { name: "Ranger", type: "Rank", iconName: "Silver Shield", description: "The Regular", criteriaLogic: "Attendance > 80% (last 10 weeks) AND Task_Completion > 60%" },
-            { name: "Guardian", type: "Rank", iconName: "Gold Shield with Wings", description: "The Supporter", criteriaLogic: "Active > 6 months AND Sponsorship > 500 AND Go-Giver award" },
-            { name: "Captain", type: "Rank", iconName: "Gold Bars", description: "The Leader", criteriaLogic: "Active > 1 Year AND Task_Completion > 85%" },
-            { name: "Commander", type: "Rank", iconName: "Diamond Eagle", description: "The Legend", criteriaLogic: "Manual Admin/Tribe Vote" },
-            { name: "The Go-Giver", type: "Monthly_Honor", iconName: "🤝", description: "Highest Altruism votes", criteriaLogic: "Won Monthly Vote" },
-            { name: "The Investor", type: "Monthly_Honor", iconName: "💰", description: "Contributed > 500€ to Sponsorship", criteriaLogic: "Sponsorship > 500" },
+            { name: "Scout", type: BadgeType.Rank, iconName: "Bronze Chevron", description: "Default Entry Level", criteriaLogic: "Sessions < 10" },
+            { name: "Ranger", type: BadgeType.Rank, iconName: "Silver Shield", description: "The Regular", criteriaLogic: "Attendance > 80% (last 10 weeks) AND Task_Completion > 60%" },
+            { name: "Guardian", type: BadgeType.Rank, iconName: "Gold Shield with Wings", description: "The Supporter", criteriaLogic: "Active > 6 months AND Sponsorship > 500 AND Go-Giver award" },
+            { name: "Captain", type: BadgeType.Rank, iconName: "Gold Bars", description: "The Leader", criteriaLogic: "Active > 1 Year AND Task_Completion > 85%" },
+            { name: "Commander", type: BadgeType.Rank, iconName: "Diamond Eagle", description: "The Legend", criteriaLogic: "Manual Admin/Tribe Vote" },
+            { name: "The Go-Giver", type: BadgeType.Monthly_Honor, iconName: "🤝", description: "Highest Altruism votes", criteriaLogic: "Won Monthly Vote" },
+            { name: "The Investor", type: BadgeType.Monthly_Honor, iconName: "💰", description: "Contributed > 500€ to Sponsorship", criteriaLogic: "Sponsorship > 500" },
         ];
 
         for (const b of badges) {
