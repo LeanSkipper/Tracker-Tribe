@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { checkPermission, forbiddenResponse } from "@/lib/auth";
+import { TribeRole } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -87,7 +88,7 @@ export async function POST(req: Request) {
             data: {
                 userId: user.id,
                 tribeId: tribeId,
-                role: "MEMBER"
+                role: TribeRole.PLAYER
             }
         });
 
