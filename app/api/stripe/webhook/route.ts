@@ -86,7 +86,7 @@ export async function POST(req: Request) {
                 await prisma.user.update({
                     where: { stripeSubscriptionId: subscriptionId },
                     data: {
-                        subscriptionStatus: "CANCELED", // Or revert to FREE/SOFT
+                        subscriptionStatus: "CANCELLED", // Or revert to FREE/SOFT
                         // Keep end date so they have access until then? 
                         // Usually deleted means immediate or end of period passed.
                     }
