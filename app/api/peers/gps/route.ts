@@ -102,12 +102,19 @@ export async function GET(req: Request) {
                     }
                 });
 
-                const peer = [...sentMatches, ...receivedMatches].find(
+                const matchedPeer = [...sentMatches, ...receivedMatches].find(
                     m => m.targetId === peerId || m.initiatorId === peerId
                 );
 
+                let peerData;
+                if (matchedPeer && 'target' in matchedPeer && matchedPeer.targetId === peerId) {
+                    peerData = matchedPeer.target;
+                } else if (matchedPeer && 'initiator' in matchedPeer && matchedPeer.initiatorId === peerId) {
+                    peerData = matchedPeer.initiator;
+                }
+
                 return {
-                    peer: peer?.target || peer?.initiator,
+                    peer: peerData,
                     goals: goals.map(g => ({
                         id: g.id,
                         vision: g.vision,
