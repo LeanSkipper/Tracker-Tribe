@@ -100,7 +100,8 @@ export default function ProfilePage() {
             .then(() => fetch('/api/tribes'))
             .then(res => res.json())
             .then(data => {
-                const tiago = data[0]?.members.find((m: any) => m.name === 'Tiago') || {
+                // Add null checks to prevent undefined errors
+                const tiago = data?.[0]?.members?.find((m: any) => m.name === 'Tiago') || {
                     name: "Tiago",
                     email: "tiago@example.com",
                     level: 5,
@@ -113,6 +114,23 @@ export default function ProfilePage() {
                     tribeRitualsAttendanceRate: 0.75,
                 };
                 setUserData(tiago);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Failed to load user data:", err);
+                // Set default data on error
+                setUserData({
+                    name: "Tiago",
+                    email: "tiago@example.com",
+                    level: 5,
+                    experience: 1250,
+                    totalReliability: 92,
+                    grit: 65,
+                    sessionsAttended: 8,
+                    taskCompletionRate: 0.85,
+                    mastermindAttendanceRate: 0.90,
+                    tribeRitualsAttendanceRate: 0.75,
+                });
                 setLoading(false);
             });
     }, []);
@@ -306,8 +324,8 @@ export default function ProfilePage() {
                                 </div>
                                 <div
                                     className={`h-full transition-all duration-500 ${reliability >= 80 ? 'bg-gradient-to-r from-green-600 to-emerald-500' :
-                                            reliability >= 60 ? 'bg-gradient-to-r from-blue-600 to-blue-500' :
-                                                'bg-gradient-to-r from-orange-600 to-red-500'
+                                        reliability >= 60 ? 'bg-gradient-to-r from-blue-600 to-blue-500' :
+                                            'bg-gradient-to-r from-orange-600 to-red-500'
                                         }`}
                                     style={{ width: `${reliability}%` }}
                                 />
