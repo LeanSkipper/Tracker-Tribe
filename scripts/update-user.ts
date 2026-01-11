@@ -23,7 +23,7 @@ async function updateUser() {
                 userProfile: user.userProfile || 'SOFT',
                 subscriptionStatus: user.subscriptionStatus || 'TRIAL',
                 trialStartDate: user.trialStartDate || new Date(),
-                trialEndDate: user.trialEndDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
+                trialEndDate: user.trialEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
                 reputationScore: user.reputationScore ?? 0,
                 profileCompleteness: user.profileCompleteness ?? 0,
             }
