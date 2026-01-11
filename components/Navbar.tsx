@@ -1,12 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Bot, Map, Feather, Target, Users, MessageSquare, User } from 'lucide-react';
-import { useState } from 'react';
+import { Feather, Target, Users, MessageSquare, User, LogIn } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import FeedbackModal from './FeedbackModal';
+import { isGuestSession } from '@/lib/guestAuth';
 
 export default function Navbar() {
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [isGuest, setIsGuest] = useState(false);
+
+    useEffect(() => {
+        setIsGuest(isGuestSession());
+    }, []);
 
     return (
         <>
@@ -38,6 +44,17 @@ export default function Navbar() {
                             <span>Feedback</span>
                         </button>
                     </div>
+
+                    {/* Guest Session Indicator */}
+                    {isGuest && (
+                        <Link
+                            href="/auth/signin"
+                            className="hidden md:flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg transition-colors text-sm"
+                        >
+                            <LogIn size={16} />
+                            Sign In
+                        </Link>
+                    )}
                 </div>
             </nav>
 
