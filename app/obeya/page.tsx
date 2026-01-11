@@ -535,6 +535,15 @@ export default function ObeyaPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updatedGoal)
             });
+
+            if (!res.ok) {
+                // Handle error response
+                const errorData = await res.json().catch(() => ({ error: 'Unknown error' }));
+                console.error("Save Goal Failed:", errorData);
+                alert(`Failed to save goal: ${errorData.error || 'Server error'}. Please try again.`);
+                return; // Keep modal open on error
+            }
+
             const savedGoal = await res.json();
 
             // Refetch all goals to ensure we have the latest data
@@ -585,10 +594,14 @@ export default function ObeyaPage() {
                     };
                 }));
             }
+
+            // Only close modal on success
+            setEditingGoal(null);
         } catch (err) {
             console.error("Save Goal Failed:", err);
+            alert('Failed to save goal. Please check your connection and try again.');
+            // Keep modal open on error
         }
-        setEditingGoal(null);
     };
 
     const handleDeleteGoal = async (id: string) => {

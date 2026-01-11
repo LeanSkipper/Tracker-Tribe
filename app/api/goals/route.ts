@@ -1,13 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { UserProfile, SubscriptionStatus, Visibility } from "@prisma/client";
 import { checkPermission, unauthorizedResponse, forbiddenResponse } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        // For now, using a mock user ID. In a real app, this would come from session/auth.
+        // In a real app, this would come from session/auth.
         const user = await prisma.user.findFirst({
+            where: { email: "tiago@example.com" },
             select: {
                 id: true,
                 email: true,
@@ -29,8 +31,8 @@ export async function GET() {
                 data: {
                     email: "tiago@example.com",
                     name: "Tiago",
-                    userProfile: "SOFT",
-                    subscriptionStatus: "TRIAL",
+                    userProfile: UserProfile.SOFT,
+                    subscriptionStatus: SubscriptionStatus.TRIAL,
                     trialStartDate: new Date(),
                     trialEndDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days from now
                     reputationScore: 0,
@@ -105,6 +107,7 @@ export async function POST(req: Request) {
     try {
         const data = await req.json();
         const user = await prisma.user.findFirst({
+            where: { email: "tiago@example.com" },
             select: {
                 id: true,
                 email: true,
@@ -151,25 +154,35 @@ export async function POST(req: Request) {
         const { id, title, category, isShared, rows } = data;
 
         // Map isShared boolean to visibility enum
-        const visibility = isShared ? 'TRIBE' : 'PRIVATE';
+        const visibility = isShared ? Visibility.TRIBE : Visibility.PRIVATE;
 
-        // Upsert Goal
-        const goal = await prisma.goal.upsert({
-            where: { id: id || "new-id" },
-            update: {
-                vision: title,
-                status: "ACTIVE",
-                visibility: visibility,
-                category: category,
-            },
-            create: {
-                userId: user.id,
-                vision: title,
-                status: "ACTIVE",
-                visibility: visibility,
-                category: category,
-            },
-        });
+        // Check if this is a new goal or an update
+        let goal;
+        const isNewGoal = !id || id === 'NEW' || !id.startsWith('c'); // cuid starts with 'c'
+
+        if (isNewGoal) {
+            // Create new goal - let Prisma generate the ID
+            goal = await prisma.goal.create({
+                data: {
+                    userId: user.id,
+                    vision: title,
+                    status: "ACTIVE",
+                    visibility: visibility,
+                    category: category,
+                },
+            });
+        } else {
+            // Update existing goal
+            goal = await prisma.goal.update({
+                where: { id: id },
+                data: {
+                    vision: title,
+                    status: "ACTIVE",
+                    visibility: visibility,
+                    category: category,
+                },
+            });
+        }
 
         // Handle OKRs and Actions
         if (rows) {
@@ -200,6 +213,12 @@ export async function POST(req: Request) {
                     // This is an ActionRow
                     const actionRow = row as any;
                     if (actionRow.actions && Array.isArray(actionRow.actions)) {
+                        // Only create actions if we have at least one OKR
+                        if (!firstOkrId) {
+                            console.warn('Skipping action creation: no OKRs exist for this goal');
+                            continue;
+                        }
+
                         for (const actionCard of actionRow.actions) {
                             // Map UI status to DB status
                             let dbStatus = "NOT_DONE";
