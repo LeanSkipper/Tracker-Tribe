@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { SubscriptionPlan } from "@prisma/client";
+import { SubscriptionPlan, UserProfile, SubscriptionStatus } from "@prisma/client";
 
 export const runtime = "nodejs";
 
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
         const now = new Date();
         let trialStartDate: Date | null = null;
         let trialEndDate: Date | null = null;
-        let subscriptionStatus: 'TRIAL' | 'ACTIVE' = 'TRIAL';
+        let subscriptionStatus: SubscriptionStatus = SubscriptionStatus.TRIAL;
         let selectedPlan: SubscriptionPlan | null = null;
 
         if (userProfile === 'SOFT') {
@@ -48,13 +48,13 @@ export async function POST(req: Request) {
             trialStartDate = now;
             trialEndDate = new Date(now);
             trialEndDate.setMonth(trialEndDate.getMonth() + 3);
-            subscriptionStatus = 'TRIAL';
+            subscriptionStatus = SubscriptionStatus.TRIAL;
             selectedPlan = SubscriptionPlan.SOFT_FREE;
         } else if (userProfile === 'ENGAGED' || userProfile === 'HARD') {
             // ENGAGED and HARD users need to subscribe immediately
             // For now, we'll set them as TRIAL and require payment in onboarding
             // In production, this would integrate with Stripe
-            subscriptionStatus = 'TRIAL';
+            subscriptionStatus = SubscriptionStatus.TRIAL;
 
             // Map string input to Enum if provided, otherwise default
             if (subscriptionPlan && Object.values(SubscriptionPlan).includes(subscriptionPlan as SubscriptionPlan)) {
@@ -72,7 +72,7 @@ export async function POST(req: Request) {
                 email,
                 password, // TODO: Hash password with bcrypt in production
                 name,
-                userProfile,
+                userProfile: userProfile as UserProfile,
                 subscriptionStatus,
                 ...(selectedPlan && { subscriptionPlan: selectedPlan }),
                 ...(trialStartDate && { trialStartDate }),

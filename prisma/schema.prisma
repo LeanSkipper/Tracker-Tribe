@@ -60,7 +60,7 @@ enum SubscriptionPlan {
 
 model User {
   id          String   @id @default(cuid())
-  email       String   @unique
+  email       String?  @unique // Made optional for guest users
   username    String?  @unique
   password    String?  // In a real app, use hashed passwords
   name        String?
@@ -117,6 +117,13 @@ model User {
   // Badge Reputation Score
   reputationScore   Float @default(0) // Calculated from badges
   profileCompleteness Float @default(0) // % of profile filled out (0-100)
+  
+  // Guest User System
+  isGuest       Boolean   @default(false) // True for anonymous/guest users
+  guestId       String?   @unique // Unique ID for guest sessions
+  convertedAt   DateTime? // When guest converted to full user
+  provider      String?   // OAuth provider: 'google', 'linkedin', 'credentials'
+  lastActiveAt  DateTime  @default(now()) // For session expiry tracking
 
   // Relations
   memberships  TribeMember[]

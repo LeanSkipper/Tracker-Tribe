@@ -1,7 +1,37 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Target, Lightbulb, TrendingUp, Users } from 'lucide-react';
+import { useState } from 'react';
 
 export default function WelcomePage() {
+    const router = useRouter();
+    const [isCreatingGuest, setIsCreatingGuest] = useState(false);
+
+    const handleTryAsGuest = async () => {
+        setIsCreatingGuest(true);
+        try {
+            const response = await fetch('/api/auth/guest', {
+                method: 'POST',
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create guest session');
+            }
+
+            const data = await response.json();
+            console.log('Guest session created:', data);
+
+            // Redirect to tutorial
+            router.push('/onboarding/tutorial');
+        } catch (error) {
+            console.error('Failed to create guest session:', error);
+            alert('Failed to start guest session. Please try again.');
+            setIsCreatingGuest(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
             <div className="max-w-2xl w-full text-center space-y-8">
@@ -48,15 +78,24 @@ export default function WelcomePage() {
 
                 {/* CTA */}
                 <div className="space-y-4 pt-4">
-                    <Link
-                        href="/onboarding/tutorial"
-                        className="inline-block bg-[var(--primary)] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-800 transition-all hover:scale-105"
+                    <button
+                        onClick={handleTryAsGuest}
+                        disabled={isCreatingGuest}
+                        className="inline-block bg-[var(--primary)] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-lg shadow-blue-200 hover:bg-blue-800 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                        Get Started in 60 Seconds
-                    </Link>
+                        {isCreatingGuest ? 'Starting...' : 'Try Without Email - 60 Seconds'}
+                    </button>
                     <p className="text-sm text-gray-500">
-                        No credit card required • Start with 1 free goal forever
+                        No email required • Try with 1 free goal • Save progress anytime
                     </p>
+                    <div className="pt-2">
+                        <Link
+                            href="/auth/signup"
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                        >
+                            Already have an account? Sign in →
+                        </Link>
+                    </div>
                 </div>
 
                 {/* What is LAPIS - Expandable */}
