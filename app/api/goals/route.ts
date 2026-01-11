@@ -186,8 +186,10 @@ export async function POST(req: Request) {
 
         // Handle OKRs and Actions
         if (rows) {
-            // Delete existing OKRs and their actions for this goal
-            await prisma.oKR.deleteMany({ where: { goalId: goal.id } });
+            // Delete existing OKRs and their actions for this goal (only if updating)
+            if (!isNewGoal) {
+                await prisma.oKR.deleteMany({ where: { goalId: goal.id } });
+            }
 
             let firstOkrId: string | null = null;
 
