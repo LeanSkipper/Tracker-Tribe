@@ -10,6 +10,11 @@ export default function WelcomePage() {
     const [isCreatingGuest, setIsCreatingGuest] = useState(false);
 
     const handleTryAsGuest = async () => {
+        // Temporary: Direct redirect until database migration is complete
+        // TODO: Re-enable guest session creation after running: npx prisma migrate deploy
+        router.push('/onboarding/tutorial');
+
+        /* Full implementation (enable after database migration):
         setIsCreatingGuest(true);
         try {
             const response = await fetch('/api/auth/guest', {
@@ -23,13 +28,13 @@ export default function WelcomePage() {
             const data = await response.json();
             console.log('Guest session created:', data);
 
-            // Redirect to tutorial
             router.push('/onboarding/tutorial');
         } catch (error) {
             console.error('Failed to create guest session:', error);
             alert('Failed to start guest session. Please try again.');
             setIsCreatingGuest(false);
         }
+        */
     };
 
     return (
