@@ -95,12 +95,14 @@ export async function getUserWithPermissions(userId: string): Promise<SessionUse
         },
     });
 
-    if (!user) return null;
+    if (!user || !user.email) {
+        return null;
+    }
 
     // Cast to SessionUser - the selected fields match our interface
     return {
         id: user.id,
-        email: user.email,
+        email: user.email as string, // Guaranteed non-null by check above
         name: user.name,
         userProfile: user.userProfile as 'SOFT' | 'ENGAGED' | 'HARD',
         subscriptionStatus: user.subscriptionStatus as 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED',
