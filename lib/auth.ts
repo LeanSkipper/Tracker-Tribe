@@ -9,7 +9,7 @@ import { canAccessGPS, canJoinTribes, canCreateTribes, canViewPeerGPS, canMoneti
  */
 export interface SessionUser {
     id: string;
-    email: string;
+    email: string; // Email is required for session
     name: string | null;
     userProfile: 'SOFT' | 'ENGAGED' | 'HARD';
     subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED';
@@ -51,13 +51,15 @@ export async function getSession(): Promise<SessionUser | null> {
         },
     });
 
-    if (!user) {
+    if (!user || !user.email) {
+        // User must have an email to have a valid session
         return null;
     }
 
+    // TypeScript now knows user.email is non-null after the check above
     return {
         id: user.id,
-        email: user.email,
+        email: user.email as string, // Guaranteed non-null by check above
         name: user.name,
         userProfile: user.userProfile as 'SOFT' | 'ENGAGED' | 'HARD',
         subscriptionStatus: user.subscriptionStatus as 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED',
