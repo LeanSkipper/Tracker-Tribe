@@ -47,7 +47,7 @@ export async function POST(req: Request) {
                 email,
                 password: hashedPassword,
                 name: name || null,
-                userProfile: 'SOFT', // Default to SOFT
+                userProfile: 'SOFT',
                 subscriptionStatus: 'TRIAL',
                 subscriptionPlan: 'SOFT_FREE',
                 trialStartDate: now,
@@ -82,25 +82,4 @@ export async function POST(req: Request) {
             { status: 500 }
         );
     }
-}
-
-    } catch (error) {
-    console.error("=== SIGNUP ERROR ===");
-    console.error("Error type:", typeof error);
-    console.error("Error:", error);
-    console.error("Error message:", error instanceof Error ? error.message : String(error));
-    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
-    console.error("Prisma client available:", !!prisma);
-    console.error("Prisma user model:", prisma.user ? 'Available' : 'Not available');
-    console.error("===================");
-
-    return NextResponse.json(
-        {
-            error: "Failed to create account",
-            details: error instanceof Error ? error.message : String(error),
-            stack: error instanceof Error ? error.stack : undefined
-        },
-        { status: 500 }
-    );
-}
 }
