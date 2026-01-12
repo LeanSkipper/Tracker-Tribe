@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkPermission, forbiddenResponse } from "@/lib/auth";
+import { checkPermission, forbiddenResponse, getSession, unauthorizedResponse } from "@/lib/auth";
 import { TribeRole } from "@prisma/client";
 
 export const runtime = "nodejs";
@@ -10,33 +10,15 @@ export async function POST(req: Request) {
     try {
         const { tribeId } = await req.json();
 
-        // Get current user (in production, this would come from session)
-        const targetEmail = 'tiago.mance@gmail.com';
-        let user = await prisma.user.findUnique({ where: { email: targetEmail } });
+        // Get authenticated user from session
+        const user = await getSession();
 
         if (!user) {
-            // Fallback to first available user
-            user = await prisma.user.findFirst();
-            if (!user) {
-                return NextResponse.json({ error: "No users found" }, { status: 404 });
-            }
+            return unauthorizedResponse('Please sign in to join tribes');
         }
 
         // Check if user can join tribes (ENGAGED or HARD subscription required)
-        const permission = await checkPermission({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            userProfile: user.userProfile as any,
-            subscriptionStatus: user.subscriptionStatus as any,
-            subscriptionPlan: user.subscriptionPlan,
-            trialStartDate: user.trialStartDate,
-            trialEndDate: user.trialEndDate,
-            graceStartDate: user.graceStartDate,
-            graceEndDate: user.graceEndDate,
-            reputationScore: user.reputationScore,
-            profileCompleteness: user.profileCompleteness,
-        }, 'joinTribes');
+        const permission = await checkPermission(user, 'joinTribes');
 
         if (!permission.allowed) {
             return forbiddenResponse(permission.message);

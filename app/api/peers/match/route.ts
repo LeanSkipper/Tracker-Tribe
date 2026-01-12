@@ -1,31 +1,18 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkPermission, forbiddenResponse } from '@/lib/auth';
+import { checkPermission, forbiddenResponse, getSession, unauthorizedResponse } from '@/lib/auth';
 
 export async function POST(req: Request) {
     try {
-        // Get current user (in production, this would come from session)
-        const user = await prisma.user.findFirst();
+        // Get authenticated user from session
+        const user = await getSession();
 
         if (!user) {
-            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+            return unauthorizedResponse('Please sign in to match with peers');
         }
 
         // Check if user can view peer GPS (ENGAGED or HARD subscription required)
-        const permission = await checkPermission({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            userProfile: user.userProfile as any,
-            subscriptionStatus: user.subscriptionStatus as any,
-            subscriptionPlan: user.subscriptionPlan,
-            trialStartDate: user.trialStartDate,
-            trialEndDate: user.trialEndDate,
-            graceStartDate: user.graceStartDate,
-            graceEndDate: user.graceEndDate,
-            reputationScore: user.reputationScore,
-            profileCompleteness: user.profileCompleteness,
-        }, 'viewPeerGPS');
+        const permission = await checkPermission(user, 'viewPeerGPS');
 
         if (!permission.allowed) {
             return forbiddenResponse(permission.message);

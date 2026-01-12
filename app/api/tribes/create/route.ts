@@ -1,38 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { checkPermission, forbiddenResponse } from "@/lib/auth";
+import { checkPermission, forbiddenResponse, getSession, unauthorizedResponse } from "@/lib/auth";
 
 export async function POST(req: Request) {
     try {
         const { name, topic, meetingTime, matchmakingCriteria, affiliateCommission, maxMembers, isPaid, monthlyPrice } = await req.json();
 
-        // For prototype, try to get the specific prototype user, fallback to first user
-        const targetEmail = 'tiago.mance@gmail.com';
-        let user = await prisma.user.findUnique({ where: { email: targetEmail } });
+        // Get authenticated user from session
+        const user = await getSession();
 
         if (!user) {
-            // Fallback to first available user
-            user = await prisma.user.findFirst();
-            if (!user) {
-                return NextResponse.json({ error: "No users found" }, { status: 404 });
-            }
+            return unauthorizedResponse('Please sign in to create tribes');
         }
 
         // Check if user can create tribes (HARD subscription required)
-        const permission = await checkPermission({
-            id: user.id,
-            email: user.email,
-            name: user.name,
-            userProfile: user.userProfile as any,
-            subscriptionStatus: user.subscriptionStatus as any,
-            subscriptionPlan: user.subscriptionPlan,
-            trialStartDate: user.trialStartDate,
-            trialEndDate: user.trialEndDate,
-            graceStartDate: user.graceStartDate,
-            graceEndDate: user.graceEndDate,
-            reputationScore: user.reputationScore,
-            profileCompleteness: user.profileCompleteness,
-        }, 'createTribes');
+        const permission = await checkPermission(user, 'createTribes');
 
         if (!permission.allowed) {
             return forbiddenResponse(permission.message);
@@ -40,20 +22,7 @@ export async function POST(req: Request) {
 
         // Check if user can monetize (if tribe is paid)
         if (isPaid) {
-            const monetizePermission = await checkPermission({
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                userProfile: user.userProfile as any,
-                subscriptionStatus: user.subscriptionStatus as any,
-                subscriptionPlan: user.subscriptionPlan,
-                trialStartDate: user.trialStartDate,
-                trialEndDate: user.trialEndDate,
-                graceStartDate: user.graceStartDate,
-                graceEndDate: user.graceEndDate,
-                reputationScore: user.reputationScore,
-                profileCompleteness: user.profileCompleteness,
-            }, 'monetizeTribe');
+            const monetizePermission = await checkPermission(user, 'monetizeTribe');
 
             if (!monetizePermission.allowed) {
                 return forbiddenResponse(monetizePermission.message);
