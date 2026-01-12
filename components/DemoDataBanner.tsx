@@ -2,13 +2,17 @@
 
 import { X } from 'lucide-react';
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 
 export default function DemoDataBanner() {
     const [isDismissed, setIsDismissed] = useState(false);
-    const router = useRouter();
 
     if (isDismissed) return null;
+
+    const handleSignUp = () => {
+        // Redirect to Google sign-in for easiest onboarding
+        signIn('google', { callbackUrl: '/obeya' });
+    };
 
     return (
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 flex items-center justify-between shadow-lg">
@@ -19,17 +23,17 @@ export default function DemoDataBanner() {
                         You're viewing demo data
                     </p>
                     <p className="text-xs text-blue-100">
-                        Sign up for free to save your own goals and track your progress
+                        Sign in to save your own goals and start your 60-day free trial
                     </p>
                 </div>
             </div>
 
             <div className="flex items-center gap-2">
                 <button
-                    onClick={() => router.push('/onboarding/upgrade')}
+                    onClick={handleSignUp}
                     className="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-50 transition-colors"
                 >
-                    Start Free Trial
+                    Sign In Free
                 </button>
                 <button
                     onClick={() => setIsDismissed(true)}
