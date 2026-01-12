@@ -1,80 +1,27 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { UserProfile, SubscriptionStatus, Visibility } from "@prisma/client";
-import { checkPermission, unauthorizedResponse, forbiddenResponse } from "@/lib/auth";
+import { Visibility } from "@prisma/client";
+import { checkPermission, unauthorizedResponse, forbiddenResponse, getSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        // In a real app, this would come from session/auth.
-        const user = await prisma.user.findFirst({
-            where: { email: "tiago@example.com" },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                userProfile: true,
-                subscriptionStatus: true,
-                subscriptionPlan: true,
-                trialStartDate: true,
-                trialEndDate: true,
-                graceStartDate: true,
-                graceEndDate: true,
-                reputationScore: true,
-                profileCompleteness: true,
-            }
-        });
+        // Get authenticated user from session
+        const user = await getSession();
+
         if (!user) {
-            // Create a default user if none exists for the prototype
-            const newUser = await prisma.user.create({
-                data: {
-                    email: "tiago@example.com",
-                    name: "Tiago",
-                    userProfile: UserProfile.SOFT,
-                    subscriptionStatus: SubscriptionStatus.TRIAL,
-                    trialStartDate: new Date(),
-                    trialEndDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000), // 60 days from now
-                    reputationScore: 0,
-                    profileCompleteness: 0,
-                }
-            });
-            return NextResponse.json([]);
+            return unauthorizedResponse('Please sign in to access your goals');
         }
 
-        // Check GPS access permission (only if user has subscription fields)
-        if (user.userProfile && user.subscriptionStatus) {
-            console.log('[GPS GET] User data:', {
-                id: user.id,
-                email: user.email,
-                userProfile: user.userProfile,
-                subscriptionStatus: user.subscriptionStatus,
-                trialEndDate: user.trialEndDate,
-                graceEndDate: user.graceEndDate,
-            });
+        // Check GPS access permission
+        const permission = await checkPermission(user, 'gps');
 
-            const permission = await checkPermission({
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                userProfile: user.userProfile as any,
-                subscriptionStatus: user.subscriptionStatus as any,
-                subscriptionPlan: user.subscriptionPlan,
-                trialStartDate: user.trialStartDate,
-                trialEndDate: user.trialEndDate,
-                graceStartDate: user.graceStartDate,
-                graceEndDate: user.graceEndDate,
-                reputationScore: user.reputationScore,
-                profileCompleteness: user.profileCompleteness,
-            }, 'gps');
+        console.log('[GPS GET] Permission result:', permission);
 
-            console.log('[GPS GET] Permission result:', permission);
-
-            if (!permission.allowed) {
-                return forbiddenResponse(permission.message);
-            }
+        if (!permission.allowed) {
+            return forbiddenResponse(permission.message);
         }
-        // If user doesn't have subscription fields, allow access (legacy users)
 
         const goals = await prisma.goal.findMany({
             where: { userId: user.id },
@@ -106,50 +53,20 @@ export async function GET() {
 export async function POST(req: Request) {
     try {
         const data = await req.json();
-        const user = await prisma.user.findFirst({
-            where: { email: "tiago@example.com" },
-            select: {
-                id: true,
-                email: true,
-                name: true,
-                userProfile: true,
-                subscriptionStatus: true,
-                subscriptionPlan: true,
-                trialStartDate: true,
-                trialEndDate: true,
-                graceStartDate: true,
-                graceEndDate: true,
-                reputationScore: true,
-                profileCompleteness: true,
-            }
-        });
+
+        // Get authenticated user from session
+        const user = await getSession();
 
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return unauthorizedResponse('Please sign in to save goals');
         }
 
-        // Check GPS access permission (only if user has subscription fields)
-        if (user.userProfile && user.subscriptionStatus) {
-            const permission = await checkPermission({
-                id: user.id,
-                email: user.email,
-                name: user.name,
-                userProfile: user.userProfile as any,
-                subscriptionStatus: user.subscriptionStatus as any,
-                subscriptionPlan: user.subscriptionPlan,
-                trialStartDate: user.trialStartDate,
-                trialEndDate: user.trialEndDate,
-                graceStartDate: user.graceStartDate,
-                graceEndDate: user.graceEndDate,
-                reputationScore: user.reputationScore,
-                profileCompleteness: user.profileCompleteness,
-            }, 'gps');
+        // Check GPS access permission
+        const permission = await checkPermission(user, 'gps');
 
-            if (!permission.allowed) {
-                return forbiddenResponse(permission.message);
-            }
+        if (!permission.allowed) {
+            return forbiddenResponse(permission.message);
         }
-        // If user doesn't have subscription fields, allow access (legacy users)
 
         const { id, title, category, isShared, rows } = data;
 

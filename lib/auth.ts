@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { prisma } from './prisma';
 import { canAccessGPS, canJoinTribes, canCreateTribes, canViewPeerGPS, canMonetizeTribe } from './permissions';
 
@@ -21,14 +23,52 @@ export interface SessionUser {
 }
 
 /**
- * Get user session from request
- * For now, this is a placeholder. In production, integrate with NextAuth or similar
+ * Get user session from NextAuth and fetch full user data with permissions
  */
-export async function getSession(request?: Request): Promise<SessionUser | null> {
-    // TODO: Implement actual session management with NextAuth or similar
-    // For now, return null to indicate no session
-    // This will be replaced with proper authentication
-    return null;
+export async function getSession(): Promise<SessionUser | null> {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email) {
+        return null;
+    }
+
+    // Fetch full user data from database
+    const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: {
+            id: true,
+            email: true,
+            name: true,
+            userProfile: true,
+            subscriptionStatus: true,
+            subscriptionPlan: true,
+            trialStartDate: true,
+            trialEndDate: true,
+            graceStartDate: true,
+            graceEndDate: true,
+            reputationScore: true,
+            profileCompleteness: true,
+        },
+    });
+
+    if (!user) {
+        return null;
+    }
+
+    return {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        userProfile: user.userProfile as 'SOFT' | 'ENGAGED' | 'HARD',
+        subscriptionStatus: user.subscriptionStatus as 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED',
+        subscriptionPlan: user.subscriptionPlan,
+        trialStartDate: user.trialStartDate,
+        trialEndDate: user.trialEndDate,
+        graceStartDate: user.graceStartDate,
+        graceEndDate: user.graceEndDate,
+        reputationScore: user.reputationScore,
+        profileCompleteness: user.profileCompleteness,
+    };
 }
 
 /**
@@ -75,8 +115,8 @@ export async function getUserWithPermissions(userId: string): Promise<SessionUse
 /**
  * Require authentication - throw error if not authenticated
  */
-export async function requireAuth(request?: Request): Promise<SessionUser> {
-    const session = await getSession(request);
+export async function requireAuth(): Promise<SessionUser> {
+    const session = await getSession();
 
     if (!session) {
         throw new Error('Authentication required');
