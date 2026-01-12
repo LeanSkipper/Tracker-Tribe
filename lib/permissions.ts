@@ -202,3 +202,94 @@ export const calculateGraceSurcharge = (baseAmount: number): number => {
     const GRACE_SURCHARGE_RATE = 0.20; // 20%
     return baseAmount * (1 + GRACE_SURCHARGE_RATE);
 };
+
+/**
+ * NEW 3-TIER MODEL PERMISSIONS
+ */
+
+/**
+ * Check if user can save GPS data (not just view)
+ * 
+ * Rules:
+ * - Guests: Cannot save (read-only demo mode)
+ * - Trial users: Can save
+ * - Subscribed users: Can save
+ */
+export const canSaveGPS = (user: User | null): boolean => {
+    if (!user) return false; // Guest users cannot save
+    return canAccessGPS(user); // Trial and subscribed can save
+};
+
+/**
+ * Check if user can view masterminds/tribes
+ * 
+ * Rules:
+ * - Guests: Cannot view (show tutorial modal)
+ * - Trial users: Can view (read-only)
+ * - Subscribed users: Can view and interact
+ */
+export const canViewMasterminds = (user: User | null): boolean => {
+    if (!user) return false; // Guests cannot view
+
+    // Trial users can view in read-only mode
+    if (isInTrial(user)) return true;
+
+    // Subscribed users can view
+    return canJoinTribes(user);
+};
+
+/**
+ * Check if user can create masterminds/tribes
+ * 
+ * Rules:
+ * - Guests: Cannot create
+ * - Trial users: Cannot create
+ * - Subscribed users: Can create (HARD profile only)
+ */
+export const canCreateMasterminds = (user: User | null): boolean => {
+    if (!user) return false;
+    return canCreateTribes(user); // Only HARD with active subscription
+};
+
+/**
+ * Check if user can interact with masterminds (not just view)
+ * 
+ * Rules:
+ * - Guests: Cannot interact
+ * - Trial users: Cannot interact (read-only)
+ * - Subscribed users: Can interact
+ */
+export const canInteractWithMasterminds = (user: User | null): boolean => {
+    if (!user) return false;
+    if (isInTrial(user)) return false; // Trial is read-only
+    return canJoinTribes(user);
+};
+
+/**
+ * Check if user is eligible for trial discount (20% off)
+ * 
+ * Rules:
+ * - Must be in trial period
+ * - Must not have used discount before
+ * - Must subscribe within 60 days of trial start
+ */
+export const isTrialDiscountEligible = (user: User): boolean => {
+    if (!isInTrial(user)) return false;
+
+    // Check if discount was already used (requires new DB field)
+    // For now, assume eligible if in trial
+    return true;
+};
+
+/**
+ * Get user tier for display
+ * 
+ * Returns: 'visitor' | 'trial' | 'subscribed'
+ */
+export const getUserTier = (user: User | null): 'visitor' | 'trial' | 'subscribed' => {
+    if (!user) return 'visitor';
+    if (isInTrial(user)) return 'trial';
+    if (user.subscriptionStatus === 'ACTIVE') return 'subscribed';
+    return 'visitor';
+};
+

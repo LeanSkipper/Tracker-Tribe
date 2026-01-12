@@ -2,19 +2,22 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { Visibility } from "@prisma/client";
 import { checkPermission, unauthorizedResponse, forbiddenResponse, getSession } from "@/lib/auth";
+import { getDemoGoalsData } from "@/lib/guestSession";
 
 export const runtime = "nodejs";
 
 export async function GET() {
     try {
-        // Get authenticated user from session
+        // Get authenticated user from session (null for guests)
         const user = await getSession();
 
+        // Guest users: Return demo data
         if (!user) {
-            return unauthorizedResponse('Please sign in to access your goals');
+            console.log('[GPS GET] Guest user - returning demo data');
+            return NextResponse.json(getDemoGoalsData());
         }
 
-        // Check GPS access permission
+        // Authenticated users: Check GPS access permission
         const permission = await checkPermission(user, 'gps');
 
         console.log('[GPS GET] Permission result:', permission);
@@ -57,8 +60,13 @@ export async function POST(req: Request) {
         // Get authenticated user from session
         const user = await getSession();
 
+        // Block guest users from saving
         if (!user) {
-            return unauthorizedResponse('Please sign in to save goals');
+            return NextResponse.json({
+                error: "Sign up to save your goals",
+                message: "You're in demo mode. Create a free account to save your progress and unlock all features.",
+                requiresAuth: true
+            }, { status: 401 });
         }
 
         // Check GPS access permission
