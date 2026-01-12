@@ -1,35 +1,12 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import LinkedInProvider from 'next-auth/providers/linkedin';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import { getGuestSessionData, convertGuestToUser } from '@/lib/guestAuth';
 
 export const authOptions: NextAuthOptions = {
     adapter: PrismaAdapter(prisma) as any,
     providers: [
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || '',
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-            authorization: {
-                params: {
-                    prompt: 'consent',
-                    access_type: 'offline',
-                    response_type: 'code'
-                }
-            }
-        }),
-        LinkedInProvider({
-            clientId: process.env.LINKEDIN_CLIENT_ID || '',
-            clientSecret: process.env.LINKEDIN_CLIENT_SECRET || '',
-            authorization: {
-                params: {
-                    scope: 'openid profile email',
-                },
-            },
-        }),
         CredentialsProvider({
             name: 'Credentials',
             credentials: {
@@ -67,39 +44,19 @@ export const authOptions: NextAuthOptions = {
         })
     ],
     callbacks: {
-        async signIn({ user, account, profile }) {
-            // Check if there's a guest session to convert
-            if (typeof window !== 'undefined') {
-                const guestSession = getGuestSessionData();
-                if (guestSession && user.email) {
-                    try {
-                        // Convert guest user to full user
-                        await convertGuestToUser(
-                            guestSession.guestId,
-                            user.email,
-                            undefined, // No password for OAuth
-                            account?.provider as 'google' | 'linkedin'
-                        );
-                    } catch (error) {
-                        console.error('Failed to convert guest user:', error);
-                        // Continue with sign-in even if conversion fails
-                    }
-                }
-            }
+        async signIn({ user }) {
+            // Allow all sign-ins for credentials provider
             return true;
         },
-        async session({ session, user, token }) {
+        async session({ session, token }) {
             if (session.user) {
-                session.user.id = user?.id || token.sub || '';
+                session.user.id = token.sub || '';
             }
             return session;
         },
-        async jwt({ token, user, account }) {
+        async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
-            }
-            if (account) {
-                token.provider = account.provider;
             }
             return token;
         }
