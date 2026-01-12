@@ -829,7 +829,8 @@ export default function ObeyaPage() {
     };
 
     // Check if user is a guest (no session)
-    const { data: session } = useSession();
+    // Use optional chaining to handle SSR where useSession might be undefined
+    const { data: session } = useSession() ?? { data: null };
     const isGuest = !session;
 
     return (
