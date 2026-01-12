@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { SubscriptionPlan, UserProfile, SubscriptionStatus } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,10 @@ export async function POST(req: Request) {
                 { status: 409 }
             );
         }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         // Calculate trial/subscription dates based on profile
         const now = new Date();
         let trialStartDate: Date | null = null;
@@ -66,11 +71,11 @@ export async function POST(req: Request) {
             }
         }
 
-        // Create user
+        // Create user with hashed password
         const user = await prisma.user.create({
             data: {
                 email,
-                password, // TODO: Hash password with bcrypt in production
+                password: hashedPassword,
                 name,
                 userProfile: userProfile as UserProfile,
                 subscriptionStatus,
