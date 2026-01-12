@@ -27,12 +27,13 @@ export default function SignInPage() {
 
             if (result?.error) {
                 setError('Invalid email or password');
-            } else {
-                router.push('/obeya');
+                setIsLoading(false);
+            } else if (result?.ok) {
+                // Use window.location for a full page reload to ensure session is loaded
+                window.location.href = '/obeya';
             }
         } catch (err) {
             setError('An error occurred. Please try again.');
-        } finally {
             setIsLoading(false);
         }
     };
