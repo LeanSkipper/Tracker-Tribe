@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
+import DemoDataBanner from '@/components/DemoDataBanner';
 import { Target, Plus, ChevronLeft, ChevronRight, Edit2, X, Layout, BarChart2, ZoomIn, ZoomOut, Trash2, TrendingUp, Circle, Clock, CheckCircle2, Users, Lightbulb } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import { GoalTemplate } from '@/lib/goalTemplates';
@@ -826,8 +828,15 @@ export default function ObeyaPage() {
         setEditingGoal(newGoal);
     };
 
+    // Check if user is a guest (no session)
+    const { data: session } = useSession();
+    const isGuest = !session;
+
     return (
         <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
+            {/* Demo Data Banner for Guest Users */}
+            {isGuest && <DemoDataBanner />}
+
             {isInspirationOpen && (
                 <InspirationModal
                     onClose={() => setIsInspirationOpen(false)}
