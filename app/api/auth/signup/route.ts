@@ -1,26 +1,21 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { SubscriptionPlan, UserProfile, SubscriptionStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
-// POST /api/auth/signup - Register new user with profile selection
+// POST /api/auth/signup - Register new user
 export async function POST(req: Request) {
     try {
         const body = await req.json();
-        const {
-            email,
-            password,
-            name,
-            userProfile = 'SOFT',
-            subscriptionPlan
-        } = body;
+        const { email, password, name } = body;
+
+        console.log('[SIGNUP] Starting signup process for:', email);
 
         // Validate required fields
         if (!email || !password) {
             return NextResponse.json(
-                { error: "Email and password are required" },
+                { message: "Email and password are required" },
                 { status: 400 }
             );
         }
@@ -32,89 +27,80 @@ export async function POST(req: Request) {
 
         if (existingUser) {
             return NextResponse.json(
-                { error: "User with this email already exists" },
+                { message: "User with this email already exists" },
                 { status: 409 }
             );
         }
 
+        console.log('[SIGNUP] Hashing password...');
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Calculate trial/subscription dates based on profile
+        console.log('[SIGNUP] Creating user in database...');
+        // Create user with 60-day trial
         const now = new Date();
-        let trialStartDate: Date | null = null;
-        let trialEndDate: Date | null = null;
-        let subscriptionStatus: SubscriptionStatus = SubscriptionStatus.TRIAL;
-        let selectedPlan: SubscriptionPlan | null = null;
+        const trialEnd = new Date(now);
+        trialEnd.setDate(trialEnd.getDate() + 60); // 60 days from now
 
-        if (userProfile === 'SOFT') {
-            // SOFT users get 3-month free trial
-            // Note: Schema doesn't have SOFT_FREE_TRIAL, using SOFT_FREE
-            trialStartDate = now;
-            trialEndDate = new Date(now);
-            trialEndDate.setMonth(trialEndDate.getMonth() + 3);
-            subscriptionStatus = SubscriptionStatus.TRIAL;
-            selectedPlan = SubscriptionPlan.SOFT_FREE;
-        } else if (userProfile === 'ENGAGED' || userProfile === 'HARD') {
-            // ENGAGED and HARD users need to subscribe immediately
-            // For now, we'll set them as TRIAL and require payment in onboarding
-            // In production, this would integrate with Stripe
-            subscriptionStatus = SubscriptionStatus.TRIAL;
-
-            // Map string input to Enum if provided, otherwise default
-            if (subscriptionPlan && Object.values(SubscriptionPlan).includes(subscriptionPlan as SubscriptionPlan)) {
-                selectedPlan = subscriptionPlan as SubscriptionPlan;
-            } else {
-                selectedPlan = userProfile === 'ENGAGED'
-                    ? SubscriptionPlan.ENGAGED_MONTHLY
-                    : SubscriptionPlan.HARD_MONTHLY;
-            }
-        }
-
-        // Create user with hashed password
         const user = await prisma.user.create({
             data: {
                 email,
                 password: hashedPassword,
-                name,
-                userProfile: userProfile as UserProfile,
-                subscriptionStatus,
-                ...(selectedPlan && { subscriptionPlan: selectedPlan }),
-                ...(trialStartDate && { trialStartDate }),
-                ...(trialEndDate && { trialEndDate }),
-                // Initialize reputation and completeness
+                name: name || null,
+                userProfile: 'SOFT', // Default to SOFT
+                subscriptionStatus: 'TRIAL',
+                subscriptionPlan: 'SOFT_FREE',
+                trialStartDate: now,
+                trialEndDate: trialEnd,
                 reputationScore: 0,
-                profileCompleteness: name ? 10 : 0, // 10% for having a name
+                profileCompleteness: name ? 10 : 0,
             }
         });
+
+        console.log('[SIGNUP] User created successfully:', user.id);
 
         // Return user without password
         const { password: _, ...userWithoutPassword } = user;
 
         return NextResponse.json({
             user: userWithoutPassword,
-            message: userProfile === 'SOFT'
-                ? "Account created! Your 3-month free trial has started."
-                : "Account created! Please complete payment to activate your subscription."
+            message: "Account created! Your 60-day free trial has started."
         });
 
     } catch (error) {
         console.error("=== SIGNUP ERROR ===");
-        console.error("Error type:", typeof error);
         console.error("Error:", error);
         console.error("Error message:", error instanceof Error ? error.message : String(error));
-        console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
-        console.error("Prisma client available:", !!prisma);
-        console.error("Prisma user model:", prisma.user ? 'Available' : 'Not available');
-        console.error("===================");
+        console.error("Error stack:", error instanceof Error ? error.stack : 'No stack');
+        console.error("====================");
 
         return NextResponse.json(
             {
-                error: "Failed to create account",
-                details: error instanceof Error ? error.message : String(error),
-                stack: error instanceof Error ? error.stack : undefined
+                message: "Failed to create account",
+                error: error instanceof Error ? error.message : String(error)
             },
             { status: 500 }
         );
     }
+}
+
+    } catch (error) {
+    console.error("=== SIGNUP ERROR ===");
+    console.error("Error type:", typeof error);
+    console.error("Error:", error);
+    console.error("Error message:", error instanceof Error ? error.message : String(error));
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+    console.error("Prisma client available:", !!prisma);
+    console.error("Prisma user model:", prisma.user ? 'Available' : 'Not available');
+    console.error("===================");
+
+    return NextResponse.json(
+        {
+            error: "Failed to create account",
+            details: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined
+        },
+        { status: 500 }
+    );
+}
 }
