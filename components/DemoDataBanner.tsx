@@ -2,16 +2,17 @@
 
 import { X } from 'lucide-react';
 import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function DemoDataBanner() {
     const [isDismissed, setIsDismissed] = useState(false);
+    const router = useRouter();
 
     if (isDismissed) return null;
 
-    const handleSignUp = () => {
-        // Redirect to Google sign-in for easiest onboarding
-        signIn('google', { callbackUrl: '/obeya' });
+    const handleSignIn = () => {
+        // Redirect to sign-in page
+        router.push('/auth/signin');
     };
 
     return (
@@ -30,7 +31,7 @@ export default function DemoDataBanner() {
 
             <div className="flex items-center gap-2">
                 <button
-                    onClick={handleSignUp}
+                    onClick={handleSignIn}
                     className="bg-white text-blue-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-50 transition-colors"
                 >
                     Sign In Free
