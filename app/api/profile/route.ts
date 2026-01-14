@@ -31,6 +31,11 @@ export async function GET() {
                 trialEndDate: true,
                 reputationScore: true,
                 profileCompleteness: true,
+                // KPI fields
+                grit: true,
+                level: true,
+                experience: true,
+                taskCompletionRate: true,
                 createdAt: true,
             },
         });
@@ -148,6 +153,11 @@ export async function PUT(req: Request) {
                 trialEndDate: true,
                 reputationScore: true,
                 profileCompleteness: true,
+                // KPI fields
+                grit: true,
+                level: true,
+                experience: true,
+                taskCompletionRate: true,
                 createdAt: true,
             },
         });

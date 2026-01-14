@@ -352,6 +352,45 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
+                {/* KPI Stats Section */}
+                <div className="bg-white rounded-3xl shadow-xl p-8 mb-6">
+                    <h2 className="text-xl font-black text-gray-900 mb-6">Your Stats</h2>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 text-center">
+                            <div className="text-3xl font-black text-blue-600">{profile?.level || 1}</div>
+                            <div className="text-sm font-medium text-gray-700 mt-1">Level</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 text-center">
+                            <div className="text-3xl font-black text-purple-600">{profile?.grit || 0}</div>
+                            <div className="text-sm font-medium text-gray-700 mt-1">Grit</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 text-center">
+                            <div className="text-3xl font-black text-green-600">{profile?.experience || 0}</div>
+                            <div className="text-sm font-medium text-gray-700 mt-1">XP</div>
+                        </div>
+                        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-4 text-center">
+                            <div className="text-3xl font-black text-orange-600">
+                                {profile?.taskCompletionRate ? Math.round(profile.taskCompletionRate * 100) : 0}%
+                            </div>
+                            <div className="text-sm font-medium text-gray-700 mt-1">Completion</div>
+                        </div>
+                    </div>
+                    <div className="mt-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-2xl p-4">
+                        <div className="flex items-center justify-between">
+                            <span className="text-sm font-bold text-gray-700">Reputation Score</span>
+                            <span className="text-2xl font-black text-yellow-600">
+                                {profile?.reputationScore ? profile.reputationScore.toFixed(1) : '0.0'}
+                            </span>
+                        </div>
+                        <div className="mt-2 bg-gray-200 rounded-full h-2">
+                            <div
+                                className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-2 rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min((profile?.reputationScore || 0) * 10, 100)}%` }}
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Account Info */}
                 <div className="bg-white rounded-3xl shadow-xl p-8">
                     <h2 className="text-xl font-black text-gray-900 mb-4">Account Information</h2>
