@@ -49,14 +49,20 @@ export const authOptions: NextAuthOptions = {
             return true;
         },
         async session({ session, token }) {
-            if (session.user) {
+            // Pass user data from JWT token to session
+            if (session.user && token) {
                 session.user.id = token.sub || '';
+                session.user.email = token.email as string;
+                session.user.name = token.name as string;
             }
             return session;
         },
         async jwt({ token, user }) {
+            // On sign-in, add user data to JWT token
             if (user) {
                 token.id = user.id;
+                token.email = user.email;
+                token.name = user.name;
             }
             return token;
         }
