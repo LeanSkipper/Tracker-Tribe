@@ -93,8 +93,11 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                            Email (optional)
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
+                            Email
+                            <span className="text-xs font-normal bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                ⭐ Earn +1 XP
+                            </span>
                         </label>
                         <input
                             type="email"
@@ -104,15 +107,23 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
                             onChange={(e) => setEmail(e.target.value)}
                             disabled={isSubmitting}
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Optional: Provide your email if you'd like us to follow up with you
+                        <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                            💡 Add your email to earn 1 XP and help us recognize your valuable contribution!
                         </p>
                     </div>
 
                     {submitStatus === 'success' && (
-                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg flex items-center gap-2">
-                            <span className="text-xl">✓</span>
-                            <span className="font-medium">Thank you! Your feedback has been submitted.</span>
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-lg">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xl">✓</span>
+                                <span className="font-medium">Thank you! Your feedback has been submitted.</span>
+                            </div>
+                            {email && (
+                                <div className="flex items-center gap-2 ml-7 text-sm">
+                                    <span className="text-yellow-600 font-bold">⭐ +1 XP earned!</span>
+                                    <span className="text-gray-600">We appreciate your contribution.</span>
+                                </div>
+                            )}
                         </div>
                     )}
 
