@@ -79,6 +79,82 @@ export default function TribeDetailsPage() {
         );
     }
 
+    // Check if current user is a member
+    const isMember = tribe.members.some(m => m.id === currentUserId);
+    const isAdmin = tribe.members.some(m => m.id === currentUserId && m.role === 'ADMIN');
+
+    if (!isMember) {
+        // --- PUBLIC PREVIEW VIEW ---
+        return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8 flex items-center justify-center">
+                <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
+                    <div className="relative h-48 bg-indigo-600">
+                        {/* Cover Image Placeholder */}
+                        <div className="absolute inset-0 flex items-center justify-center text-white/20 font-black text-6xl uppercase tracking-widest select-none">
+                            {tribe.topic || 'TRIBE'}
+                        </div>
+                    </div>
+
+                    <div className="px-8 py-8 -mt-12 relative">
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <h1 className="text-3xl font-black text-slate-900 mb-2">{tribe.name}</h1>
+                            {tribe.topic && <p className="text-indigo-600 font-bold uppercase tracking-wide text-sm">{tribe.topic}</p>}
+
+                            {/* Key Info */}
+                            <div className="flex items-center gap-4 mt-4 text-slate-600 text-sm">
+                                <span className="flex items-center gap-1"><Users size={16} /> {tribe.members.length} Members</span>
+                                {tribe.meetingTime && <span className="flex items-center gap-1"><CheckCircle2 size={16} /> {tribe.meetingTime}</span>}
+                            </div>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Description */}
+                            <div>
+                                <h3 className="text-lg font-bold text-slate-900 mb-2">About this Table</h3>
+                                <p className="text-slate-600 leading-relaxed">
+                                    {tribe.description || "Join this high-performance mastermind group to accelerate your growth."}
+                                </p>
+                            </div>
+
+                            {/* Requirements (Mocked for now as we don't have them in the simple Tribe type yet, need to fetch) */}
+                            {/* In a real scenario we'd display minLevel, minGrit etc. from tribe object */}
+
+                            {/* Join Action */}
+                            <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm("Apply to join this tribe?")) return;
+                                        try {
+                                            const res = await fetch(`/api/tribes/${tribe.id}/apply`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ message: "I'd like to join!" })
+                                            });
+                                            if (res.ok) alert('Application sent!');
+                                        } catch (e) { alert('Error applying'); }
+                                    }}
+                                    className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 hover:scale-[1.02] transition-all shadow-xl shadow-indigo-200 text-lg"
+                                >
+                                    Apply to Join
+                                </button>
+                                <p className="text-center text-xs text-slate-400 mt-3">
+                                    By applying, you agree to the community guidelines.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="mt-8 text-center">
+                            <button onClick={() => router.push('/tribes')} className="text-slate-500 font-bold hover:text-slate-800 transition-colors">
+                                Back to Browse
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // --- MEMBER VIEW (TRIBE ROOM) ---
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
             <div className="max-w-7xl mx-auto">
@@ -97,8 +173,8 @@ export default function TribeDetailsPage() {
                     {tribe.description && <p className="text-slate-600 mt-2 text-lg">{tribe.description}</p>}
                     {tribe.topic && <p className="text-slate-500 mt-1 font-bold uppercase text-sm tracking-wide">{tribe.topic}</p>}
 
-                    {/* Admin Console - Only visible to ADMINs (conceptually, backend secures it) */}
-                    {tribe.members.find(m => m.id === currentUserId && m.role === 'ADMIN') && (
+                    {/* Admin Console - Only visible to ADMINs */}
+                    {isAdmin && (
                         <div className="mt-6 bg-slate-800 text-white p-6 rounded-2xl">
                             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
                                 🛡️ Admin Console
@@ -137,10 +213,6 @@ export default function TribeDetailsPage() {
                                         ))}
                                     </div>
                                 </div>
-                                <div className="bg-slate-700 p-4 rounded-xl">
-                                    <h4 className="font-bold mb-2">Pending Applications</h4>
-                                    <p className="text-sm text-slate-300">No pending applications.</p>
-                                </div>
                             </div>
                         </div>
                     )}
@@ -148,16 +220,7 @@ export default function TribeDetailsPage() {
 
                 {/* Round Table Visualization */}
                 <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-100 mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                                <Users className="text-indigo-600" />
-                                Badges & Reliability
-                            </h3>
-                        </div>
-                    </div>
-
-                    {/* Members in circular layout */}
+                    {/* ... (Existing visualization code) ... */}
                     <div className="relative flex items-center justify-center min-h-[400px]">
                         {/* Center reliability circle */}
                         <div className="absolute">
@@ -237,6 +300,8 @@ export default function TribeDetailsPage() {
         </div>
     );
 }
+
+// ... rest of the file ...
 
 type MemberGPSCardProps = {
     member: Member;

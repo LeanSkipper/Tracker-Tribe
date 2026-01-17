@@ -8,7 +8,8 @@ export async function POST(req: Request) {
             name, description, topic, meetingTime, meetingDay, matchmakingCriteria, affiliateCommission, maxMembers, isPaid, monthlyPrice,
             // New fields
             meetingFrequency, meetingTimeHour, meetingTimeMinute, matchmaking,
-            minLevel, minGrit, minExperience, minCompletionRate, minReputation
+            minLevel, minGrit, minExperience, minCompletionRate, minReputation,
+            subscriptionPrice, subscriptionFrequency // New pricing fields
         } = await req.json();
 
         // Get authenticated user from session
@@ -31,6 +32,14 @@ export async function POST(req: Request) {
 
             if (!monetizePermission.allowed) {
                 return forbiddenResponse(monetizePermission.message);
+            }
+
+            // Validate Pricing
+            if (!subscriptionPrice || subscriptionPrice <= 0) {
+                return NextResponse.json({ error: "Price must be greater than 0 for paid tribes" }, { status: 400 });
+            }
+            if (!subscriptionFrequency) {
+                return NextResponse.json({ error: "Billing frequency is required for paid tribes" }, { status: 400 });
             }
         }
 
@@ -55,7 +64,8 @@ export async function POST(req: Request) {
                 maxMembers: maxMembers || 10,
                 creatorId: user.id,
                 isPaid: isPaid || false,
-                subscriptionPrice: isPaid ? (monthlyPrice || 0) : 0,
+                subscriptionPrice: isPaid ? (monthlyPrice || subscriptionPrice || 0) : 0,
+                subscriptionFrequency: isPaid ? subscriptionFrequency : null,
 
                 // Meeting configuration
                 meetingFrequency: meetingFrequency || null,

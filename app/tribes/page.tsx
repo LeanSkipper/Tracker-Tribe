@@ -195,11 +195,10 @@ export default function BrowseTribesPage() {
                                 </div>
 
                                 <button
-                                    onClick={() => handleApply(tribe.id)}
-                                    disabled={tribe.memberCount >= tribe.maxMembers}
-                                    className="w-full py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors disabled:bg-slate-300 disabled:cursor-not-allowed mt-auto"
+                                    onClick={() => router.push(`/tribes/${tribe.id}`)}
+                                    className="w-full py-3 bg-white border-2 border-indigo-600 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors mt-auto"
                                 >
-                                    {tribe.memberCount >= tribe.maxMembers ? 'Full' : 'Apply to Join'}
+                                    View Details
                                 </button>
                             </motion.div>
                         ))}

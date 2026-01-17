@@ -30,6 +30,11 @@ interface TribeFormData {
     minExperience: number;
     minCompletionRate: number;
     minReputation: number;
+
+    // Pricing
+    isPaid: boolean;
+    subscriptionPrice: number;
+    subscriptionFrequency: 'weekly' | 'monthly' | 'yearly' | 'lifetime' | '';
 }
 
 interface TribeCreationFormProps {
@@ -63,12 +68,17 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
         minExperience: 0,
         minCompletionRate: 0,
         minReputation: 0,
+
+        isPaid: false,
+        subscriptionPrice: 0,
+        subscriptionFrequency: '',
     });
 
     const [expandedSections, setExpandedSections] = useState({
         basic: true,
         matchmaking: false,
         stats: false,
+        pricing: false,
     });
 
     const [estimatedMembers, setEstimatedMembers] = useState<number | null>(null);
@@ -156,6 +166,19 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
             setError('At least one matchmaking criterion is required');
             setExpandedSections(prev => ({ ...prev, matchmaking: true }));
             return;
+        }
+
+        if (formData.isPaid) {
+            if (!formData.subscriptionPrice || formData.subscriptionPrice <= 0) {
+                setError('Price must be greater than 0');
+                setExpandedSections(prev => ({ ...prev, pricing: true }));
+                return;
+            }
+            if (!formData.subscriptionFrequency) {
+                setError('Please select a billing frequency');
+                setExpandedSections(prev => ({ ...prev, pricing: true }));
+                return;
+            }
         }
 
         setLoading(true);
@@ -515,6 +538,82 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
                                             </span>
                                         </div>
                                     </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Section 4: Pricing & Access */}
+                        <div className="border border-gray-200 rounded-xl overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => toggleSection('pricing')}
+                                className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-green-100 p-1 rounded-full">
+                                        <div className="text-green-600 font-bold">$</div>
+                                    </div>
+                                    <h3 className="text-lg font-bold text-gray-900">4. Pricing & Access <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full ml-2">Beta</span></h3>
+                                </div>
+                                {expandedSections.pricing ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                            </button>
+
+                            {expandedSections.pricing && (
+                                <div className="p-6 space-y-4 bg-white border-t border-gray-200">
+                                    <div className="flex items-center justify-between mb-4">
+                                        <label className="font-bold text-gray-900">Is this a Paid Tribe?</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData({ ...formData, isPaid: !formData.isPaid })}
+                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.isPaid ? 'bg-green-600' : 'bg-gray-200'}`}
+                                        >
+                                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.isPaid ? 'translate-x-6' : 'translate-x-1'}`} />
+                                        </button>
+                                    </div>
+
+                                    {formData.isPaid && (
+                                        <div className="bg-green-50 p-4 rounded-xl space-y-4 border border-green-100">
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 mb-2">Price Amount ($)</label>
+                                                <input
+                                                    type="number"
+                                                    min="0.01"
+                                                    step="0.01"
+                                                    value={formData.subscriptionPrice || ''}
+                                                    onChange={(e) => setFormData({ ...formData, subscriptionPrice: parseFloat(e.target.value) })}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                                                    placeholder="0.00"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 mb-2">Billing Frequency</label>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    {(['weekly', 'monthly', 'yearly', 'lifetime'] as const).map((freq) => (
+                                                        <button
+                                                            key={freq}
+                                                            type="button"
+                                                            onClick={() => setFormData({ ...formData, subscriptionFrequency: freq })}
+                                                            className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${formData.subscriptionFrequency === freq
+                                                                ? 'border-green-500 bg-green-100 text-green-700 font-bold'
+                                                                : 'border-gray-300 hover:border-gray-400 bg-white'
+                                                                }`}
+                                                        >
+                                                            {freq}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-sm text-yellow-800">
+                                                <strong>Note:</strong> Platform commission applies. You will receive the majority of the revenue. (Coming Soon)
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!formData.isPaid && (
+                                        <p className="text-sm text-gray-500 italic">This tribe will be free for members to join.</p>
+                                    )}
                                 </div>
                             )}
                         </div>

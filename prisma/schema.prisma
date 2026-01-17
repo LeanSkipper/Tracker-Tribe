@@ -280,6 +280,7 @@ model Tribe {
   // Monetization (for HARD user tribes)
   isPaid              Boolean  @default(false)
   subscriptionPrice   Float?   // Monthly price for members (set by HARD user)
+  subscriptionFrequency String? // "weekly", "monthly", "yearly", "lifetime"
   currency            String   @default("USD")
   
   // Creator revenue tracking
