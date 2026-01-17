@@ -27,6 +27,7 @@ type Member = {
 type Tribe = {
     id: string;
     name: string;
+    description?: string;
     topic?: string;
     meetingTime?: string;
     members: Member[];
@@ -93,7 +94,56 @@ export default function TribeDetailsPage() {
                 <div className="mb-8">
                     <h1 className="text-4xl font-black text-slate-900 mb-2">TABLE details</h1>
                     <h2 className="text-2xl font-bold text-indigo-600">{tribe.name}</h2>
-                    {tribe.topic && <p className="text-slate-600 mt-1">{tribe.topic}</p>}
+                    {tribe.description && <p className="text-slate-600 mt-2 text-lg">{tribe.description}</p>}
+                    {tribe.topic && <p className="text-slate-500 mt-1 font-bold uppercase text-sm tracking-wide">{tribe.topic}</p>}
+
+                    {/* Admin Console - Only visible to ADMINs (conceptually, backend secures it) */}
+                    {tribe.members.find(m => m.id === currentUserId && m.role === 'ADMIN') && (
+                        <div className="mt-6 bg-slate-800 text-white p-6 rounded-2xl">
+                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                🛡️ Admin Console
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="bg-slate-700 p-4 rounded-xl">
+                                    <h4 className="font-bold mb-2">Member Roles</h4>
+                                    <p className="text-sm text-slate-300 mb-4">Manage permissions for your tribe members.</p>
+                                    <div className="flex flex-col gap-2">
+                                        {tribe.members.map(member => (
+                                            <div key={member.id} className="flex items-center justify-between bg-slate-600 p-2 rounded-lg">
+                                                <span className="text-sm font-bold">{member.name}</span>
+                                                <select
+                                                    value={member.role}
+                                                    onChange={async (e) => {
+                                                        const newRole = e.target.value;
+                                                        try {
+                                                            const res = await fetch(`/api/tribes/${tribe.id}/roles`, {
+                                                                method: 'PATCH',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ memberId: member.id, role: newRole })
+                                                            });
+                                                            if (res.ok) fetchTribeDetails();
+                                                        } catch (err) {
+                                                            alert('Failed to update role');
+                                                        }
+                                                    }}
+                                                    className="bg-slate-800 text-white text-xs p-1 rounded border border-slate-500"
+                                                >
+                                                    <option value="ADMIN">Admin</option>
+                                                    <option value="MODERATOR">Moderator</option>
+                                                    <option value="TIME_KEEPER">Time Keeper</option>
+                                                    <option value="PLAYER">Player</option>
+                                                </select>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-700 p-4 rounded-xl">
+                                    <h4 className="font-bold mb-2">Pending Applications</h4>
+                                    <p className="text-sm text-slate-300">No pending applications.</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Round Table Visualization */}
@@ -112,7 +162,7 @@ export default function TribeDetailsPage() {
                         {/* Center reliability circle */}
                         <div className="absolute">
                             <CircularProgress
-                                value={tribe.members.reduce((acc, m) => acc + m.reliability, 0) / tribe.members.length}
+                                value={tribe.members.reduce((acc, m) => acc + m.reliability, 0) / (tribe.members.length || 1)}
                                 size={140}
                                 strokeWidth={10}
                             />
@@ -140,8 +190,8 @@ export default function TribeDetailsPage() {
                                     }}
                                 >
                                     {/* Member avatar with badges */}
-                                    <div className="relative">
-                                        <div className="w-20 h-20 rounded-full overflow-hidden bg-indigo-100 border-4 border-white shadow-lg">
+                                    <div className="relative group">
+                                        <div className="w-20 h-20 rounded-full overflow-hidden bg-indigo-100 border-4 border-white shadow-lg relative">
                                             {member.avatarUrl ? (
                                                 <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
                                             ) : (
@@ -150,6 +200,11 @@ export default function TribeDetailsPage() {
                                                 </div>
                                             )}
                                         </div>
+                                        {/* Role Badge */}
+                                        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full whitespace-nowrap z-10">
+                                            {member.role.replace('_', ' ')}
+                                        </div>
+
                                         {/* Top badge */}
                                         {member.badges[0] && (
                                             <div className="absolute -top-2 -right-2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center border-2 border-indigo-100">
@@ -157,7 +212,7 @@ export default function TribeDetailsPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <div className="text-center">
+                                    <div className="text-center mt-2">
                                         <div className="font-bold text-slate-900 text-sm">{member.name.split(' ')[0]}</div>
                                         <div className="text-xs font-bold text-indigo-600">{member.reliability}%</div>
                                     </div>
@@ -236,8 +291,12 @@ function MemberGPSCard({ member, isCurrentUser, index }: MemberGPSCardProps) {
                         </div>
 
                         <div>
-                            <h3 className="text-xl font-black text-slate-900">
-                                {member.name} {isCurrentUser && <span className="text-sm text-indigo-600">(Me)</span>}
+                            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                {member.name}
+                                {isCurrentUser && <span className="text-sm text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">(Me)</span>}
+                                <span className="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 uppercase font-bold">
+                                    {member.role.replace('_', ' ')}
+                                </span>
                             </h3>
                             <div className="flex items-center gap-4 mt-1">
                                 <div className="flex items-center gap-2">

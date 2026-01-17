@@ -31,8 +31,10 @@ export async function GET(req: Request) {
         const formattedTribes = tribes.map(t => ({
             id: t.id,
             name: t.name,
+            description: t.description,
             topic: t.topic,
             meetingTime: t.meetingTime,
+            meetingDay: t.meetingDay, // New field for robust scheduling
             // Also mapping structured meeting fields if available
             meetingFrequency: t.meetingFrequency,
             meetingTimeHour: t.meetingTimeHour,

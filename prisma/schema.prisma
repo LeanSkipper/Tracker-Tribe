@@ -17,6 +17,7 @@ enum BadgeType {
 enum TribeRole {
   ADMIN
   MODERATOR
+  TIME_KEEPER
   PLAYER
 }
 
@@ -229,8 +230,10 @@ model MonthlyVote {
 model Tribe {
   id          String   @id @default(cuid())
   name        String
+  description String?
   topic       String?
   meetingTime String?  // e.g. "Friday 10:00 AM"
+  meetingDay  String?  // e.g. "Friday" (for sorting/filtering)
   maxMembers  Int      @default(10)
   reliabilityRate Float @default(0) // 0-100 percentage
   

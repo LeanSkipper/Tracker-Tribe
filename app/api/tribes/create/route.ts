@@ -5,7 +5,7 @@ import { checkPermission, forbiddenResponse, getSession, unauthorizedResponse } 
 export async function POST(req: Request) {
     try {
         const {
-            name, topic, meetingTime, matchmakingCriteria, affiliateCommission, maxMembers, isPaid, monthlyPrice,
+            name, description, topic, meetingTime, meetingDay, matchmakingCriteria, affiliateCommission, maxMembers, isPaid, monthlyPrice,
             // New fields
             meetingFrequency, meetingTimeHour, meetingTimeMinute, matchmaking,
             minLevel, minGrit, minExperience, minCompletionRate, minReputation
@@ -46,8 +46,10 @@ export async function POST(req: Request) {
         const tribe = await prisma.tribe.create({
             data: {
                 name,
+                description,
                 topic,
                 meetingTime,
+                meetingDay,
                 matchmakingCriteria,
                 affiliateCommission: affiliateCommission || 0,
                 maxMembers: maxMembers || 10,

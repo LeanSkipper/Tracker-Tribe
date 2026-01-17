@@ -9,6 +9,7 @@ type Tribe = {
     name: string;
     topic?: string;
     meetingTime?: string;
+    meetingDay?: string | null;
     meetingFrequency?: string | null;
     meetingTimeHour?: number | null;
     meetingTimeMinute?: number | null;
@@ -26,11 +27,16 @@ export default function WeeklyTribeSchedule({ tribes }: WeeklyTribeScheduleProps
 
     const getDayTribes = (dayIndex: number) => {
         return tribes.filter(tribe => {
-            // Priority 1: Check structured frequency and time (if implemented properly in future)
-            // For now, relies heavily on parsing `meetingTime` string as it's the primary display field
+            const dayName = fullDays[dayIndex];
+
+            // Priority 1: Check explicit meetingDay field
+            if (tribe.meetingDay) {
+                return tribe.meetingDay.toLowerCase() === dayName.toLowerCase();
+            }
+
+            // Priority 2: Fallback to parsing meetingTime string
             // Example format: "Wednesday 4:00 PM"
             if (tribe.meetingTime) {
-                const dayName = fullDays[dayIndex];
                 return tribe.meetingTime.toLowerCase().includes(dayName.toLowerCase());
             }
             return false;
