@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Target, Zap, Users, TrendingUp, Mail, Check, Sparkles, CreditCard } from 'lucide-react';
-import { signIn } from 'next-auth/react';
+// import { signIn } from 'next-auth/react'; // Temporarily unused, preserved for future OAuth implementation
 
 export default function UpgradePage() {
     const router = useRouter();
@@ -247,8 +247,8 @@ export default function UpgradePage() {
                     </div>
                 </div>
 
-                {/* OAuth Sign In */}
-                <div className="mt-6">
+                {/* OAuth Sign In - Temporarily hidden, preserved for future use */}
+                {/* <div className="mt-6">
                     <div className="relative">
                         <div className="absolute inset-0 flex items-center">
                             <div className="w-full border-t border-gray-200"></div>
@@ -284,7 +284,7 @@ export default function UpgradePage() {
                             LinkedIn
                         </button>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
