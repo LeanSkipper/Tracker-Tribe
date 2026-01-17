@@ -7,6 +7,8 @@ import DemoDataBanner from '@/components/DemoDataBanner';
 import { Target, Plus, ChevronLeft, ChevronRight, Edit2, X, Layout, BarChart2, ZoomIn, ZoomOut, Trash2, TrendingUp, Circle, Clock, CheckCircle2, Users, Lightbulb } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import { GoalTemplate } from '@/lib/goalTemplates';
+import KanbanBoard from '@/components/KanbanBoard';
+
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const LIFE_AREAS = ['Health', 'Family', 'Wealth', 'Business/Career', 'Leisure', 'Social/Environment'];
@@ -737,6 +739,19 @@ export default function ObeyaPage() {
         }
     };
 
+    const handleAddKanbanTask = async (goalId: string, title: string) => {
+        if (!title.trim()) return;
+
+        // Get current week
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+        const currentWeek = Math.floor(daysSinceStart / 7) + 1;
+        const weekId = `W${currentWeek}`;
+
+        await handleAddAction(weekId, goalId, title);
+    };
+
     const handleUpdateActionStatus = async (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => {
         setGoals(prev => {
             const next = prev.map(g => {
@@ -892,309 +907,319 @@ export default function ObeyaPage() {
             </header>
 
             <main className="flex-1 overflow-auto">
-                <div className="inline-block min-w-full">
-                    <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex">
-                        <div className="sticky left-0 w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
-                        {(viewMode === 'strategic' ?
-                            Array.from({ length: 36 }, (_, i) => {
-                                const yearOffset = Math.floor(i / 12);
-                                const monthIndex = i % 12;
-                                return { month: MONTHS[monthIndex], year: currentYear + yearOffset, key: `${currentYear + yearOffset}-${MONTHS[monthIndex]}` };
-                            })
-                            :
-                            MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
-                        ).map(({ month: m, year: y, key }) => (
-                            <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : viewMode === 'task' ? 'w-[40rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 transition-all duration-300`}>
-                                <div className="bg-gray-50 text-center py-1 font-bold text-[var(--primary)] text-sm border-b border-gray-100 flex flex-col">
-                                    <span>{m}</span>
-                                    {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
+                {viewMode === 'task' ? (
+                    <KanbanBoard
+                        goals={goals}
+                        currentYear={currentYear}
+                        onUpdateStatus={handleUpdateActionStatus}
+                        onUpdateTitle={handleUpdateActionTitle}
+                        onAddTask={handleAddKanbanTask}
+                    />
+                ) : (
+                    <div className="inline-block min-w-full">
+                        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex">
+                            <div className="sticky left-0 w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
+                            {(viewMode === 'strategic' ?
+                                Array.from({ length: 36 }, (_, i) => {
+                                    const yearOffset = Math.floor(i / 12);
+                                    const monthIndex = i % 12;
+                                    return { month: MONTHS[monthIndex], year: currentYear + yearOffset, key: `${currentYear + yearOffset}-${MONTHS[monthIndex]}` };
+                                })
+                                :
+                                MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
+                            ).map(({ month: m, year: y, key }) => (
+                                <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : viewMode === 'task' ? 'w-[40rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 transition-all duration-300`}>
+                                    <div className="bg-gray-50 text-center py-1 font-bold text-[var(--primary)] text-sm border-b border-gray-100 flex flex-col">
+                                        <span>{m}</span>
+                                        {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
+                                    </div>
+                                    {(viewMode === 'operational' || viewMode === 'task') && <div className="flex">{MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50">{w}</div>)}</div>}
                                 </div>
-                                {(viewMode === 'operational' || viewMode === 'task') && <div className="flex">{MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50">{w}</div>)}</div>}
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
 
-                    {[...goals]
-                        .sort((a, b) => LIFE_AREAS.indexOf(a.category) - LIFE_AREAS.indexOf(b.category))
-                        .map((goal, gIdx, allGoals) => {
-                            const isFirstInCat = gIdx === 0 || allGoals[gIdx - 1].category !== goal.category;
-                            const okrRowsCount = goal.rows.filter(r => 'type' in r && r.type === 'OKR').length;
+                        {[...goals]
+                            .sort((a, b) => LIFE_AREAS.indexOf(a.category) - LIFE_AREAS.indexOf(b.category))
+                            .map((goal, gIdx, allGoals) => {
+                                const isFirstInCat = gIdx === 0 || allGoals[gIdx - 1].category !== goal.category;
+                                const okrRowsCount = goal.rows.filter(r => 'type' in r && r.type === 'OKR').length;
 
-                            return (
-                                <div key={goal.id} className="bg-white">
-                                    {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
-                                    <div className="border-b-4 border-gray-50 last:border-0 relative">
-                                        {goal.rows.map((row, rIdx) => {
-                                            const isOKR = 'type' in row;
-                                            const isKPI = isOKR && (row as MetricRow).type === 'KPI';
-                                            if (viewMode === 'tactical' && !isOKR) return null;
-                                            if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
+                                return (
+                                    <div key={goal.id} className="bg-white">
+                                        {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
+                                        <div className="border-b-4 border-gray-50 last:border-0 relative">
+                                            {goal.rows.map((row, rIdx) => {
+                                                const isOKR = 'type' in row;
+                                                const isKPI = isOKR && (row as MetricRow).type === 'KPI';
+                                                if (viewMode === 'tactical' && !isOKR) return null;
+                                                if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
 
-                                            return (
-                                                <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
-                                                    <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex shadow-sm text-sm group">
-                                                        <div className={`w-24 p-3 flex items-center justify-center font-bold text-white text-xs text-center leading-tight
+                                                return (
+                                                    <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
+                                                        <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex shadow-sm text-sm group">
+                                                            <div className={`w-24 p-3 flex items-center justify-center font-bold text-white text-xs text-center leading-tight
                                                             ${goal.category === 'Health' ? 'bg-teal-600' :
-                                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
-                                                                    goal.category === 'Family' ? 'bg-indigo-500' :
-                                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
-                                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'}
+                                                                    goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                                                        goal.category === 'Family' ? 'bg-indigo-500' :
+                                                                            goal.category === 'Leisure' ? 'bg-pink-500' :
+                                                                                goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'}
                                                          `}>{rIdx === 0 ? goal.category : ''}</div>
 
-                                                        <div className="w-56 p-3 flex items-center gap-2 border-r border-gray-100 relative">
-                                                            {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1"><Edit2 size={12} /></button>}
-                                                            {rIdx === 0 && <span className="font-bold text-gray-900 truncate flex-1">{goal.title}</span>}
-                                                            <span className={`text-xs font-medium truncate flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px]' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1' : (okrRowsCount > 1 ? 'text-gray-600 pl-1' : 'hidden'))}`}>
-                                                                {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
-                                                                {row.label}
-                                                            </span>
-                                                            {isOKR && (
-                                                                <button onClick={() => setActiveGraphModal(row as MetricRow)} className="p-1 text-gray-300 hover:text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                    <TrendingUp size={14} />
-                                                                </button>
-                                                            )}
+                                                            <div className="w-56 p-3 flex items-center gap-2 border-r border-gray-100 relative">
+                                                                {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1"><Edit2 size={12} /></button>}
+                                                                {rIdx === 0 && <span className="font-bold text-gray-900 truncate flex-1">{goal.title}</span>}
+                                                                <span className={`text-xs font-medium truncate flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px]' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1' : (okrRowsCount > 1 ? 'text-gray-600 pl-1' : 'hidden'))}`}>
+                                                                    {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
+                                                                    {row.label}
+                                                                </span>
+                                                                {isOKR && (
+                                                                    <button onClick={() => setActiveGraphModal(row as MetricRow)} className="p-1 text-gray-300 hover:text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity">
+                                                                        <TrendingUp size={14} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                            <div className="w-20 p-2 flex items-center justify-center bg-gray-50 text-xs font-bold text-gray-400">{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</div>
                                                         </div>
-                                                        <div className="w-20 p-2 flex items-center justify-center bg-gray-50 text-xs font-bold text-gray-400">{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</div>
-                                                    </div>
 
-                                                    {(viewMode === 'strategic' ?
-                                                        Array.from({ length: 36 }, (_, i) => {
-                                                            const yearOffset = Math.floor(i / 12);
-                                                            const monthIndex = i % 12;
-                                                            return { month: MONTHS[monthIndex], year: currentYear + yearOffset, key: `${currentYear + yearOffset}-${MONTHS[monthIndex]}` };
-                                                        })
-                                                        :
-                                                        MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
-                                                    ).map(({ month: m, year: y, key }) => (
-                                                        <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : viewMode === 'task' ? 'w-[40rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
-                                                            {isOKR ? (
-                                                                (() => {
-                                                                    const metricRow = row as MetricRow;
-                                                                    const data = metricRow.monthlyData.find(d => d.monthId === m && d.year === y);
-                                                                    const hasData = data && data.target !== null;
-                                                                    const hasResult = data && data.actual !== null && data.actual !== undefined;
-                                                                    if (!hasData) return <div className="w-full h-full bg-gray-50/50 flex items-center justify-center"><span className="text-gray-200 text-[10px]">-</span></div>;
+                                                        {(viewMode === 'strategic' ?
+                                                            Array.from({ length: 36 }, (_, i) => {
+                                                                const yearOffset = Math.floor(i / 12);
+                                                                const monthIndex = i % 12;
+                                                                return { month: MONTHS[monthIndex], year: currentYear + yearOffset, key: `${currentYear + yearOffset}-${MONTHS[monthIndex]}` };
+                                                            })
+                                                            :
+                                                            MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
+                                                        ).map(({ month: m, year: y, key }) => (
+                                                            <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : viewMode === 'task' ? 'w-[40rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
+                                                                {isOKR ? (
+                                                                    (() => {
+                                                                        const metricRow = row as MetricRow;
+                                                                        const data = metricRow.monthlyData.find(d => d.monthId === m && d.year === y);
+                                                                        const hasData = data && data.target !== null;
+                                                                        const hasResult = data && data.actual !== null && data.actual !== undefined;
+                                                                        if (!hasData) return <div className="w-full h-full bg-gray-50/50 flex items-center justify-center"><span className="text-gray-200 text-[10px]">-</span></div>;
 
-                                                                    const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
-                                                                    let cardClass = "";
-                                                                    let textClass = "";
+                                                                        const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
+                                                                        let cardClass = "";
+                                                                        let textClass = "";
 
-                                                                    if (isKPI) {
-                                                                        cardClass = "bg-white border border-dashed border-gray-100";
-                                                                        textClass = hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300";
-                                                                    } else {
-                                                                        cardClass = hasResult ? (isSuccess ? 'bg-green-500 shadow-md shadow-green-200' : 'bg-red-500 shadow-md shadow-red-200') : 'bg-gray-50';
-                                                                        textClass = hasResult ? "text-white" : "text-gray-300";
-                                                                    }
+                                                                        if (isKPI) {
+                                                                            cardClass = "bg-white border border-dashed border-gray-100";
+                                                                            textClass = hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300";
+                                                                        } else {
+                                                                            cardClass = hasResult ? (isSuccess ? 'bg-green-500 shadow-md shadow-green-200' : 'bg-red-500 shadow-md shadow-red-200') : 'bg-gray-50';
+                                                                            textClass = hasResult ? "text-white" : "text-gray-300";
+                                                                        }
 
-                                                                    const targetCellId = `${goal.id}-${row.id}-${m}-target`;
-                                                                    const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
-                                                                    const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
-                                                                    const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
+                                                                        const targetCellId = `${goal.id}-${row.id}-${m}-target`;
+                                                                        const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
+                                                                        const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
+                                                                        const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
 
-                                                                    return (
-                                                                        <div
-                                                                            className={`w-full h-full rounded-lg flex flex-col items-center justify-center relative group isolate ${cardClass} ${isKPI ? 'hover:border-gray-300' : ''} cursor-pointer`}
-                                                                            onClick={() => hasData && setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data })}
-                                                                            title={data.comment || 'Click to add note'}
-                                                                        >
-                                                                            {hasResult ? <span className={`${textClass} font-black drop-shadow-sm ${isKPI ? 'text-xs' : (viewMode === 'tactical' ? 'text-2xl' : 'text-xl')}`}>{data.actual}</span> : <span className="text-gray-300 font-medium group-hover:hidden">-</span>}
-                                                                            {data.comment && (
-                                                                                <div className="absolute top-0.5 right-0.5 text-[10px] opacity-70">💬</div>
-                                                                            )}
-                                                                            {/* Only show input overlay for Execution and FUP views, not Planning */}
-                                                                            {(viewMode === 'operational' || viewMode === 'task') && (
-                                                                                <div className={`absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-20 rounded-lg border border-gray-200 shadow-sm`} onClick={(e) => e.stopPropagation()}>
-                                                                                    <div className="flex flex-col gap-1 w-full p-2">
-                                                                                        {viewMode === 'operational' && !isKPI && <div className="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase"><span>Target</span><span>Actual</span></div>}
-                                                                                        <div className="flex items-center gap-1">
-                                                                                            <input className={`p-1 text-center font-bold text-xs bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-400 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} value={currentTargetVal} onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)} title="Target" />
-                                                                                            {viewMode === 'operational' && (
-                                                                                                <button
-                                                                                                    onClick={(e) => {
-                                                                                                        e.stopPropagation();
-                                                                                                        setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data });
-                                                                                                    }}
-                                                                                                    className="p-1 hover:bg-blue-50 rounded text-blue-600 transition-colors"
-                                                                                                    title="Add/Edit Note"
-                                                                                                >
-                                                                                                    💬
-                                                                                                </button>
-                                                                                            )}
-                                                                                            <input className={`p-1 text-center font-bold text-sm bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-900 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} placeholder="-" value={currentActualVal} onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)} title="Actual" />
+                                                                        return (
+                                                                            <div
+                                                                                className={`w-full h-full rounded-lg flex flex-col items-center justify-center relative group isolate ${cardClass} ${isKPI ? 'hover:border-gray-300' : ''} cursor-pointer`}
+                                                                                onClick={() => hasData && setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data })}
+                                                                                title={data.comment || 'Click to add note'}
+                                                                            >
+                                                                                {hasResult ? <span className={`${textClass} font-black drop-shadow-sm ${isKPI ? 'text-xs' : (viewMode === 'tactical' ? 'text-2xl' : 'text-xl')}`}>{data.actual}</span> : <span className="text-gray-300 font-medium group-hover:hidden">-</span>}
+                                                                                {data.comment && (
+                                                                                    <div className="absolute top-0.5 right-0.5 text-[10px] opacity-70">💬</div>
+                                                                                )}
+                                                                                {/* Only show input overlay for Execution and FUP views, not Planning */}
+                                                                                {(viewMode === 'operational' || viewMode === 'task') && (
+                                                                                    <div className={`absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-20 rounded-lg border border-gray-200 shadow-sm`} onClick={(e) => e.stopPropagation()}>
+                                                                                        <div className="flex flex-col gap-1 w-full p-2">
+                                                                                            {viewMode === 'operational' && !isKPI && <div className="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase"><span>Target</span><span>Actual</span></div>}
+                                                                                            <div className="flex items-center gap-1">
+                                                                                                <input className={`p-1 text-center font-bold text-xs bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-400 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} value={currentTargetVal} onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)} title="Target" />
+                                                                                                {viewMode === 'operational' && (
+                                                                                                    <button
+                                                                                                        onClick={(e) => {
+                                                                                                            e.stopPropagation();
+                                                                                                            setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data });
+                                                                                                        }}
+                                                                                                        className="p-1 hover:bg-blue-50 rounded text-blue-600 transition-colors"
+                                                                                                        title="Add/Edit Note"
+                                                                                                    >
+                                                                                                        💬
+                                                                                                    </button>
+                                                                                                )}
+                                                                                                <input className={`p-1 text-center font-bold text-sm bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-900 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} placeholder="-" value={currentActualVal} onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)} title="Actual" />
+                                                                                            </div>
                                                                                         </div>
                                                                                     </div>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    );
-                                                                })()
-                                                            ) : (
-                                                                viewMode === 'operational' ? MONTH_WEEKS[m].map(w => {
-                                                                    const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
-                                                                    const tbdCount = weekActions.filter(a => a.status === 'TBD').length;
-                                                                    const doneCount = weekActions.filter(a => a.status === 'DONE').length;
+                                                                                )}
+                                                                            </div>
+                                                                        );
+                                                                    })()
+                                                                ) : (
+                                                                    viewMode === 'operational' ? MONTH_WEEKS[m].map(w => {
+                                                                        const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
+                                                                        const tbdCount = weekActions.filter(a => a.status === 'TBD').length;
+                                                                        const doneCount = weekActions.filter(a => a.status === 'DONE').length;
 
-                                                                    return (
-                                                                        <button key={w} onClick={() => setActiveWeekModal({ week: w, goalId: goal.id })} className="flex-1 h-full border-r border-gray-50 last:border-0 hover:bg-blue-50 transition-colors flex flex-col items-center justify-center p-1 group/btn gap-1">
-                                                                            {weekActions.length > 0 ? (
-                                                                                <div className="flex gap-1 items-center">
-                                                                                    {tbdCount > 0 && <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{tbdCount}</span>}
-                                                                                    {doneCount > 0 && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">{doneCount}</span>}
-                                                                                </div>
-                                                                            ) : <Plus size={14} className="text-gray-300 opacity-0 group-hover/btn:opacity-100" />}
-                                                                        </button>
-                                                                    );
-                                                                }) : viewMode === 'task' ? MONTH_WEEKS[m].map(w => {
-                                                                    const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
+                                                                        return (
+                                                                            <button key={w} onClick={() => setActiveWeekModal({ week: w, goalId: goal.id })} className="flex-1 h-full border-r border-gray-50 last:border-0 hover:bg-blue-50 transition-colors flex flex-col items-center justify-center p-1 group/btn gap-1">
+                                                                                {weekActions.length > 0 ? (
+                                                                                    <div className="flex gap-1 items-center">
+                                                                                        {tbdCount > 0 && <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{tbdCount}</span>}
+                                                                                        {doneCount > 0 && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">{doneCount}</span>}
+                                                                                    </div>
+                                                                                ) : <Plus size={14} className="text-gray-300 opacity-0 group-hover/btn:opacity-100" />}
+                                                                            </button>
+                                                                        );
+                                                                    }) : viewMode === 'task' ? MONTH_WEEKS[m].map(w => {
+                                                                        const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
 
-                                                                    return (
-                                                                        <div
-                                                                            key={w}
-                                                                            className="w-40 h-full border-r border-gray-50 last:border-0 flex flex-col p-2 gap-2 min-h-[120px]"
-                                                                            onDragOver={(e) => e.preventDefault()}
-                                                                            onDrop={() => {
-                                                                                if (draggedTaskId) {
-                                                                                    const draggedAction = (row as ActionRow).actions.find(a => a.id === draggedTaskId);
-                                                                                    if (draggedAction && draggedAction.weekId !== w) {
-                                                                                        // Update the week for the dragged task
-                                                                                        setGoals(prev => prev.map(g => {
-                                                                                            if (g.id !== goal.id) return g;
-                                                                                            return {
-                                                                                                ...g,
-                                                                                                rows: g.rows.map(r => {
-                                                                                                    if ('type' in r) return r;
-                                                                                                    return {
-                                                                                                        ...r,
-                                                                                                        actions: r.actions.map(a =>
-                                                                                                            a.id === draggedTaskId ? { ...a, weekId: w } : a
-                                                                                                        )
-                                                                                                    };
-                                                                                                })
-                                                                                            };
-                                                                                        }));
-                                                                                        // Save the updated goal
-                                                                                        const updatedGoal = goals.find(g => g.id === goal.id);
-                                                                                        if (updatedGoal) {
-                                                                                            const goalWithUpdatedWeek = {
-                                                                                                ...updatedGoal,
-                                                                                                rows: updatedGoal.rows.map(r => {
-                                                                                                    if ('type' in r) return r;
-                                                                                                    return {
-                                                                                                        ...r,
-                                                                                                        actions: r.actions.map(a =>
-                                                                                                            a.id === draggedTaskId ? { ...a, weekId: w } : a
-                                                                                                        )
-                                                                                                    };
-                                                                                                })
-                                                                                            };
-                                                                                            handleSaveGoal(goalWithUpdatedWeek);
+                                                                        return (
+                                                                            <div
+                                                                                key={w}
+                                                                                className="w-40 h-full border-r border-gray-50 last:border-0 flex flex-col p-2 gap-2 min-h-[120px]"
+                                                                                onDragOver={(e) => e.preventDefault()}
+                                                                                onDrop={() => {
+                                                                                    if (draggedTaskId) {
+                                                                                        const draggedAction = (row as ActionRow).actions.find(a => a.id === draggedTaskId);
+                                                                                        if (draggedAction && draggedAction.weekId !== w) {
+                                                                                            // Update the week for the dragged task
+                                                                                            setGoals(prev => prev.map(g => {
+                                                                                                if (g.id !== goal.id) return g;
+                                                                                                return {
+                                                                                                    ...g,
+                                                                                                    rows: g.rows.map(r => {
+                                                                                                        if ('type' in r) return r;
+                                                                                                        return {
+                                                                                                            ...r,
+                                                                                                            actions: r.actions.map(a =>
+                                                                                                                a.id === draggedTaskId ? { ...a, weekId: w } : a
+                                                                                                            )
+                                                                                                        };
+                                                                                                    })
+                                                                                                };
+                                                                                            }));
+                                                                                            // Save the updated goal
+                                                                                            const updatedGoal = goals.find(g => g.id === goal.id);
+                                                                                            if (updatedGoal) {
+                                                                                                const goalWithUpdatedWeek = {
+                                                                                                    ...updatedGoal,
+                                                                                                    rows: updatedGoal.rows.map(r => {
+                                                                                                        if ('type' in r) return r;
+                                                                                                        return {
+                                                                                                            ...r,
+                                                                                                            actions: r.actions.map(a =>
+                                                                                                                a.id === draggedTaskId ? { ...a, weekId: w } : a
+                                                                                                            )
+                                                                                                        };
+                                                                                                    })
+                                                                                                };
+                                                                                                handleSaveGoal(goalWithUpdatedWeek);
+                                                                                            }
                                                                                         }
+                                                                                        setDraggedTaskId(null);
                                                                                     }
-                                                                                    setDraggedTaskId(null);
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            {weekActions.map(action => (
-                                                                                <div
-                                                                                    key={action.id}
-                                                                                    draggable
-                                                                                    onDragStart={() => setDraggedTaskId(action.id)}
-                                                                                    onDragEnd={() => setDraggedTaskId(null)}
-                                                                                    className={`bg-white border border-gray-200 rounded px-2 py-1.5 text-xs cursor-move hover:shadow-md transition-all flex items-center gap-2 ${draggedTaskId === action.id ? 'opacity-50' : ''}`}
-                                                                                >
-                                                                                    <input
-                                                                                        type="checkbox"
-                                                                                        checked={action.status === 'DONE'}
-                                                                                        onChange={() => handleUpdateActionStatus(goal.id, action.id, action.status === 'DONE' ? 'TBD' : 'DONE')}
-                                                                                        className="w-3.5 h-3.5 cursor-pointer flex-shrink-0"
-                                                                                        onClick={(e) => e.stopPropagation()}
-                                                                                    />
-                                                                                    {editingTaskId === action.id ? (
+                                                                                }}
+                                                                            >
+                                                                                {weekActions.map(action => (
+                                                                                    <div
+                                                                                        key={action.id}
+                                                                                        draggable
+                                                                                        onDragStart={() => setDraggedTaskId(action.id)}
+                                                                                        onDragEnd={() => setDraggedTaskId(null)}
+                                                                                        className={`bg-white border border-gray-200 rounded px-2 py-1.5 text-xs cursor-move hover:shadow-md transition-all flex items-center gap-2 ${draggedTaskId === action.id ? 'opacity-50' : ''}`}
+                                                                                    >
+                                                                                        <input
+                                                                                            type="checkbox"
+                                                                                            checked={action.status === 'DONE'}
+                                                                                            onChange={() => handleUpdateActionStatus(goal.id, action.id, action.status === 'DONE' ? 'TBD' : 'DONE')}
+                                                                                            className="w-3.5 h-3.5 cursor-pointer flex-shrink-0"
+                                                                                            onClick={(e) => e.stopPropagation()}
+                                                                                        />
+                                                                                        {editingTaskId === action.id ? (
+                                                                                            <input
+                                                                                                type="text"
+                                                                                                value={editingTaskValue}
+                                                                                                onChange={(e) => setEditingTaskValue(e.target.value)}
+                                                                                                onBlur={() => {
+                                                                                                    handleUpdateActionTitle(goal.id, action.id, editingTaskValue);
+                                                                                                    setEditingTaskId(null);
+                                                                                                }}
+                                                                                                onKeyDown={(e) => {
+                                                                                                    if (e.key === 'Enter') {
+                                                                                                        handleUpdateActionTitle(goal.id, action.id, editingTaskValue);
+                                                                                                        setEditingTaskId(null);
+                                                                                                    }
+                                                                                                    if (e.key === 'Escape') {
+                                                                                                        setEditingTaskId(null);
+                                                                                                    }
+                                                                                                }}
+                                                                                                className="flex-1 outline-none border-b border-blue-500 bg-transparent text-xs"
+                                                                                                autoFocus
+                                                                                                onClick={(e) => e.stopPropagation()}
+                                                                                            />
+                                                                                        ) : (
+                                                                                            <span
+                                                                                                className={`flex-1 truncate ${action.status === 'DONE' ? 'line-through text-gray-400' : 'text-gray-700'} cursor-text`}
+                                                                                                onDoubleClick={(e) => {
+                                                                                                    e.stopPropagation();
+                                                                                                    setEditingTaskId(action.id);
+                                                                                                    setEditingTaskValue(action.title);
+                                                                                                }}
+                                                                                            >
+                                                                                                {action.title}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                ))}
+
+                                                                                {/* Add new task - minimal UI */}
+                                                                                <div className="mt-auto pt-1">
+                                                                                    {editingTaskId === `new-${w}-${goal.id}` ? (
                                                                                         <input
                                                                                             type="text"
-                                                                                            value={editingTaskValue}
-                                                                                            onChange={(e) => setEditingTaskValue(e.target.value)}
-                                                                                            onBlur={() => {
-                                                                                                handleUpdateActionTitle(goal.id, action.id, editingTaskValue);
-                                                                                                setEditingTaskId(null);
-                                                                                            }}
+                                                                                            placeholder="Task..."
+                                                                                            className="w-full p-1.5 text-xs border border-blue-300 rounded outline-none focus:ring-1 focus:ring-blue-500"
+                                                                                            autoFocus
                                                                                             onKeyDown={(e) => {
                                                                                                 if (e.key === 'Enter') {
-                                                                                                    handleUpdateActionTitle(goal.id, action.id, editingTaskValue);
+                                                                                                    const input = e.currentTarget;
+                                                                                                    const title = input.value.trim();
+                                                                                                    if (title) {
+                                                                                                        handleAddAction(w, goal.id, title);
+                                                                                                    }
                                                                                                     setEditingTaskId(null);
                                                                                                 }
                                                                                                 if (e.key === 'Escape') {
                                                                                                     setEditingTaskId(null);
                                                                                                 }
                                                                                             }}
-                                                                                            className="flex-1 outline-none border-b border-blue-500 bg-transparent text-xs"
-                                                                                            autoFocus
+                                                                                            onBlur={() => setEditingTaskId(null)}
                                                                                             onClick={(e) => e.stopPropagation()}
                                                                                         />
                                                                                     ) : (
-                                                                                        <span
-                                                                                            className={`flex-1 truncate ${action.status === 'DONE' ? 'line-through text-gray-400' : 'text-gray-700'} cursor-text`}
-                                                                                            onDoubleClick={(e) => {
-                                                                                                e.stopPropagation();
-                                                                                                setEditingTaskId(action.id);
-                                                                                                setEditingTaskValue(action.title);
-                                                                                            }}
+                                                                                        <button
+                                                                                            onClick={() => setEditingTaskId(`new-${w}-${goal.id}`)}
+                                                                                            className="w-full p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center"
                                                                                         >
-                                                                                            {action.title}
-                                                                                        </span>
+                                                                                            <Plus size={14} />
+                                                                                        </button>
                                                                                     )}
                                                                                 </div>
-                                                                            ))}
-
-                                                                            {/* Add new task - minimal UI */}
-                                                                            <div className="mt-auto pt-1">
-                                                                                {editingTaskId === `new-${w}-${goal.id}` ? (
-                                                                                    <input
-                                                                                        type="text"
-                                                                                        placeholder="Task..."
-                                                                                        className="w-full p-1.5 text-xs border border-blue-300 rounded outline-none focus:ring-1 focus:ring-blue-500"
-                                                                                        autoFocus
-                                                                                        onKeyDown={(e) => {
-                                                                                            if (e.key === 'Enter') {
-                                                                                                const input = e.currentTarget;
-                                                                                                const title = input.value.trim();
-                                                                                                if (title) {
-                                                                                                    handleAddAction(w, goal.id, title);
-                                                                                                }
-                                                                                                setEditingTaskId(null);
-                                                                                            }
-                                                                                            if (e.key === 'Escape') {
-                                                                                                setEditingTaskId(null);
-                                                                                            }
-                                                                                        }}
-                                                                                        onBlur={() => setEditingTaskId(null)}
-                                                                                        onClick={(e) => e.stopPropagation()}
-                                                                                    />
-                                                                                ) : (
-                                                                                    <button
-                                                                                        onClick={() => setEditingTaskId(`new-${w}-${goal.id}`)}
-                                                                                        className="w-full p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center"
-                                                                                    >
-                                                                                        <Plus size={14} />
-                                                                                    </button>
-                                                                                )}
                                                                             </div>
-                                                                        </div>
-                                                                    );
-                                                                }) : null
-                                                            )
-                                                            }
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            );
-                                        })}
+                                                                        );
+                                                                    }) : null
+                                                                )
+                                                                }
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
-                </div>
+                                );
+                            })}
+                    </div>
+                )}
             </main>
             <Coach goals={goals} />
         </div>
