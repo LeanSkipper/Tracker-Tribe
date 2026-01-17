@@ -928,12 +928,12 @@ export default function ObeyaPage() {
                                 :
                                 MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
                             ).map(({ month: m, year: y, key }) => (
-                                <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : viewMode === 'task' ? 'w-[40rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 transition-all duration-300`}>
+                                <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 transition-all duration-300`}>
                                     <div className="bg-gray-50 text-center py-1 font-bold text-[var(--primary)] text-sm border-b border-gray-100 flex flex-col">
                                         <span>{m}</span>
                                         {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
                                     </div>
-                                    {(viewMode === 'operational' || viewMode === 'task') && <div className="flex">{MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50">{w}</div>)}</div>}
+                                    {viewMode === 'operational' && <div className="flex">{MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50">{w}</div>)}</div>}
                                 </div>
                             ))}
                         </div>
@@ -990,7 +990,7 @@ export default function ObeyaPage() {
                                                             :
                                                             MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
                                                         ).map(({ month: m, year: y, key }) => (
-                                                            <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : viewMode === 'task' ? 'w-[40rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
+                                                            <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
                                                                 {isOKR ? (
                                                                     (() => {
                                                                         const metricRow = row as MetricRow;
@@ -1026,8 +1026,8 @@ export default function ObeyaPage() {
                                                                                 {data.comment && (
                                                                                     <div className="absolute top-0.5 right-0.5 text-[10px] opacity-70">💬</div>
                                                                                 )}
-                                                                                {/* Only show input overlay for Execution and FUP views, not Planning */}
-                                                                                {(viewMode === 'operational' || viewMode === 'task') && (
+                                                                                {/* Only show input overlay for Execution view, not Planning */}
+                                                                                {viewMode === 'operational' && (
                                                                                     <div className={`absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-20 rounded-lg border border-gray-200 shadow-sm`} onClick={(e) => e.stopPropagation()}>
                                                                                         <div className="flex flex-col gap-1 w-full p-2">
                                                                                             {viewMode === 'operational' && !isKPI && <div className="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase"><span>Target</span><span>Actual</span></div>}
@@ -1068,143 +1068,6 @@ export default function ObeyaPage() {
                                                                                     </div>
                                                                                 ) : <Plus size={14} className="text-gray-300 opacity-0 group-hover/btn:opacity-100" />}
                                                                             </button>
-                                                                        );
-                                                                    }) : viewMode === 'task' ? MONTH_WEEKS[m].map(w => {
-                                                                        const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
-
-                                                                        return (
-                                                                            <div
-                                                                                key={w}
-                                                                                className="w-40 h-full border-r border-gray-50 last:border-0 flex flex-col p-2 gap-2 min-h-[120px]"
-                                                                                onDragOver={(e) => e.preventDefault()}
-                                                                                onDrop={() => {
-                                                                                    if (draggedTaskId) {
-                                                                                        const draggedAction = (row as ActionRow).actions.find(a => a.id === draggedTaskId);
-                                                                                        if (draggedAction && draggedAction.weekId !== w) {
-                                                                                            // Update the week for the dragged task
-                                                                                            setGoals(prev => prev.map(g => {
-                                                                                                if (g.id !== goal.id) return g;
-                                                                                                return {
-                                                                                                    ...g,
-                                                                                                    rows: g.rows.map(r => {
-                                                                                                        if ('type' in r) return r;
-                                                                                                        return {
-                                                                                                            ...r,
-                                                                                                            actions: r.actions.map(a =>
-                                                                                                                a.id === draggedTaskId ? { ...a, weekId: w } : a
-                                                                                                            )
-                                                                                                        };
-                                                                                                    })
-                                                                                                };
-                                                                                            }));
-                                                                                            // Save the updated goal
-                                                                                            const updatedGoal = goals.find(g => g.id === goal.id);
-                                                                                            if (updatedGoal) {
-                                                                                                const goalWithUpdatedWeek = {
-                                                                                                    ...updatedGoal,
-                                                                                                    rows: updatedGoal.rows.map(r => {
-                                                                                                        if ('type' in r) return r;
-                                                                                                        return {
-                                                                                                            ...r,
-                                                                                                            actions: r.actions.map(a =>
-                                                                                                                a.id === draggedTaskId ? { ...a, weekId: w } : a
-                                                                                                            )
-                                                                                                        };
-                                                                                                    })
-                                                                                                };
-                                                                                                handleSaveGoal(goalWithUpdatedWeek);
-                                                                                            }
-                                                                                        }
-                                                                                        setDraggedTaskId(null);
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                {weekActions.map(action => (
-                                                                                    <div
-                                                                                        key={action.id}
-                                                                                        draggable
-                                                                                        onDragStart={() => setDraggedTaskId(action.id)}
-                                                                                        onDragEnd={() => setDraggedTaskId(null)}
-                                                                                        className={`bg-white border border-gray-200 rounded px-2 py-1.5 text-xs cursor-move hover:shadow-md transition-all flex items-center gap-2 ${draggedTaskId === action.id ? 'opacity-50' : ''}`}
-                                                                                    >
-                                                                                        <input
-                                                                                            type="checkbox"
-                                                                                            checked={action.status === 'DONE'}
-                                                                                            onChange={() => handleUpdateActionStatus(goal.id, action.id, action.status === 'DONE' ? 'TBD' : 'DONE')}
-                                                                                            className="w-3.5 h-3.5 cursor-pointer flex-shrink-0"
-                                                                                            onClick={(e) => e.stopPropagation()}
-                                                                                        />
-                                                                                        {editingTaskId === action.id ? (
-                                                                                            <input
-                                                                                                type="text"
-                                                                                                value={editingTaskValue}
-                                                                                                onChange={(e) => setEditingTaskValue(e.target.value)}
-                                                                                                onBlur={() => {
-                                                                                                    handleUpdateActionTitle(goal.id, action.id, editingTaskValue);
-                                                                                                    setEditingTaskId(null);
-                                                                                                }}
-                                                                                                onKeyDown={(e) => {
-                                                                                                    if (e.key === 'Enter') {
-                                                                                                        handleUpdateActionTitle(goal.id, action.id, editingTaskValue);
-                                                                                                        setEditingTaskId(null);
-                                                                                                    }
-                                                                                                    if (e.key === 'Escape') {
-                                                                                                        setEditingTaskId(null);
-                                                                                                    }
-                                                                                                }}
-                                                                                                className="flex-1 outline-none border-b border-blue-500 bg-transparent text-xs"
-                                                                                                autoFocus
-                                                                                                onClick={(e) => e.stopPropagation()}
-                                                                                            />
-                                                                                        ) : (
-                                                                                            <span
-                                                                                                className={`flex-1 truncate ${action.status === 'DONE' ? 'line-through text-gray-400' : 'text-gray-700'} cursor-text`}
-                                                                                                onDoubleClick={(e) => {
-                                                                                                    e.stopPropagation();
-                                                                                                    setEditingTaskId(action.id);
-                                                                                                    setEditingTaskValue(action.title);
-                                                                                                }}
-                                                                                            >
-                                                                                                {action.title}
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </div>
-                                                                                ))}
-
-                                                                                {/* Add new task - minimal UI */}
-                                                                                <div className="mt-auto pt-1">
-                                                                                    {editingTaskId === `new-${w}-${goal.id}` ? (
-                                                                                        <input
-                                                                                            type="text"
-                                                                                            placeholder="Task..."
-                                                                                            className="w-full p-1.5 text-xs border border-blue-300 rounded outline-none focus:ring-1 focus:ring-blue-500"
-                                                                                            autoFocus
-                                                                                            onKeyDown={(e) => {
-                                                                                                if (e.key === 'Enter') {
-                                                                                                    const input = e.currentTarget;
-                                                                                                    const title = input.value.trim();
-                                                                                                    if (title) {
-                                                                                                        handleAddAction(w, goal.id, title);
-                                                                                                    }
-                                                                                                    setEditingTaskId(null);
-                                                                                                }
-                                                                                                if (e.key === 'Escape') {
-                                                                                                    setEditingTaskId(null);
-                                                                                                }
-                                                                                            }}
-                                                                                            onBlur={() => setEditingTaskId(null)}
-                                                                                            onClick={(e) => e.stopPropagation()}
-                                                                                        />
-                                                                                    ) : (
-                                                                                        <button
-                                                                                            onClick={() => setEditingTaskId(`new-${w}-${goal.id}`)}
-                                                                                            className="w-full p-1 text-gray-300 hover:text-blue-500 hover:bg-blue-50 rounded transition-colors flex items-center justify-center"
-                                                                                        >
-                                                                                            <Plus size={14} />
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
-                                                                            </div>
                                                                         );
                                                                     }) : null
                                                                 )
