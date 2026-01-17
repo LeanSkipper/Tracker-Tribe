@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Users, Search } from 'lucide-react';
+import { ArrowLeft, Users, Search, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import TribeCreationForm from '@/components/TribeCreationForm';
 
 type Tribe = {
     id: string;
@@ -20,10 +21,7 @@ export default function BrowseTribesPage() {
     const [tribes, setTribes] = useState<Tribe[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        fetchTribes();
-    }, []);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const fetchTribes = async () => {
         try {
@@ -38,6 +36,10 @@ export default function BrowseTribesPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        fetchTribes();
+    }, []);
 
     const handleApply = async (tribeId: string) => {
         try {
@@ -75,13 +77,23 @@ export default function BrowseTribesPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
             <div className="max-w-6xl mx-auto">
-                <button
-                    onClick={() => router.back()}
-                    className="flex items-center text-slate-600 hover:text-indigo-600 font-bold mb-6 transition-colors"
-                >
-                    <ArrowLeft size={20} className="mr-2" />
-                    Back to Dashboard
-                </button>
+                <div className="flex items-center justify-between mb-6">
+                    <button
+                        onClick={() => router.back()}
+                        className="flex items-center text-slate-600 hover:text-indigo-600 font-bold transition-colors"
+                    >
+                        <ArrowLeft size={20} className="mr-2" />
+                        Back to Dashboard
+                    </button>
+
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
+                    >
+                        <Plus size={20} />
+                        Create Table
+                    </button>
+                </div>
 
                 <div className="mb-8">
                     <h1 className="text-4xl font-black text-slate-900 mb-4">Browse Tribes</h1>
@@ -111,7 +123,7 @@ export default function BrowseTribesPage() {
                             {searchQuery ? 'Try a different search term' : 'Be the first to create a tribe!'}
                         </p>
                         <button
-                            onClick={() => router.push('/tribes/create')}
+                            onClick={() => setShowCreateModal(true)}
                             className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700"
                         >
                             Create Tribe
@@ -175,6 +187,17 @@ export default function BrowseTribesPage() {
                     </div>
                 )}
             </div>
+
+            {/* Create Tribe Modal */}
+            {showCreateModal && (
+                <TribeCreationForm
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={() => {
+                        fetchTribes();
+                        // Optional: Show success toast
+                    }}
+                />
+            )}
         </div>
     );
 }
