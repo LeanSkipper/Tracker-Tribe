@@ -23,9 +23,9 @@ export default function Navbar() {
 
                     <div className="flex w-full md:w-auto justify-around md:gap-8">
 
-                        <Link href="/dashboard" className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2">
+                        <Link href="/tribes" className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2">
                             <Users size={20} />
-                            <span>Mastermind</span>
+                            <span>Tribes</span>
                         </Link>
                         <Link href="/obeya" className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2">
                             <Target size={20} />
