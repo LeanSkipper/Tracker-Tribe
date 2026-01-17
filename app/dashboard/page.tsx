@@ -1,10 +1,9 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import TableCard from '@/components/TableCard';
-import { Users, Network, User, Plus } from 'lucide-react';
+import { Users, Network, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import TribeCreationForm from '@/components/TribeCreationForm';
 
 type Member = {
     id: string;
@@ -24,12 +23,9 @@ export default function DashboardPage() {
     const router = useRouter();
     const [tribes, setTribes] = useState<Tribe[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
-    useEffect(() => {
-        fetchDashboardData();
-    }, []);
-
-    const fetchDashboardData = async () => {
+    const fetchDashboardData = useCallback(async () => {
         try {
             const res = await fetch('/api/dashboard');
             if (res.ok) {
@@ -41,7 +37,11 @@ export default function DashboardPage() {
             console.error("Failed to fetch dashboard:", err);
             setLoading(false);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, [fetchDashboardData]);
 
     if (loading) {
         return (
@@ -61,7 +61,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-8">
                         {/* New Tribe */}
                         <button
-                            onClick={() => router.push('/tribes/create')}
+                            onClick={() => setShowCreateModal(true)}
                             className="flex flex-col items-center gap-2 group"
                         >
                             <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-50 transition-all shadow-sm">
@@ -83,7 +83,7 @@ export default function DashboardPage() {
 
                         {/* Browse Peers */}
                         <button
-                            onClick={() => router.push('/peers')}
+                            onClick={() => router.push('/peers/coming-soon')}
                             className="flex flex-col items-center gap-2 group"
                         >
                             <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-50 transition-all shadow-sm">
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                             <p className="text-slate-600 mb-6">Create your first mastermind tribe or browse existing ones to join</p>
                             <div className="flex gap-4 justify-center">
                                 <button
-                                    onClick={() => router.push('/tribes/create')}
+                                    onClick={() => setShowCreateModal(true)}
                                     className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700"
                                 >
                                     Create Tribe
@@ -171,6 +171,16 @@ export default function DashboardPage() {
                     )}
                 </div>
             </div>
+
+            {/* Create Tribe Modal */}
+            {showCreateModal && (
+                <TribeCreationForm
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={() => {
+                        fetchDashboardData();
+                    }}
+                />
+            )}
         </div>
     );
 }
