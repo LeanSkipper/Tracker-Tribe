@@ -30,6 +30,7 @@ type Tribe = {
     description?: string;
     topic?: string;
     meetingTime?: string;
+    creatorId?: string;
     members: Member[];
 };
 
@@ -41,12 +42,6 @@ export default function TribeDetailsPage() {
     const [tribe, setTribe] = useState<Tribe | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string>('');
-
-    useEffect(() => {
-        if (tribeId) {
-            fetchTribeDetails();
-        }
-    }, [tribeId]);
 
     const fetchTribeDetails = async () => {
         try {
@@ -62,6 +57,12 @@ export default function TribeDetailsPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (tribeId) {
+            fetchTribeDetails();
+        }
+    }, [tribeId]);
 
     if (loading) {
         return (
@@ -79,9 +80,10 @@ export default function TribeDetailsPage() {
         );
     }
 
-    // Check if current user is a member
-    const isMember = tribe.members.some(m => m.id === currentUserId);
-    const isAdmin = tribe.members.some(m => m.id === currentUserId && m.role === 'ADMIN');
+    // Check if current user is a member or creator
+    const isCreator = tribe.creatorId === currentUserId;
+    const isMember = isCreator || tribe.members.some(m => m.id === currentUserId);
+    const isAdmin = isCreator || tribe.members.some(m => m.id === currentUserId && m.role === 'ADMIN');
 
     if (!isMember) {
         // --- PUBLIC PREVIEW VIEW ---

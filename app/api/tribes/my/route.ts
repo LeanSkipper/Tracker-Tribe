@@ -14,11 +14,10 @@ export async function GET(req: Request) {
 
         const tribes = await prisma.tribe.findMany({
             where: {
-                members: {
-                    some: {
-                        userId: user.id
-                    }
-                }
+                OR: [
+                    { creatorId: user.id },
+                    { members: { some: { userId: user.id } } }
+                ]
             },
             include: {
                 _count: {

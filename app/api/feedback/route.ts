@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getSession } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
     try {
@@ -14,13 +15,38 @@ export async function POST(req: NextRequest) {
             );
         }
 
+        const session = await getSession();
+        let xpEarned = 0;
+        let userId: string | null = null;
+
+        if (session) {
+            userId = session.id;
+            // Base XP for feedback
+            xpEarned += 1;
+
+            // Extra XP for email (if provided)
+            if (email) {
+                xpEarned += 1;
+            }
+
+            // Update user XP
+            if (xpEarned > 0) {
+                await prisma.user.update({
+                    where: { id: userId },
+                    data: {
+                        experience: { increment: xpEarned }
+                    }
+                });
+            }
+        }
+
         // Store feedback in database
         const feedbackEntry = await prisma.feedback.create({
             data: {
                 content: feedback,
-                email: email || null,
+                email: email || (session ? session.email : null),
                 page: page || null,
-                userId: null, // Can be enhanced later with session
+                userId: userId,
                 createdAt: timestamp ? new Date(timestamp) : new Date(),
             },
         });
@@ -32,7 +58,8 @@ export async function POST(req: NextRequest) {
             {
                 success: true,
                 message: 'Feedback submitted successfully',
-                id: feedbackEntry.id
+                id: feedbackEntry.id,
+                xpEarned
             },
             { status: 200 }
         );

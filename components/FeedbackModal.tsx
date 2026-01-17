@@ -1,17 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { MessageSquare, X, Send } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 interface FeedbackModalProps {
     onClose: () => void;
 }
 
 export default function FeedbackModal({ onClose }: FeedbackModalProps) {
+    const { data: session } = useSession();
     const [feedback, setFeedback] = useState('');
     const [email, setEmail] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+    const [earnedXP, setEarnedXP] = useState(0);
+
+    // Pre-fill email for logged-in users
+    useEffect(() => {
+        if (session?.user?.email && !email) {
+            setEmail(session.user.email);
+        }
+    }, [session, email]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,6 +32,7 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
 
         setIsSubmitting(true);
         setSubmitStatus('idle');
+        setEarnedXP(0);
 
         try {
             const response = await fetch('/api/feedback', {
@@ -37,14 +48,17 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
                 }),
             });
 
+            const data = await response.json();
+
             if (response.ok) {
                 setSubmitStatus('success');
+                setEarnedXP(data.xpEarned || 0);
                 setFeedback('');
-                setEmail('');
+                if (!session) setEmail(''); // Clear email only if not logged in
                 setTimeout(() => {
                     onClose();
                     setSubmitStatus('idle');
-                }, 2000);
+                }, 3000);
             } else {
                 setSubmitStatus('error');
             }
@@ -73,13 +87,18 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
                 </div>
 
                 <p className="text-gray-600 mb-6">
-                    We'd love to hear your suggestions and ideas to improve the platform!
+                    We&apos;d love to hear your suggestions and ideas to improve the platform!
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">
+                        <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                             Your Suggestion *
+                            {session && (
+                                <span className="text-xs font-normal bg-gradient-to-r from-blue-500 to-indigo-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    ⭐ Earn +1 XP
+                                </span>
+                            )}
                         </label>
                         <textarea
                             className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent outline-none resize-none"
@@ -95,9 +114,11 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
                     <div>
                         <label className="block text-sm font-bold text-gray-700 mb-2 flex items-center gap-2">
                             Email
-                            <span className="text-xs font-normal bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
-                                ⭐ Earn +1 XP
-                            </span>
+                            {session && (
+                                <span className="text-xs font-normal bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                    ⭐ Earn +1 XP
+                                </span>
+                            )}
                         </label>
                         <input
                             type="email"
@@ -118,10 +139,10 @@ export default function FeedbackModal({ onClose }: FeedbackModalProps) {
                                 <span className="text-xl">✓</span>
                                 <span className="font-medium">Thank you! Your feedback has been submitted.</span>
                             </div>
-                            {email && (
+                            {earnedXP > 0 && (
                                 <div className="flex items-center gap-2 ml-7 text-sm">
-                                    <span className="text-yellow-600 font-bold">⭐ +1 XP earned!</span>
-                                    <span className="text-gray-600">We appreciate your contribution.</span>
+                                    <span className="text-yellow-600 font-bold">⭐ +{earnedXP} XP earned!</span>
+                                    <span className="text-gray-600">Great job!</span>
                                 </div>
                             )}
                         </div>

@@ -100,8 +100,11 @@ export async function GET(
             tribe: {
                 id: tribe.id,
                 name: tribe.name,
+                description: tribe.description,
                 topic: tribe.topic,
                 meetingTime: tribe.meetingTime,
+                meetingDay: tribe.meetingDay,
+                creatorId: tribe.creatorId,
                 members: membersWithStats
             },
             currentUserId: currentUser.id
