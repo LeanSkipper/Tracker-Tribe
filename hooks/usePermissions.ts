@@ -42,7 +42,7 @@ export function usePermissions(): UserPermissions | null {
                     userProfile: 'SOFT',
                     subscriptionStatus: 'TRIAL',
                     reputationScore: 0,
-                    trialDaysRemaining: 90,
+                    trialDaysRemaining: 60,
                     isInGracePeriod: false,
                     isInTrial: true,
                 };
