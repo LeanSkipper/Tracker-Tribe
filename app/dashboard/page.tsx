@@ -58,7 +58,7 @@ export default function DashboardPage() {
             <div className="max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-12">
-                    <h1 className="text-5xl font-black text-slate-900">Mastermind</h1>
+                    <h1 className="text-5xl font-black text-slate-900">Tribes</h1>
 
                     <div className="flex items-center gap-8">
                         {/* New Tribe */}
@@ -102,7 +102,7 @@ export default function DashboardPage() {
                         <div className="bg-white rounded-3xl p-8 shadow-lg border border-slate-100">
                             <h2 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
                                 <Users className="text-indigo-600" />
-                                My Tribe
+                                My Peers
                             </h2>
 
                             <div className="flex items-center gap-6 flex-wrap">
@@ -131,9 +131,9 @@ export default function DashboardPage() {
                     </div>
                 )}
 
-                {/* My Tables (Meeting Places) */}
+                {/* My Tribes (Meeting Places) */}
                 <div>
-                    <h2 className="text-3xl font-black text-slate-900 mb-6">My Tables</h2>
+                    <h2 className="text-3xl font-black text-slate-900 mb-6">My Tribes</h2>
                     <p className="text-slate-600 mb-6">Your tribe meeting places</p>
 
                     {tribes.length === 0 ? (
