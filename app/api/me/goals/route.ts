@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession, unauthorizedResponse } from "@/lib/auth";
 
 export async function GET() {
     try {
-        // For prototype, get the first user
-        const user = await prisma.user.findFirst();
-        if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+        // Get user from session
+        const user = await getSession();
+        if (!user) return unauthorizedResponse();
 
         const goals = await prisma.goal.findMany({
             where: { userId: user.id },

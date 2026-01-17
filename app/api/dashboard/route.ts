@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession, unauthorizedResponse } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
 // GET /api/dashboard - Get user's dashboard data
 export async function GET(req: Request) {
     try {
-        // Get current user (in production, get from session)
-        const user = await prisma.user.findFirst();
+        // Get current user from session
+        const user = await getSession();
 
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return unauthorizedResponse();
         }
 
         // Get user's tribes with members

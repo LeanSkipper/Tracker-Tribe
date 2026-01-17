@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession, unauthorizedResponse } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -12,9 +13,9 @@ export async function GET(
         const tribeId = (await params).id;
 
         // Verify user is a member of the tribe
-        const user = await prisma.user.findFirst();
+        const user = await getSession();
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return unauthorizedResponse();
         }
 
         const membership = await prisma.tribeMember.findUnique({

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { getSession, unauthorizedResponse } from "@/lib/auth";
 
 export async function GET() {
     try {
@@ -23,9 +24,9 @@ export async function POST(req: Request) {
         const data = await req.json();
         const { tribeId, message } = data;
 
-        // For prototype, just use the first user
-        const user = await prisma.user.findFirst();
-        if (!user) return NextResponse.json({ error: "No user found" }, { status: 404 });
+        // Get user from session
+        const user = await getSession();
+        if (!user) return unauthorizedResponse();
 
         const application = await prisma.tribeApplication.create({
             data: {

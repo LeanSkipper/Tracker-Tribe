@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession, unauthorizedResponse } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -13,9 +14,9 @@ export async function POST(
         const { message } = await req.json();
 
         // Get current user
-        const user = await prisma.user.findFirst();
+        const user = await getSession();
         if (!user) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
+            return unauthorizedResponse();
         }
 
         // Check if already a member

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -11,11 +12,9 @@ export async function GET(
     try {
         const { id: tribeId } = await params;
 
-        // Get current user
-        const currentUser = await prisma.user.findFirst();
-        if (!currentUser) {
-            return NextResponse.json({ error: "User not found" }, { status: 404 });
-        }
+        // Get current user from session
+        const session = await getSession();
+        const currentUserId = session?.id || '';
 
         // Get tribe with all members and their data
         const tribe = await prisma.tribe.findUnique({
@@ -107,7 +106,7 @@ export async function GET(
                 creatorId: tribe.creatorId,
                 members: membersWithStats
             },
-            currentUserId: currentUser.id
+            currentUserId: currentUserId
         });
     } catch (error) {
         console.error("GET Tribe Details Error:", error);
