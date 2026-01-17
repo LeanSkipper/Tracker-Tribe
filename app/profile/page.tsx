@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { User as UserIcon, Mail, Lock, Save, X, CheckCircle, AlertCircle, Shield } from 'lucide-react';
+import { User as UserIcon, Mail, Lock, Save, X, CheckCircle, AlertCircle, Shield, TrendingUp, Target, Zap, Award, Star, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -10,6 +10,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [expandedKPI, setExpandedKPI] = useState<string | null>(null);
 
     // Form state
     const [isEditing, setIsEditing] = useState(false);
@@ -23,7 +24,6 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (status === 'authenticated' && session?.user) {
-            // Initialize form data from session immediately
             setFormData(prev => ({
                 ...prev,
                 name: session.user.name || '',
@@ -57,7 +57,6 @@ export default function ProfilePage() {
     };
 
     const handleSave = async () => {
-        // Validation
         if (!formData.name || !formData.email) {
             setMessage({ type: 'error', text: 'Name and email are required' });
             return;
@@ -99,7 +98,6 @@ export default function ProfilePage() {
                 setMessage({ type: 'success', text: 'Profile updated successfully!' });
                 setProfile(data.profile);
                 setIsEditing(false);
-                // Clear password fields
                 setFormData(prev => ({
                     ...prev,
                     currentPassword: '',
@@ -128,6 +126,10 @@ export default function ProfilePage() {
         setMessage(null);
     };
 
+    const toggleKPI = (kpiName: string) => {
+        setExpandedKPI(expandedKPI === kpiName ? null : kpiName);
+    };
+
     if (status === 'loading' || loading) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -150,11 +152,283 @@ export default function ProfilePage() {
         );
     }
 
+    const level = profile?.level || 1;
+    const grit = profile?.grit || 0;
+    const xp = profile?.experience || 0;
+    const completion = profile?.taskCompletionRate ? Math.round(profile.taskCompletionRate * 100) : 0;
+    const reputation = profile?.reputationScore || 0;
+
+    // Calculate progress percentages for visual scales
+    const levelProgress = ((level % 10) / 10) * 100; // Progress within current tier
+    const gritProgress = Math.min((grit / 100) * 100, 100);
+    const xpProgress = Math.min((xp / 1000) * 100, 100);
+    const reputationProgress = Math.min((reputation / 10) * 100, 100);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
-            <div className="max-w-4xl mx-auto">
-                {/* Header */}
-                <div className="bg-white rounded-3xl shadow-xl p-8 mb-6">
+            <div className="max-w-4xl mx-auto space-y-6">
+                {/* 1. YOUR STATS - Now at the top */}
+                <div className="bg-white rounded-3xl shadow-xl p-8">
+                    <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
+                        <TrendingUp className="text-blue-600" size={28} />
+                        Your Stats
+                    </h2>
+
+                    <div className="space-y-4">
+                        {/* Level KPI */}
+                        <div
+                            onClick={() => toggleKPI('level')}
+                            className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-300"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center">
+                                        <Award className="text-white" size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-600">Level</div>
+                                        <div className="text-3xl font-black text-blue-600">{level}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="w-32 bg-blue-200 rounded-full h-3">
+                                            <div
+                                                className="bg-gradient-to-r from-blue-500 to-blue-700 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${levelProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-600 mt-1">Tier {Math.floor(level / 10) + 1}</div>
+                                    </div>
+                                    {expandedKPI === 'level' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
+
+                            {expandedKPI === 'level' && (
+                                <div className="mt-4 pt-4 border-t border-blue-200">
+                                    <h4 className="font-bold text-gray-900 mb-2">How to Level Up:</h4>
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-blue-600 font-bold">•</span>
+                                            <span>Complete goals and action plans to earn XP</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-blue-600 font-bold">•</span>
+                                            <span>Maintain consistent progress (builds Grit)</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-blue-600 font-bold">•</span>
+                                            <span>Participate in tribes and help peers</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Grit KPI */}
+                        <div
+                            onClick={() => toggleKPI('grit')}
+                            className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-300"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center">
+                                        <Zap className="text-white" size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-600">Grit</div>
+                                        <div className="text-3xl font-black text-purple-600">{grit}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="w-32 bg-purple-200 rounded-full h-3">
+                                            <div
+                                                className="bg-gradient-to-r from-purple-500 to-purple-700 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${gritProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-600 mt-1">{gritProgress.toFixed(0)}% to max</div>
+                                    </div>
+                                    {expandedKPI === 'grit' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
+
+                            {expandedKPI === 'grit' && (
+                                <div className="mt-4 pt-4 border-t border-purple-200">
+                                    <h4 className="font-bold text-gray-900 mb-2">How to Build Grit:</h4>
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-purple-600 font-bold">•</span>
+                                            <span>Log in daily and update your progress</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-purple-600 font-bold">•</span>
+                                            <span>Complete tasks even when they're difficult</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-purple-600 font-bold">•</span>
+                                            <span>Maintain streaks and consistency over time</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* XP KPI */}
+                        <div
+                            onClick={() => toggleKPI('xp')}
+                            className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-green-300"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
+                                        <Star className="text-white" size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-600">Experience Points</div>
+                                        <div className="text-3xl font-black text-green-600">{xp}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="w-32 bg-green-200 rounded-full h-3">
+                                            <div
+                                                className="bg-gradient-to-r from-green-500 to-green-700 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${xpProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-600 mt-1">{xp}/1000 XP</div>
+                                    </div>
+                                    {expandedKPI === 'xp' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
+
+                            {expandedKPI === 'xp' && (
+                                <div className="mt-4 pt-4 border-t border-green-200">
+                                    <h4 className="font-bold text-gray-900 mb-2">How to Earn XP:</h4>
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-green-600 font-bold">•</span>
+                                            <span>Complete action plan tasks (+10 XP each)</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-green-600 font-bold">•</span>
+                                            <span>Achieve OKR milestones (+50 XP)</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-green-600 font-bold">•</span>
+                                            <span>Finish entire goals (+100 XP)</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Completion KPI */}
+                        <div
+                            onClick={() => toggleKPI('completion')}
+                            className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-orange-300"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-orange-600 rounded-xl flex items-center justify-center">
+                                        <Target className="text-white" size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-600">Completion Rate</div>
+                                        <div className="text-3xl font-black text-orange-600">{completion}%</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="w-32 bg-orange-200 rounded-full h-3">
+                                            <div
+                                                className="bg-gradient-to-r from-orange-500 to-orange-700 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${completion}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-600 mt-1">{completion < 70 ? 'Needs work' : completion < 90 ? 'Good!' : 'Excellent!'}</div>
+                                    </div>
+                                    {expandedKPI === 'completion' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
+
+                            {expandedKPI === 'completion' && (
+                                <div className="mt-4 pt-4 border-t border-orange-200">
+                                    <h4 className="font-bold text-gray-900 mb-2">How to Improve Completion:</h4>
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-orange-600 font-bold">•</span>
+                                            <span>Focus on finishing started tasks before adding new ones</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-orange-600 font-bold">•</span>
+                                            <span>Break large tasks into smaller, achievable steps</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-orange-600 font-bold">•</span>
+                                            <span>Set realistic deadlines and stick to them</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Reputation KPI */}
+                        <div
+                            onClick={() => toggleKPI('reputation')}
+                            className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-yellow-300"
+                        >
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 bg-yellow-600 rounded-xl flex items-center justify-center">
+                                        <Shield className="text-white" size={28} />
+                                    </div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-600">Reputation</div>
+                                        <div className="text-3xl font-black text-yellow-600">{reputation.toFixed(1)}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="w-32 bg-yellow-200 rounded-full h-3">
+                                            <div
+                                                className="bg-gradient-to-r from-yellow-500 to-yellow-700 h-3 rounded-full transition-all duration-500"
+                                                style={{ width: `${reputationProgress}%` }}
+                                            ></div>
+                                        </div>
+                                        <div className="text-xs text-gray-600 mt-1">{reputation.toFixed(1)}/10.0</div>
+                                    </div>
+                                    {expandedKPI === 'reputation' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                                </div>
+                            </div>
+
+                            {expandedKPI === 'reputation' && (
+                                <div className="mt-4 pt-4 border-t border-yellow-200">
+                                    <h4 className="font-bold text-gray-900 mb-2">How to Build Reputation:</h4>
+                                    <ul className="space-y-2 text-sm text-gray-700">
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-yellow-600 font-bold">•</span>
+                                            <span>Join tribes and actively participate in sessions</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-yellow-600 font-bold">•</span>
+                                            <span>Help peers achieve their goals</span>
+                                        </li>
+                                        <li className="flex items-start gap-2">
+                                            <span className="text-yellow-600 font-bold">•</span>
+                                            <span>Share your roadmap and inspire others</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* 2. MY PROFILE - Now in the middle */}
+                <div className="bg-white rounded-3xl shadow-xl p-8">
                     <div className="flex items-center gap-6 mb-6">
                         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
                             <UserIcon size={48} className="text-white" />
@@ -282,7 +556,7 @@ export default function ProfilePage() {
                                     Change Password
                                 </h3>
                                 <p className="text-sm text-gray-600 mb-4">
-                                    Leave blank if you don't want to change your password
+                                    Leave blank if you don&apos;t want to change your password
                                 </p>
 
                                 <div className="space-y-4">
@@ -352,46 +626,7 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* KPI Stats Section */}
-                <div className="bg-white rounded-3xl shadow-xl p-8 mb-6">
-                    <h2 className="text-xl font-black text-gray-900 mb-6">Your Stats</h2>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-4 text-center">
-                            <div className="text-3xl font-black text-blue-600">{profile?.level || 1}</div>
-                            <div className="text-sm font-medium text-gray-700 mt-1">Level</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-4 text-center">
-                            <div className="text-3xl font-black text-purple-600">{profile?.grit || 0}</div>
-                            <div className="text-sm font-medium text-gray-700 mt-1">Grit</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-4 text-center">
-                            <div className="text-3xl font-black text-green-600">{profile?.experience || 0}</div>
-                            <div className="text-sm font-medium text-gray-700 mt-1">XP</div>
-                        </div>
-                        <div className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-4 text-center">
-                            <div className="text-3xl font-black text-orange-600">
-                                {profile?.taskCompletionRate ? Math.round(profile.taskCompletionRate * 100) : 0}%
-                            </div>
-                            <div className="text-sm font-medium text-gray-700 mt-1">Completion</div>
-                        </div>
-                    </div>
-                    <div className="mt-4 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-2xl p-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-gray-700">Reputation Score</span>
-                            <span className="text-2xl font-black text-yellow-600">
-                                {profile?.reputationScore ? profile.reputationScore.toFixed(1) : '0.0'}
-                            </span>
-                        </div>
-                        <div className="mt-2 bg-gray-200 rounded-full h-2">
-                            <div
-                                className="bg-gradient-to-r from-yellow-400 to-yellow-600 h-2 rounded-full transition-all duration-500"
-                                style={{ width: `${Math.min((profile?.reputationScore || 0) * 10, 100)}%` }}
-                            ></div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Account Info */}
+                {/* 3. ACCOUNT INFORMATION - Now at the bottom */}
                 <div className="bg-white rounded-3xl shadow-xl p-8">
                     <h2 className="text-xl font-black text-gray-900 mb-4">Account Information</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
