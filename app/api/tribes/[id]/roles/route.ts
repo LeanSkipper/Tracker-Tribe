@@ -5,9 +5,9 @@ import { getSession, unauthorizedResponse, forbiddenResponse } from "@/lib/auth"
 export const runtime = "nodejs";
 
 // PATCH /api/tribes/[id]/roles - Update a member's role
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
-        const tribeId = params.id;
+        const { id: tribeId } = await params;
         const { memberId, role } = await req.json();
 
         // 1. Authenticate user
