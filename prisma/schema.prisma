@@ -125,6 +125,39 @@ model User {
   provider      String?   // OAuth provider: 'google', 'linkedin', 'credentials'
   lastActiveAt  DateTime  @default(now()) // For session expiry tracking
 
+  // === MATCHMAKING PROFILE (Phase 1) ===
+  
+  // Identity & Context
+  ageRange              String?   // "18-25", "26-35", "36-45", "46-55", "56+"
+  country               String?
+  timeZone              String?
+  languagesSpoken       String[]  @default([])
+  city                  String?
+  maritalStatus         String?   // "single", "married", "partnered", "divorced"
+  hasChildren           Boolean?
+  
+  // Professional
+  professionalRole      String?   // "employee", "founder", "freelancer", "investor"
+  industry              String?
+  seniorityLevel        String?   // "junior", "mid", "senior", "executive", "c-level"
+  companySize           String?   // "1-10", "11-50", "51-200", "201-1000", "1000+"
+  
+  // Execution Style
+  actionSpeed           String?   // "fast", "steady", "slow"
+  planningStyle         String?   // "structured", "flexible", "chaotic"
+  followThroughLevel    String?   // "low", "medium", "high"
+  needForAccountability String?   // "low", "high"
+  
+  // Privacy Controls
+  identityPrivacy       String    @default("private") // "public", "private", "members"
+  professionalPrivacy   String    @default("members")
+  executionPrivacy      String    @default("members")
+  
+  // Profile Metadata
+  matchmakingCompleteness Int     @default(0) // 0-100%
+  profileXpEarned         Int     @default(0) // XP earned from profile completion
+  profileLastUpdated      DateTime?
+
   // Relations
   memberships  TribeMember[]
   createdTribes Tribe[]           @relation("TribeCreator")

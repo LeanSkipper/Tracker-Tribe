@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { User as UserIcon, Mail, Lock, Save, X, CheckCircle, AlertCircle, Shield, TrendingUp, Target, Zap, Award, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import MatchmakingProfile from '@/components/MatchmakingProfile';
+import ProfileCompletionBadge from '@/components/ProfileCompletionBadge';
 
 export default function ProfilePage() {
     const { data: session, status } = useSession();
@@ -425,6 +427,27 @@ export default function ProfilePage() {
                             )}
                         </div>
                     </div>
+                </div>
+
+                {/* 1.5 COMPLETE YOUR PROFILE - Matchmaking Section */}
+                <div className="bg-white rounded-3xl shadow-xl p-8">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex-1">
+                            <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                                <Target className="text-blue-600" size={28} />
+                                Complete Your Profile
+                            </h2>
+                            <p className="text-gray-600 mt-2">
+                                Help us connect you with the right peers for your journey. All fields are optional and used only for intelligent matchmaking.
+                            </p>
+                        </div>
+                        <ProfileCompletionBadge
+                            percentage={profile?.matchmakingCompleteness || 0}
+                            xpEarned={profile?.profileXpEarned || 0}
+                        />
+                    </div>
+
+                    <MatchmakingProfile />
                 </div>
 
                 {/* 2. MY PROFILE - Now in the middle */}
