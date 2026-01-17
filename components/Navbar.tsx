@@ -29,7 +29,7 @@ export default function Navbar() {
                         </Link>
                         <Link href="/obeya" className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2">
                             <Target size={20} />
-                            <span>GPS View</span>
+                            <span>Tracker</span>
                         </Link>
                         <Link href="/profile" className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2">
                             <User size={20} />

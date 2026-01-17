@@ -883,7 +883,7 @@ export default function ObeyaPage() {
 
             <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 shadow-sm flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-6">
-                    <h1 className="text-2xl font-bold text-[var(--primary)] flex items-center gap-2"><Target /> OBEYA LAPIS</h1>
+                    <h1 className="text-2xl font-bold text-[var(--primary)] flex items-center gap-2"><Target /> Goals GPS</h1>
                     <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-200">
                         <button onClick={() => setCurrentYear(currentYear - 1)} className="p-1 hover:bg-gray-100 rounded-lg"><ChevronLeft size={20} /></button>
                         <span className="text-xl font-bold text-[var(--primary)] min-w-[5rem] text-center">{currentYear}</span>
