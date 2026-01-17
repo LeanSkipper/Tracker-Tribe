@@ -36,10 +36,10 @@ export async function GET(req: Request) {
             meetingDay: t.meetingDay, // New field for robust scheduling
             // Also mapping structured meeting fields if available
             meetingFrequency: t.meetingFrequency,
-            meetingTimeHour: t.meetingTimeHour,
             meetingTimeMinute: t.meetingTimeMinute,
             maxMembers: t.maxMembers,
             memberCount: t._count.members,
+            reliabilityRate: t.reliabilityRate,
         }));
 
         return NextResponse.json(formattedTribes);
