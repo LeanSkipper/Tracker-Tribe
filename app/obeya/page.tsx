@@ -876,9 +876,9 @@ export default function ObeyaPage() {
                     </div>
                     <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
                         <button onClick={() => setViewMode('task')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'task' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="FUP: Follow-up tasks and OKR tracking">FUP</button>
-                        <button onClick={() => setViewMode('operational')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'operational' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Operational: Full weekly details">Operational</button>
-                        <button onClick={() => setViewMode('tactical')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'tactical' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Tactical: OKRs + KPIs">Tactical</button>
-                        <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategic: High-level roadmap">Strategic</button>
+                        <button onClick={() => setViewMode('operational')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'operational' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Execution: Full weekly details">Execution</button>
+                        <button onClick={() => setViewMode('tactical')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'tactical' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Planning: OKRs + KPIs">Planning</button>
+                        <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategy: High-level roadmap">Strategy</button>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1002,7 +1002,7 @@ export default function ObeyaPage() {
                                                                             {data.comment && (
                                                                                 <div className="absolute top-0.5 right-0.5 text-[10px] opacity-70">💬</div>
                                                                             )}
-                                                                            {/* Only show input overlay for Operational and FUP views, not Tactical */}
+                                                                            {/* Only show input overlay for Execution and FUP views, not Planning */}
                                                                             {(viewMode === 'operational' || viewMode === 'task') && (
                                                                                 <div className={`absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-20 rounded-lg border border-gray-200 shadow-sm`} onClick={(e) => e.stopPropagation()}>
                                                                                     <div className="flex flex-col gap-1 w-full p-2">
