@@ -2,10 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Search, Plus } from 'lucide-react';
+import { Users, Search, Plus, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TribeCreationForm from '@/components/TribeCreationForm';
-import WeeklyTribeSchedule from '@/components/WeeklyTribeSchedule';
 
 type Tribe = {
     id: string;
@@ -57,26 +56,6 @@ export default function BrowseTribesPage() {
         fetchData();
     }, []);
 
-    const handleApply = async (tribeId: string) => {
-        try {
-            const res = await fetch(`/api/tribes/${tribeId}/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: 'I would like to join this tribe' })
-            });
-
-            if (res.ok) {
-                alert('Application submitted! The tribe admin will review your request.');
-                fetchData();
-            } else {
-                alert('Failed to apply');
-            }
-        } catch (err) {
-            console.error('Apply error:', err);
-            alert('Failed to apply');
-        }
-    };
-
     const filteredTribes = allTribes.filter(t =>
         t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.topic?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -93,7 +72,11 @@ export default function BrowseTribesPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
             <div className="max-w-7xl mx-auto">
-                <div className="flex items-center justify-end mb-6">
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="text-4xl font-black text-slate-900 mb-2">Browse Tribes</h1>
+                        <p className="text-slate-600">Find and join mastermind tables that match your goals</p>
+                    </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
                         className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
@@ -101,20 +84,6 @@ export default function BrowseTribesPage() {
                         <Plus size={20} />
                         Create Table
                     </button>
-                </div>
-
-                {/* My Tribes Schedule */}
-                <WeeklyTribeSchedule tribes={myTribes} />
-
-                <div className="flex flex-col md:flex-row justify-between items-end gap-4 mb-8">
-                    <div>
-                        <h1 className="text-4xl font-black text-slate-900 mb-2">Browse Tribes</h1>
-                        <p className="text-slate-600">Find and join mastermind tables that match your goals</p>
-                    </div>
-
-                    <div>
-                        <h2 className="text-2xl font-black text-slate-900 border-b-4 border-slate-200 pb-1 opacity-50">Browse Peers <span className="text-sm font-normal text-slate-500">(Coming Soon)</span></h2>
-                    </div>
                 </div>
 
                 {/* Search */}
@@ -148,60 +117,76 @@ export default function BrowseTribesPage() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredTribes.map((tribe, index) => (
-                            <motion.div
-                                key={tribe.id}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 hover:shadow-xl hover:border-indigo-200 transition-all flex flex-col h-full"
-                            >
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between mb-4">
-                                        <div className="flex-1 pr-2">
-                                            <h3 className="text-xl font-black text-slate-900 mb-1 leading-tight">{tribe.name}</h3>
-                                            {tribe.topic && (
-                                                <p className="text-sm text-indigo-600 font-bold">{tribe.topic}</p>
+                        {filteredTribes.map((tribe, index) => {
+                            const isMember = myTribes.some(mt => mt.id === tribe.id);
+
+                            return (
+                                <motion.div
+                                    key={tribe.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className={`
+                                        rounded-3xl p-6 shadow-lg border transition-all flex flex-col h-full
+                                        ${isMember
+                                            ? 'bg-emerald-50 border-emerald-200 shadow-emerald-100 hover:shadow-emerald-200 hover:border-emerald-300'
+                                            : 'bg-white border-slate-100 hover:shadow-xl hover:border-indigo-200'
+                                        }
+                                    `}
+                                >
+                                    <div className="flex-1">
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex-1 pr-2">
+                                                <h3 className={`text-xl font-black mb-1 leading-tight ${isMember ? 'text-emerald-900' : 'text-slate-900'}`}>{tribe.name}</h3>
+                                                {tribe.topic && (
+                                                    <p className={`text-sm font-bold ${isMember ? 'text-emerald-700' : 'text-indigo-600'}`}>{tribe.topic}</p>
+                                                )}
+                                            </div>
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isMember ? 'bg-emerald-200 text-emerald-700' : 'bg-indigo-100 text-indigo-600'}`}>
+                                                {isMember ? <CheckCircle size={20} /> : <Users size={20} />}
+                                            </div>
+                                        </div>
+
+                                        {tribe.meetingTime && (
+                                            <div className="text-sm text-slate-600 mb-3 flex items-center gap-2">
+                                                <span>📅</span> {tribe.meetingTime}
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
+                                            <Users size={16} />
+                                            <span className="font-bold">
+                                                {tribe.memberCount}/{tribe.maxMembers} Members
+                                            </span>
+                                            {!isMember && tribe.maxMembers - tribe.memberCount > 0 && (
+                                                <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-0.5 rounded-full">
+                                                    {tribe.maxMembers - tribe.memberCount} spots left
+                                                </span>
                                             )}
                                         </div>
-                                        <div className="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                                            <Users className="text-indigo-600" size={20} />
-                                        </div>
-                                    </div>
 
-                                    {tribe.meetingTime && (
-                                        <div className="text-sm text-slate-600 mb-3 flex items-center gap-2">
-                                            <span>📅</span> {tribe.meetingTime}
-                                        </div>
-                                    )}
-
-                                    <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
-                                        <Users size={16} />
-                                        <span className="font-bold">
-                                            {tribe.memberCount}/{tribe.maxMembers} Members
-                                        </span>
-                                        {tribe.maxMembers - tribe.memberCount > 0 && (
-                                            <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-0.5 rounded-full">
-                                                {tribe.maxMembers - tribe.memberCount} spots left
-                                            </span>
+                                        {tribe.matchmakingCriteria && (
+                                            <div className={`rounded-xl p-3 mb-4 ${isMember ? 'bg-white/60' : 'bg-slate-50'}`}>
+                                                <p className="text-xs text-slate-600 line-clamp-2">{tribe.matchmakingCriteria}</p>
+                                            </div>
                                         )}
                                     </div>
 
-                                    {tribe.matchmakingCriteria && (
-                                        <div className="bg-slate-50 rounded-xl p-3 mb-4">
-                                            <p className="text-xs text-slate-600 line-clamp-2">{tribe.matchmakingCriteria}</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <button
-                                    onClick={() => router.push(`/tribes/${tribe.id}`)}
-                                    className="w-full py-3 bg-white border-2 border-indigo-600 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors mt-auto"
-                                >
-                                    View Details
-                                </button>
-                            </motion.div>
-                        ))}
+                                    <button
+                                        onClick={() => router.push(`/tribes/${tribe.id}`)}
+                                        className={`
+                                            w-full py-3 font-bold rounded-xl transition-colors mt-auto border-2
+                                            ${isMember
+                                                ? 'bg-emerald-600 border-emerald-600 text-white hover:bg-emerald-700'
+                                                : 'bg-white border-indigo-600 text-indigo-600 hover:bg-indigo-50'
+                                            }
+                                        `}
+                                    >
+                                        {isMember ? 'Enter Tribe' : 'View Details'}
+                                    </button>
+                                </motion.div>
+                            );
+                        })}
                     </div>
                 )}
             </div>
@@ -212,7 +197,6 @@ export default function BrowseTribesPage() {
                     onClose={() => setShowCreateModal(false)}
                     onSuccess={() => {
                         fetchData();
-                        // Optional: Show success toast
                     }}
                 />
             )}
