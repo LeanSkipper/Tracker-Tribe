@@ -234,6 +234,42 @@ model Tribe {
   maxMembers  Int      @default(10)
   reliabilityRate Float @default(0) // 0-100 percentage
   
+  // Meeting Configuration
+  meetingFrequency    String?  // "daily", "weekly", "monthly"
+  meetingTimeHour     Int?     // 0-23
+  meetingTimeMinute   Int?     // 0-59
+  
+  // Matchmaking Criteria (11 categories)
+  matchmakingAgeRange         Boolean @default(false)
+  matchmakingAgeRangeDesc     String?
+  matchmakingLifeFocus        Boolean @default(false)
+  matchmakingLifeFocusDesc    String?
+  matchmakingProfessional     Boolean @default(false)
+  matchmakingProfessionalDesc String?
+  matchmakingWealth           Boolean @default(false)
+  matchmakingWealthDesc       String?
+  matchmakingExecution        Boolean @default(false)
+  matchmakingExecutionDesc    String?
+  matchmakingPersonality      Boolean @default(false)
+  matchmakingPersonalityDesc  String?
+  matchmakingHealth           Boolean @default(false)
+  matchmakingHealthDesc       String?
+  matchmakingSkills           Boolean @default(false)
+  matchmakingSkillsDesc       String?
+  matchmakingValues           Boolean @default(false)
+  matchmakingValuesDesc       String?
+  matchmakingSocial           Boolean @default(false)
+  matchmakingSocialDesc       String?
+  matchmakingIntent           Boolean @default(false)
+  matchmakingIntentDesc       String?
+  
+  // Required Stats (minimum thresholds)
+  minLevel            Int      @default(1)
+  minGrit             Int      @default(0)
+  minExperience       Int      @default(0)
+  minCompletionRate   Float    @default(0)    // 0-100
+  minReputation       Float    @default(0)    // 0-10
+  
   // Matchmaking & Monetization
   matchmakingCriteria String? // e.g. "SaaS Focus, $5k+ MRR"
   affiliateCommission Float    @default(0)

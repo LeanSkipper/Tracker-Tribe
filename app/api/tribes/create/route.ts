@@ -4,7 +4,12 @@ import { checkPermission, forbiddenResponse, getSession, unauthorizedResponse } 
 
 export async function POST(req: Request) {
     try {
-        const { name, topic, meetingTime, matchmakingCriteria, affiliateCommission, maxMembers, isPaid, monthlyPrice } = await req.json();
+        const {
+            name, topic, meetingTime, matchmakingCriteria, affiliateCommission, maxMembers, isPaid, monthlyPrice,
+            // New fields
+            meetingFrequency, meetingTimeHour, meetingTimeMinute, matchmaking,
+            minLevel, minGrit, minExperience, minCompletionRate, minReputation
+        } = await req.json();
 
         // Get authenticated user from session
         const user = await getSession();
@@ -29,6 +34,14 @@ export async function POST(req: Request) {
             }
         }
 
+        // Validate at least one matchmaking criterion if provided
+        if (matchmaking) {
+            const hasMatchmaking = Object.values(matchmaking).some((c: any) => c?.enabled);
+            if (!hasMatchmaking) {
+                return NextResponse.json({ error: 'At least one matchmaking criterion is required' }, { status: 400 });
+            }
+        }
+
         // Create the Tribe and assign creator as ADMIN
         const tribe = await prisma.tribe.create({
             data: {
@@ -41,6 +54,43 @@ export async function POST(req: Request) {
                 creatorId: user.id,
                 isPaid: isPaid || false,
                 subscriptionPrice: isPaid ? (monthlyPrice || 0) : 0,
+
+                // Meeting configuration
+                meetingFrequency: meetingFrequency || null,
+                meetingTimeHour: meetingTimeHour ?? null,
+                meetingTimeMinute: meetingTimeMinute ?? null,
+
+                // Matchmaking criteria (11 categories)
+                matchmakingAgeRange: matchmaking?.ageRange?.enabled || false,
+                matchmakingAgeRangeDesc: matchmaking?.ageRange?.description || null,
+                matchmakingLifeFocus: matchmaking?.lifeFocus?.enabled || false,
+                matchmakingLifeFocusDesc: matchmaking?.lifeFocus?.description || null,
+                matchmakingProfessional: matchmaking?.professional?.enabled || false,
+                matchmakingProfessionalDesc: matchmaking?.professional?.description || null,
+                matchmakingWealth: matchmaking?.wealth?.enabled || false,
+                matchmakingWealthDesc: matchmaking?.wealth?.description || null,
+                matchmakingExecution: matchmaking?.execution?.enabled || false,
+                matchmakingExecutionDesc: matchmaking?.execution?.description || null,
+                matchmakingPersonality: matchmaking?.personality?.enabled || false,
+                matchmakingPersonalityDesc: matchmaking?.personality?.description || null,
+                matchmakingHealth: matchmaking?.health?.enabled || false,
+                matchmakingHealthDesc: matchmaking?.health?.description || null,
+                matchmakingSkills: matchmaking?.skills?.enabled || false,
+                matchmakingSkillsDesc: matchmaking?.skills?.description || null,
+                matchmakingValues: matchmaking?.values?.enabled || false,
+                matchmakingValuesDesc: matchmaking?.values?.description || null,
+                matchmakingSocial: matchmaking?.social?.enabled || false,
+                matchmakingSocialDesc: matchmaking?.social?.description || null,
+                matchmakingIntent: matchmaking?.intent?.enabled || false,
+                matchmakingIntentDesc: matchmaking?.intent?.description || null,
+
+                // Required stats
+                minLevel: minLevel ?? 1,
+                minGrit: minGrit ?? 0,
+                minExperience: minExperience ?? 0,
+                minCompletionRate: minCompletionRate ?? 0,
+                minReputation: minReputation ?? 0,
+
                 members: {
                     create: {
                         userId: user.id,
