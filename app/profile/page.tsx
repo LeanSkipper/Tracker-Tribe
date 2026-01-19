@@ -169,6 +169,58 @@ export default function ProfilePage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
             <div className="max-w-4xl mx-auto space-y-6">
+                {/* 0. REFER & EARN - Marketing Growth Section (Moved to Top) */}
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl shadow-xl p-8 text-white relative overflow-hidden">
+                    {/* Background decoration */}
+                    <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
+
+                    <div className="relative z-10">
+                        <div className="flex flex-col md:flex-row items-center gap-8">
+                            <div className="flex-1 text-center md:text-left">
+                                <h2 className="text-2xl font-black mb-2 flex items-center justify-center md:justify-start gap-2">
+                                    <Award className="text-yellow-300" size={28} />
+                                    Refer & Earn Rewards
+                                </h2>
+                                <p className="text-indigo-100 mb-6">
+                                    Invite friends to join the tribe! You'll earn <span className="font-bold text-white">50 XP</span> for every signup,
+                                    plus <span className="font-bold text-white">30 Days Free</span> when they subscribe.
+                                </p>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 font-mono text-sm w-full sm:w-auto text-indigo-50 selection:bg-indigo-500 selection:text-white">
+                                        {typeof window !== 'undefined' ? `${window.location.origin}/onboarding/welcome?ref=${profile?.referralCode || '...'}` : 'Loading...'}
+                                    </div>
+                                    <button
+                                        onClick={() => {
+                                            const link = `${window.location.origin}/onboarding/welcome?ref=${profile?.referralCode}`;
+                                            navigator.clipboard.writeText(link);
+                                            setMessage({ type: 'success', text: 'Referral link copied to clipboard!' });
+                                        }}
+                                        className="w-full sm:w-auto px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg flex items-center justify-center gap-2"
+                                    >
+                                        Copy Link
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex-shrink-0 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-xs w-full">
+                                <h3 className="font-bold text-lg mb-4 text-center">Your Impact</h3>
+                                <div className="grid grid-cols-2 gap-4 text-center">
+                                    <div className="p-2">
+                                        <div className="text-3xl font-black text-yellow-300">{profile?._count?.referrals || 0}</div>
+                                        <div className="text-xs text-indigo-200 mt-1 uppercase tracking-wider">Friends</div>
+                                    </div>
+                                    <div className="p-2 border-l border-white/10">
+                                        <div className="text-3xl font-black text-green-300">{(profile?._count?.referrals || 0) * 50}</div>
+                                        <div className="text-xs text-indigo-200 mt-1 uppercase tracking-wider">XP Earned</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* 1. YOUR STATS - Now at the top */}
                 <div className="bg-white rounded-3xl shadow-xl p-8">
                     <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
@@ -601,57 +653,7 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* 2.5 REFER & EARN - Marketing Growth Section */}
-                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-3xl shadow-xl p-8 text-white relative overflow-hidden">
-                    {/* Background decoration */}
-                    <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
-                    <div className="absolute bottom-0 left-0 -mb-10 -ml-10 w-40 h-40 bg-white opacity-10 rounded-full blur-3xl"></div>
 
-                    <div className="relative z-10">
-                        <div className="flex flex-col md:flex-row items-center gap-8">
-                            <div className="flex-1 text-center md:text-left">
-                                <h2 className="text-2xl font-black mb-2 flex items-center justify-center md:justify-start gap-2">
-                                    <Award className="text-yellow-300" size={28} />
-                                    Refer & Earn Rewards
-                                </h2>
-                                <p className="text-indigo-100 mb-6">
-                                    Invite friends to join the tribe! You'll earn <span className="font-bold text-white">50 XP</span> for every signup,
-                                    plus <span className="font-bold text-white">30 Days Free</span> when they subscribe.
-                                </p>
-
-                                <div className="flex flex-col sm:flex-row items-center gap-3">
-                                    <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl px-4 py-3 font-mono text-sm w-full sm:w-auto text-indigo-50 selection:bg-indigo-500 selection:text-white">
-                                        {typeof window !== 'undefined' ? `${window.location.origin}/onboarding/welcome?ref=${profile?.referralCode || '...'}` : 'Loading...'}
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            const link = `${window.location.origin}/onboarding/welcome?ref=${profile?.referralCode}`;
-                                            navigator.clipboard.writeText(link);
-                                            setMessage({ type: 'success', text: 'Referral link copied to clipboard!' });
-                                        }}
-                                        className="w-full sm:w-auto px-6 py-3 bg-white text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors shadow-lg flex items-center justify-center gap-2"
-                                    >
-                                        Copy Link
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="flex-shrink-0 bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 max-w-xs w-full">
-                                <h3 className="font-bold text-lg mb-4 text-center">Your Impact</h3>
-                                <div className="grid grid-cols-2 gap-4 text-center">
-                                    <div className="p-2">
-                                        <div className="text-3xl font-black text-yellow-300">{profile?._count?.referrals || 0}</div>
-                                        <div className="text-xs text-indigo-200 mt-1 uppercase tracking-wider">Friends</div>
-                                    </div>
-                                    <div className="p-2 border-l border-white/10">
-                                        <div className="text-3xl font-black text-green-300">{(profile?._count?.referrals || 0) * 50}</div>
-                                        <div className="text-xs text-indigo-200 mt-1 uppercase tracking-wider">XP Earned</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 {/* 3. ACCOUNT INFORMATION - Now at the bottom */}
                 <div className="bg-white rounded-3xl shadow-xl p-8">
