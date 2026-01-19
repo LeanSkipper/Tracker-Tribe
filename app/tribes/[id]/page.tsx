@@ -3,9 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import TribeCapacityVisualizer from '@/components/TribeCapacityVisualizer';
-import { ArrowLeft, Users, CheckCircle2, Target, Settings, FileText, UserPlus, Share2, Edit3, X, Save, Copy } from 'lucide-react';
-import TribeReliabilityCircle from '@/components/TribeReliabilityCircle';
-import MemberGoalTracker from '@/components/MemberGoalTracker';
+import { ArrowLeft, Users, CheckCircle2, Settings, FileText, Share2, Edit3, Save, Copy } from 'lucide-react';
 
 type Badge = {
     id: string;
@@ -364,12 +362,59 @@ export default function TribeDetailsPage() {
                         </div>
                     </div>
 
-                    {/* VISUALIZATION: Tribe Reliability Circle (Hats) - Moved Up */}
-                    <div className="mb-12">
-                        <TribeReliabilityCircle
-                            members={tribe.members}
-                            averageGrit={averageGrit}
-                        />
+                    {/* TRIBE MEMBERS - Lean View */}
+                    <div className="mb-12 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
+                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                            <Users size={16} />
+                            Tribe Members ({tribe.members.length})
+                        </h3>
+
+                        <div className="flex flex-wrap gap-4">
+                            {tribe.members.map(member => (
+                                <div
+                                    key={member.id}
+                                    className="flex flex-col items-center gap-2 group cursor-pointer"
+                                    onClick={() => router.push(`/profile/${member.id}`)}
+                                    title={`View ${member.name}'s profile`}
+                                >
+                                    {/* Avatar Circle with Grit */}
+                                    <div className="relative">
+                                        <div className="w-16 h-16 rounded-full bg-indigo-100 border-2 border-indigo-200 overflow-hidden group-hover:border-indigo-400 transition-all group-hover:scale-105">
+                                            {member.avatarUrl ? (
+                                                <img
+                                                    src={member.avatarUrl}
+                                                    alt={member.name}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center font-bold text-indigo-600 text-xl">
+                                                    {(member.name || '?').charAt(0)}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {/* Grit Badge */}
+                                        <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                                            {member.grit}
+                                        </div>
+                                    </div>
+
+                                    {/* Name */}
+                                    <div className="text-center">
+                                        <div className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                                            {member.name}
+                                        </div>
+                                        {/* Role Label Only */}
+                                        <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
+                                            {member.role === 'ADMIN' && 'Admin'}
+                                            {member.role === 'MODERATOR' && 'Moderator'}
+                                            {member.role === 'TIME_KEEPER' && 'Time Keeper'}
+                                            {member.role === 'SPECIAL_GUEST' && 'Guest'}
+                                            {member.role === 'PLAYER' && 'Player'}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
                     {/* SOPs Read-Only View for NON-ADMINS (Displayed if exists) */}
