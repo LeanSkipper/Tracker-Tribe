@@ -1210,7 +1210,7 @@ export default function ObeyaPage() {
                                 :
                                 MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
                             ).map(({ month: m, year: y, key }) => (
-                                <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 transition-all duration-300`}>
+                                <div key={key} className={`${viewMode === 'operational' ? 'w-[45rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 transition-all duration-300`}>
                                     <div className="bg-gray-50 text-center py-1 font-bold text-[var(--primary)] text-sm border-b border-gray-100 flex flex-col">
                                         <span>{m}</span>
                                         {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
@@ -1272,7 +1272,7 @@ export default function ObeyaPage() {
                                                             :
                                                             MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
                                                         ).map(({ month: m, year: y, key }) => (
-                                                            <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
+                                                            <div key={key} className={`${viewMode === 'operational' ? 'w-[45rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
                                                                 {isOKR ? (
                                                                     (() => {
                                                                         const metricRow = row as MetricRow;
@@ -1348,9 +1348,9 @@ export default function ObeyaPage() {
                                                                                                 key={a.id}
                                                                                                 draggable
                                                                                                 className={`p-2 rounded-lg border shadow-sm text-xs font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                                                                                                        a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
-                                                                                                            a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
-                                                                                                                'bg-white border-gray-200 text-gray-700'
+                                                                                                    a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+                                                                                                        a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                                                                                            'bg-white border-gray-200 text-gray-700'
                                                                                                     }`}
                                                                                             >
                                                                                                 <div className="flex items-start gap-1">
