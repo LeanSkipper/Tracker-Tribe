@@ -26,7 +26,8 @@ export async function GET(req: Request) {
                                     select: {
                                         id: true,
                                         name: true,
-                                        avatarUrl: true
+                                        avatarUrl: true,
+                                        grit: true
                                     }
                                 }
                             }
@@ -37,17 +38,32 @@ export async function GET(req: Request) {
         });
 
         // Format tribes for dashboard
-        const tribes = userTribes.map(ut => ({
-            id: ut.tribe.id,
-            name: ut.tribe.name,
-            reliabilityRate: ut.tribe.reliabilityRate,
-            maxMembers: ut.tribe.maxMembers,
-            members: ut.tribe.members.map(m => ({
-                id: m.user.id,
-                name: m.user.name,
-                avatarUrl: m.user.avatarUrl
-            }))
-        }));
+        const tribes = userTribes.map(ut => {
+            const t = ut.tribe;
+            // Calculate average grit
+            const totalGrit = t.members.reduce((acc, m) => acc + (m.user.grit || 0), 0);
+            const avgGrit = t.members.length > 0 ? Math.round(totalGrit / t.members.length) : 0;
+
+            return {
+                id: t.id,
+                name: t.name,
+                topic: t.topic,
+                meetingTime: t.meetingTime,
+                meetingFrequency: t.meetingFrequency,
+                reliabilityRate: t.reliabilityRate,
+                maxMembers: t.maxMembers,
+                members: t.members.map(m => ({
+                    id: m.user.id,
+                    name: m.user.name,
+                    avatarUrl: m.user.avatarUrl
+                })),
+                averageGrit: avgGrit,
+                minGrit: t.minGrit,
+                minLevel: t.minLevel,
+                minExperience: t.minExperience,
+                minReputation: t.minReputation
+            };
+        });
 
         return NextResponse.json({ tribes });
     } catch (error) {

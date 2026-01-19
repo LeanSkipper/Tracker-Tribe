@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import TableCard from '@/components/TableCard';
+import EnhancedTribeCard from '@/components/EnhancedTribeCard';
 import { Users, Network, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TribeCreationForm from '@/components/TribeCreationForm';
@@ -24,15 +24,23 @@ type Tribe = {
 export default function DashboardPage() {
     const router = useRouter();
     const [tribes, setTribes] = useState<Tribe[]>([]);
+    const [userStats, setUserStats] = useState<any>(null); // Quick type for now
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
 
     const fetchDashboardData = useCallback(async () => {
         try {
-            const res = await fetch('/api/dashboard');
-            if (res.ok) {
-                const data = await res.json();
+            const [dashRes, profileRes] = await Promise.all([
+                fetch('/api/dashboard'),
+                fetch('/api/profile')
+            ]);
+
+            if (dashRes.ok) {
+                const data = await dashRes.json();
                 setTribes(data.tribes || []);
+            }
+            if (profileRes.ok) {
+                setUserStats(await profileRes.json());
             }
             setLoading(false);
         } catch (err) {
@@ -159,13 +167,11 @@ export default function DashboardPage() {
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {tribes.map((tribe, index) => (
-                                <TableCard
+                                <EnhancedTribeCard
                                     key={tribe.id}
-                                    id={tribe.id}
-                                    name={tribe.name}
-                                    reliabilityRate={tribe.reliabilityRate}
-                                    members={tribe.members}
-                                    maxSeats={tribe.maxMembers}
+                                    tribe={tribe as any} // Cast to match type if strict alignment needed
+                                    isMember={true}
+                                    userStats={userStats}
                                     index={index}
                                 />
                             ))}
