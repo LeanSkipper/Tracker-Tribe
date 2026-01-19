@@ -266,3 +266,48 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Failed to save goal" }, { status: 500 });
     }
 }
+
+export async function DELETE(req: Request) {
+    try {
+        const user = await getSession();
+
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const permission = await checkPermission(user, 'gps');
+        if (!permission.allowed) {
+            return forbiddenResponse(permission.message);
+        }
+
+        const { searchParams } = new URL(req.url);
+        const goalId = searchParams.get('id');
+
+        if (!goalId) {
+            return NextResponse.json({ error: 'Goal ID required' }, { status: 400 });
+        }
+
+        // Verify the goal belongs to the user before deleting
+        const goal = await prisma.goal.findUnique({
+            where: { id: goalId }
+        });
+
+        if (!goal) {
+            return NextResponse.json({ error: 'Goal not found' }, { status: 404 });
+        }
+
+        if (goal.userId !== user.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        // Delete the goal (cascade will handle OKRs and actions)
+        await prisma.goal.delete({
+            where: { id: goalId }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Error deleting goal:", error);
+        return NextResponse.json({ error: "Failed to delete goal" }, { status: 500 });
+    }
+}

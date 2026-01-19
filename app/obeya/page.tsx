@@ -700,9 +700,25 @@ export default function ObeyaPage() {
     };
 
     const handleDeleteGoal = async (id: string) => {
-        // For now, local delete
-        setGoals(prev => prev.filter(g => g.id !== id));
-        setEditingGoal(null);
+        try {
+            const res = await fetch(`/api/goals?id=${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!res.ok) {
+                const error = await res.json().catch(() => ({ error: 'Unknown error' }));
+                console.error("Delete Goal Failed:", error);
+                alert(`Failed to delete goal: ${error.error || 'Server error'}`);
+                return;
+            }
+
+            // Remove from local state on success
+            setGoals(prev => prev.filter(g => g.id !== id));
+            setEditingGoal(null);
+        } catch (err) {
+            console.error("Delete Goal Failed:", err);
+            alert('Failed to delete goal. Please check your connection and try again.');
+        }
     };
 
     const handleCommitMetric = async (goalId: string, rowId: string, monthId: string, field: 'actual' | 'target', value: string) => {
