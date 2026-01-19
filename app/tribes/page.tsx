@@ -69,10 +69,32 @@ export default function BrowseTribesPage() {
         fetchData();
     }, []);
 
-    const filteredTribes = allTribes.filter(t =>
-        t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        t.topic?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const [filterQualified, setFilterQualified] = useState(false);
+    const [filterOpenSpots, setFilterOpenSpots] = useState(false);
+
+    // Helpers for filtering
+    const isQualified = (tribe: Tribe) => {
+        if (!userStats) return true; // If no user stats, show all? Or fail open.
+        return (
+            (userStats.level >= tribe.minLevel) &&
+            (userStats.grit >= tribe.minGrit) &&
+            (userStats.reputationScore >= tribe.minReputation)
+        );
+    };
+
+    const hasOpenSpots = (tribe: Tribe) => {
+        return tribe.maxMembers > tribe.memberCount;
+    };
+
+    const filteredTribes = allTribes.filter(t => {
+        const matchesSearch = t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            t.topic?.toLowerCase().includes(searchQuery.toLowerCase());
+
+        const matchesQualified = !filterQualified || isQualified(t);
+        const matchesOpenSpots = !filterOpenSpots || hasOpenSpots(t);
+
+        return matchesSearch && matchesQualified && matchesOpenSpots;
+    });
 
     // Helper to render stat match
     const StatMatch = ({ label, required, userValue, unit = '' }: { label: string, required: number, userValue: number, unit?: string }) => {
@@ -121,8 +143,9 @@ export default function BrowseTribesPage() {
                 </div>
 
                 {/* Search */}
-                <div className="mb-8">
-                    <div className="relative">
+                {/* Search & Filter Bar */}
+                <div className="mb-8 flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                         <input
                             type="text"
@@ -131,6 +154,29 @@ export default function BrowseTribesPage() {
                             placeholder="Search tribes by name or topic..."
                             className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none bg-white shadow-sm"
                         />
+                    </div>
+                    {/* Filters */}
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => setFilterQualified(!filterQualified)}
+                            className={`px-4 py-4 rounded-xl font-bold text-sm transition-all border-2 flex items-center gap-2 ${filterQualified
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                                }`}
+                        >
+                            <CheckCircle size={16} />
+                            Only Qualified
+                        </button>
+                        <button
+                            onClick={() => setFilterOpenSpots(!filterOpenSpots)}
+                            className={`px-4 py-4 rounded-xl font-bold text-sm transition-all border-2 flex items-center gap-2 ${filterOpenSpots
+                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                                }`}
+                        >
+                            <Users size={16} />
+                            Open Spots
+                        </button>
                     </div>
                 </div>
 
