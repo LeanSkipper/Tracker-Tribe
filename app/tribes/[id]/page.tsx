@@ -32,6 +32,7 @@ type Member = {
     goals: Goal[];
     actionPlansCount: number;
     attendanceRate: number;
+    signedSOPAt?: string;
 };
 
 type Tribe = {
@@ -47,6 +48,28 @@ type Tribe = {
 };
 
 type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task';
+
+const DEFAULT_SOP = `🛠 [Mastermind Name] Standard Operating Procedure (SOP)
+1. Tribe Identity & Purpose
+Purpose: [Define the core mission. Example: "To empower entrepreneurs through collective intelligence and accountability in real estate."] 
+Values & Principles:
+
+2. Logistics & Cadence
+Meeting Time: [Insert Day/Time/Timezone].
+Platform: [Insert Google Meet/Zoom/Bitrix link]. 
+Communication Hub: [Insert link to private WhatsApp/Discord/Tribe channel]. 
+
+3. Roles & Responsibilities
+The Facilitator (Admin): 
+The Tribe Member: 
+Time keeper
+Player
+
+4. The Rhythm (Meeting Agenda)
+5. Rules of Engagement & The "Grit" System
+6. Penalties & Moderation
+Strikes Policy: 
+Permanent Removal: `;
 
 export default function TribeDetailsPage() {
     const params = useParams();
@@ -65,6 +88,7 @@ export default function TribeDetailsPage() {
     const [editForm, setEditForm] = useState<any>({});
     const [applications, setApplications] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
+    const [showSOPModal, setShowSOPModal] = useState(false);
 
     const fetchTribeDetails = useCallback(async () => {
         try {
@@ -79,8 +103,15 @@ export default function TribeDetailsPage() {
                     description: data.tribe.description,
                     meetingTime: data.tribe.meetingTime,
                     topic: data.tribe.topic,
-                    standardProcedures: data.tribe.standardProcedures || ''
+                    standardProcedures: data.tribe.standardProcedures || DEFAULT_SOP
                 });
+
+                // Check for SOP signature (if member and not creator/admin)
+                // Note: We need to check the current user's membership details
+                const currentMember = data.tribe.members.find((m: any) => m.id === data.currentUserId);
+                if (currentMember && data.tribe.standardProcedures && !currentMember.signedSOPAt && data.tribe.creatorId !== data.currentUserId) {
+                    setShowSOPModal(true);
+                }
 
                 // If Admin, fetch applications
                 const isCreator = data.tribe.creatorId === data.currentUserId;
@@ -145,6 +176,20 @@ export default function TribeDetailsPage() {
             }
         } catch (e) {
             alert('Error processing application');
+        }
+    };
+
+    const handleSignSOP = async () => {
+        try {
+            const res = await fetch(`/api/tribes/${tribeId}/sop/sign`, { method: 'POST' });
+            if (res.ok) {
+                setShowSOPModal(false);
+                fetchTribeDetails();
+            } else {
+                alert('Failed to sign SOP');
+            }
+        } catch (e) {
+            alert('Error signing SOP');
         }
     };
 
@@ -587,6 +632,34 @@ export default function TribeDetailsPage() {
                         ))}
                     </div>
                 </div>
+
+
+                {/* SOP SIGNATURE MODAL */}
+                {showSOPModal && tribe.standardProcedures && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                        <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl">
+                            <div className="p-6 border-b border-slate-100">
+                                <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                                    <FileText className="text-indigo-600" /> Community Guidelines
+                                </h3>
+                                <p className="text-slate-500 text-sm mt-1">Please read and accept the tribe's rules to continue.</p>
+                            </div>
+                            <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
+                                <div className="prose prose-slate max-w-none">
+                                    <pre className="whitespace-pre-wrap font-sans text-sm text-slate-600">{tribe.standardProcedures}</pre>
+                                </div>
+                            </div>
+                            <div className="p-6 border-t border-slate-100 flex justify-end gap-3 bg-white rounded-b-3xl">
+                                <button
+                                    onClick={handleSignSOP}
+                                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                                >
+                                    I Have Read & Agree
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>

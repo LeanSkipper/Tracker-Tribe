@@ -346,6 +346,7 @@ model TribeMember {
   role      TribeRole @default(PLAYER)
   customTitle String? // For "Specific Role" text (the Hat title)
   
+  signedSOPAt DateTime? // When the member signed the SOPs
   joinedAt  DateTime  @default(now())
 
   @@unique([userId, tribeId])

@@ -11,6 +11,7 @@ export async function GET(
 ) {
     try {
         const tribeId = (await params).id;
+        const session = await getSession(); // Optional: to return currentUserId
 
         const tribe = await prisma.tribe.findUnique({
             where: { id: tribeId },
@@ -29,7 +30,8 @@ export async function GET(
                                 id: true,
                                 name: true,
                                 avatarUrl: true,
-                                level: true
+                                level: true,
+                                grit: true
                             }
                         }
                     }
@@ -41,7 +43,21 @@ export async function GET(
             return NextResponse.json({ error: "Tribe not found" }, { status: 404 });
         }
 
-        return NextResponse.json(tribe);
+        // Transform members to flatten user details for frontend convenience
+        // Frontend expects member.name, member.grit, etc.
+        const transformedMembers = tribe.members.map(member => ({
+            ...member.user, // Spread user details (name, avatar, grit, etc.)
+            ...member,      // Spread member details (role, joinedAt, signedSOPAt). This overwrites user.id with member.id
+            userId: member.userId // Ensure userId is explicit
+        }));
+
+        return NextResponse.json({
+            tribe: {
+                ...tribe,
+                members: transformedMembers
+            },
+            currentUserId: session?.id || ''
+        });
     } catch (error) {
         console.error("GET Tribe Error:", error);
         return NextResponse.json({ error: "Failed to fetch tribe" }, { status: 500 });
@@ -63,9 +79,6 @@ export async function PUT(
         const body = await req.json();
         const { name, description, topic, meetingTime, standardProcedures } = body;
 
-        // Check permissions: Is user Creator or Admin?
-        // We need to fetch the tribe first to check membership/creator status
-        // We can optimize this by checking existence + permissions in one query or just fetching what we need.
         const tribe = await prisma.tribe.findUnique({
             where: { id: tribeId },
             include: { members: true }
@@ -76,12 +89,10 @@ export async function PUT(
         }
 
         const isCreator = tribe.creatorId === session.id;
-        // Check if user is an ADMIN member
-        // careful: member.userId is the User ID in schema (TribeMember model)
         const isAdmin = tribe.members.some(m => m.userId === session.id && m.role === 'ADMIN');
 
         if (!isCreator && !isAdmin) {
-            return NextResponse.json({ error: "Forbidden: You must be an Admin to update this tribe." }, { status: 403 });
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         const updatedTribe = await prisma.tribe.update({
