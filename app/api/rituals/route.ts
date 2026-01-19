@@ -59,8 +59,8 @@ export async function POST(req: Request) {
         return NextResponse.json({
             ...ritual,
             xpAwarded: xpResult.amount,
-            newLevel: xpResult.level,
-            newXP: xpResult.currentXP,
+            newLevel: xpResult.newLevel,
+            newXP: xpResult.newCurrentXP,
             newlyAwarded: awarded
         });
     } catch (error) {
