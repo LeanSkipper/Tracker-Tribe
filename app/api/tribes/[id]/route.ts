@@ -77,6 +77,7 @@ export async function PUT(
 
         const tribeId = (await params).id;
         const body = await req.json();
+        console.log("PUT Tribe Body:", body); // DEBUG
         const { name, description, topic, meetingTime, standardProcedures } = body;
 
         const tribe = await prisma.tribe.findUnique({
