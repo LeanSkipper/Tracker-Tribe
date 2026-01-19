@@ -1,39 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
-import RoundTable from '@/components/RoundTable';
-import { Users, Target, Calendar, Clock, ArrowLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useParams, useRouter } from 'next/navigation';
+import { Users, Target, Calendar, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import MemberGoalTracker from '@/components/MemberGoalTracker';
 
-type Member = {
-    id: string;
-    name: string;
-    avatarUrl?: string;
-    role: 'ADMIN' | 'MODERATOR' | 'PLAYER';
-    badges?: any[];
-};
-
-type Goal = {
-    id: string;
-    vision: string;
-    category: string;
-    user: {
-        id: string;
-        name: string;
-        avatarUrl?: string;
-    };
-    okrs: any[];
-};
+type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task';
 
 export default function SessionPage() {
     const params = useParams();
+    const router = useRouter();
     const tribeId = params?.id as string;
 
-    const [members, setMembers] = useState<Member[]>([]);
-    const [sharedGoals, setSharedGoals] = useState<Goal[]>([]);
+    const [members, setMembers] = useState<any[]>([]);
     const [tribe, setTribe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [trackerMode, setTrackerMode] = useState<ViewMode>('operational');
 
     useEffect(() => {
         if (tribeId) {
@@ -43,40 +25,17 @@ export default function SessionPage() {
 
     const fetchSessionData = async () => {
         try {
-            // Fetch tribe details with members
-            const tribeRes = await fetch(`/api/tribes/${tribeId}`);
-            const tribeData = await tribeRes.json();
+            // Fetch tribe details with members AND their goals (now included in API)
+            const tribeRes = await fetch(`/api/tribes/${tribeId}`, { cache: 'no-store' });
 
             if (tribeRes.ok) {
-                setTribe(tribeData);
+                const data = await tribeRes.json();
+                setTribe(data.tribe);
 
-                // Map members with their badges
-                const membersWithBadges = await Promise.all(
-                    tribeData.members.map(async (m: any) => {
-                        // Fetch user achievements/badges
-                        const badgesRes = await fetch(`/api/users/${m.user.id}/badges`);
-                        const badges = badgesRes.ok ? await badgesRes.json() : [];
-
-                        return {
-                            id: m.user.id,
-                            name: m.user.name,
-                            avatarUrl: m.user.avatarUrl,
-                            role: m.role,
-                            badges: badges.slice(0, 3) // Show max 3 badges
-                        };
-                    })
-                );
-
-                setMembers(membersWithBadges);
+                // transformMembers in API already flattens user data
+                // We just need to ensure goals are present (which they are via the new include)
+                setMembers(data.tribe.members || []);
             }
-
-            // Fetch shared goals
-            const goalsRes = await fetch(`/api/tribes/${tribeId}/shared-goals`);
-            if (goalsRes.ok) {
-                const goalsData = await goalsRes.json();
-                setSharedGoals(goalsData);
-            }
-
             setLoading(false);
         } catch (err) {
             console.error("Failed to fetch session data:", err);
@@ -94,135 +53,113 @@ export default function SessionPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
-            <div className="max-w-7xl mx-auto">
+            <div className="max-w-[1600px] mx-auto">
                 {/* Header */}
                 <div className="mb-8">
                     <button
-                        onClick={() => window.history.back()}
+                        onClick={() => router.push(`/tribes/${tribeId}`)}
                         className="flex items-center text-slate-600 hover:text-indigo-600 font-bold mb-4 transition-colors"
                     >
                         <ArrowLeft size={20} className="mr-2" />
-                        Back to Tribe
+                        Back to Tribe Room
                     </button>
 
                     <div className="flex items-center justify-between">
                         <div>
                             <h1 className="text-4xl font-black text-slate-900 mb-2">
-                                {tribe?.name} Session
+                                🔴 Live Session
                             </h1>
-                            <div className="flex items-center gap-4 text-sm text-slate-600">
-                                <div className="flex items-center gap-2">
-                                    <Users size={16} />
-                                    <span>{members.length} / {tribe?.maxMembers || 10} Members</span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <Calendar size={16} />
-                                    <span>{tribe?.meetingTime || 'Schedule TBD'}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-3">
-                            <button className="px-6 py-3 bg-white border-2 border-indigo-200 text-indigo-600 font-bold rounded-xl hover:bg-indigo-50 transition-colors">
-                                Schedule Session
-                            </button>
-                            <button className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-colors">
-                                Start Session
-                            </button>
+                            <h2 className="text-xl font-bold text-indigo-600 flex items-center gap-2">
+                                {tribe?.name} <span className="text-slate-400 font-normal text-sm">| {tribe?.meetingTime}</span>
+                            </h2>
                         </div>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Round Table */}
-                    <div className="lg:col-span-2">
-                        <div className="bg-white rounded-3xl shadow-xl p-8 border border-slate-100">
-                            <h2 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                                <Users className="text-indigo-600" />
-                                Mastermind Table
-                            </h2>
+                {/* CHECK-IN ROUTINE */}
+                <div className="mb-12 bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                    <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                        <CheckCircle2 className="text-emerald-500" /> Check-in Routine
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-600">
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="font-bold text-slate-900 mb-2">1. Personal Check-in</div>
+                            <p className="text-sm">"On a scale of 1-10, how present are you? What is your biggest win from last week?"</p>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="font-bold text-slate-900 mb-2">2. Metric Review</div>
+                            <p className="text-sm">Review KPIs and OKR progress below. Identify any red flags or blockers.</p>
+                        </div>
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div className="font-bold text-slate-900 mb-2">3. The Hot Seat</div>
+                            <p className="text-sm">Dive deep into one member's challenge. Brainstorm solutions and commit to actions.</p>
+                        </div>
+                    </div>
+                </div>
 
-                            <div className="flex justify-center">
-                                <RoundTable
-                                    members={members}
-                                    maxSeats={tribe?.maxMembers || 10}
-                                    onInvite={() => {
-                                        // TODO: Open invite modal
-                                        alert('Invite member functionality coming soon!');
-                                    }}
+                {/* SHARED GPS TRACKER */}
+                <div>
+                    <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
+                            <Target className="text-indigo-600" />
+                            Shared GPS Tracker
+                        </h2>
+
+                        {/* View Switcher */}
+                        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
+                            {[
+                                { id: 'task', label: 'FUP' },
+                                { id: 'operational', label: 'Execution' },
+                                { id: 'tactical', label: 'Planning' },
+                                { id: 'strategic', label: 'Strategy' }
+                            ].map(view => (
+                                <button
+                                    key={view.id}
+                                    onClick={() => setTrackerMode(view.id as ViewMode)}
+                                    className={`
+                                        px-4 py-2 rounded-lg text-sm font-bold transition-all
+                                        ${trackerMode === view.id
+                                            ? 'bg-indigo-600 text-white shadow-md'
+                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                                        }
+                                    `}
+                                >
+                                    {view.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-8">
+                        {members.map(member => (
+                            <div key={member.id} className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100">
+                                <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
+                                    <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
+                                        {member.avatarUrl ? (
+                                            <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
+                                                {(member.name || '?').charAt(0)}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-900">
+                                            {member.name}
+                                        </h3>
+                                        <div className="text-xs font-bold text-slate-400 uppercase">Level {member.level || 1} • Grit {member.grit || 0}%</div>
+                                    </div>
+                                </div>
+
+                                <MemberGoalTracker
+                                    member={member}
+                                    viewMode={trackerMode}
                                 />
                             </div>
-                        </div>
-                    </div>
-
-                    {/* Shared Goals Panel */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-3xl shadow-xl p-6 border border-slate-100">
-                            <h2 className="text-xl font-black text-slate-900 mb-4 flex items-center gap-2">
-                                <Target className="text-indigo-600" size={20} />
-                                Shared Goals
-                            </h2>
-
-                            <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                                {sharedGoals.length === 0 ? (
-                                    <div className="text-center py-12 text-slate-400">
-                                        <Target size={48} className="mx-auto mb-3 opacity-30" />
-                                        <p className="font-medium">No shared goals yet</p>
-                                        <p className="text-sm mt-1">Members can share their goals from the OBEYA view</p>
-                                    </div>
-                                ) : (
-                                    sharedGoals.map((goal, idx) => (
-                                        <motion.div
-                                            key={goal.id}
-                                            initial={{ opacity: 0, x: 20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: idx * 0.1 }}
-                                            className="bg-slate-50 rounded-2xl p-4 border border-slate-100 hover:border-indigo-200 transition-colors"
-                                        >
-                                            <div className="flex items-start gap-3 mb-3">
-                                                <div className="w-10 h-10 rounded-full overflow-hidden bg-indigo-100 flex-shrink-0">
-                                                    {goal.user.avatarUrl ? (
-                                                        <img src={goal.user.avatarUrl} alt={goal.user.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-indigo-600 font-black">
-                                                            {goal.user.name.charAt(0)}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                <div className="flex-1">
-                                                    <div className="text-xs font-bold text-slate-500 mb-1">{goal.user.name}</div>
-                                                    <div className="font-bold text-slate-900">{goal.vision}</div>
-                                                    <div className="text-xs text-slate-500 mt-1">{goal.category}</div>
-                                                </div>
-                                            </div>
-
-                                            {goal.okrs && goal.okrs.length > 0 && (
-                                                <div className="space-y-2">
-                                                    {goal.okrs.slice(0, 2).map((okr: any) => (
-                                                        <div key={okr.id} className="bg-white rounded-lg p-2 text-xs">
-                                                            <div className="flex justify-between items-center mb-1">
-                                                                <span className="font-bold text-slate-700">{okr.metricName}</span>
-                                                                <span className="text-indigo-600 font-black">
-                                                                    {okr.targetValue > 0 ? Math.round((okr.currentValue / okr.targetValue) * 100) : 0}%
-                                                                </span>
-                                                            </div>
-                                                            <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                                                                <div
-                                                                    className="h-full bg-indigo-500 rounded-full"
-                                                                    style={{ width: `${okr.targetValue > 0 ? (okr.currentValue / okr.targetValue) * 100 : 0}%` }}
-                                                                />
-                                                            </div>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </motion.div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
+
             </div>
         </div>
     );

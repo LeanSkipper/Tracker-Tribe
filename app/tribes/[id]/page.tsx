@@ -582,68 +582,7 @@ export default function TribeDetailsPage() {
 
                 </div>
 
-                {/* SHARED TRACKER VIEW */}
-                <div className="mt-12">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
-                            <Target className="text-indigo-600" />
-                            Shared Tracker
-                        </h2>
-
-                        {/* View Switcher */}
-                        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
-                            {[
-                                { id: 'task', label: 'FUP' },
-                                { id: 'operational', label: 'Execution' },
-                                { id: 'tactical', label: 'Planning' },
-                                { id: 'strategic', label: 'Strategy' }
-                            ].map(view => (
-                                <button
-                                    key={view.id}
-                                    onClick={() => setTrackerMode(view.id as ViewMode)}
-                                    className={`
-                                        px-4 py-2 rounded-lg text-sm font-bold transition-all
-                                        ${trackerMode === view.id
-                                            ? 'bg-indigo-600 text-white shadow-md'
-                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                                        }
-                                    `}
-                                >
-                                    {view.label}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-8">
-                        {tribe.members.map(member => (
-                            <div key={member.id} className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100">
-                                <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                                    <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
-                                        {member.avatarUrl ? (
-                                            <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
-                                                {(member.name || '?').charAt(0)}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-slate-900">
-                                            {member.name}
-                                            {member.id === currentUserId && <span className="ml-2 text-xs bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-bold">YOU</span>}
-                                        </h3>
-                                    </div>
-                                </div>
-
-                                <MemberGoalTracker
-                                    member={member}
-                                    viewMode={trackerMode}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                </div>
+                {/* SHARED TRACKER MOVED TO SESSION PAGE */}
 
 
                 {/* SOP SIGNATURE MODAL */}

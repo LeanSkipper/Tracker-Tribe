@@ -31,7 +31,17 @@ export async function GET(
                                 name: true,
                                 avatarUrl: true,
                                 level: true,
-                                grit: true
+                                grit: true,
+                                goals: {
+                                    where: { visibility: 'TRIBE' },
+                                    include: {
+                                        okrs: {
+                                            include: {
+                                                actions: true
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
