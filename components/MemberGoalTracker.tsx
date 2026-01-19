@@ -204,12 +204,12 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
 
                                                     if (isKPI) {
                                                         if (!hasResult) return <span className="text-slate-300 text-[10px]">-</span>;
-                                                        return <span className={`text-xs font-bold ${isSuccess ? 'text-emerald-600' : 'text-rose-500'}`}>{data.actual}</span>;
+                                                        return <span className={`${viewMode === 'team-work' ? 'text-[10px]' : 'text-xs'} font-bold ${isSuccess ? 'text-emerald-600' : 'text-rose-500'}`}>{data.actual}</span>;
                                                     } else {
                                                         if (!hasResult) return <div className="w-full h-full bg-slate-50/50 rounded flex items-center justify-center"><span className="text-slate-300 text-[10px]">-</span></div>;
                                                         return (
-                                                            <div className={`w-full h-full rounded-md flex flex-col items-center justify-center shadow-sm ${isSuccess ? 'bg-emerald-500 shadow-emerald-200' : 'bg-rose-500 shadow-rose-200'}`}>
-                                                                <span className="text-white font-black text-sm">{data.actual}</span>
+                                                            <div className={`w-full ${viewMode === 'team-work' ? 'h-6' : 'h-full'} rounded-md flex flex-col items-center justify-center shadow-sm ${isSuccess ? 'bg-emerald-500 shadow-emerald-200' : 'bg-rose-500 shadow-rose-200'}`}>
+                                                                <span className={`text-white font-black ${viewMode === 'team-work' ? 'text-xs' : 'text-sm'}`}>{data.actual}</span>
                                                             </div>
                                                         );
                                                     }
