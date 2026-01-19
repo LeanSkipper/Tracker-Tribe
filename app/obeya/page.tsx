@@ -1343,11 +1343,69 @@ export default function ObeyaPage() {
                                                                                 const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
 
                                                                                 return (
-                                                                                    <div key={w} className="flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 bg-gray-50/30 min-h-[80px]">
+                                                                                    <div
+                                                                                        key={w}
+                                                                                        className="flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 bg-gray-50/30 min-h-[80px] transition-colors"
+                                                                                        onDragOver={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.currentTarget.classList.add('bg-blue-100', 'border-blue-300');
+                                                                                        }}
+                                                                                        onDragLeave={(e) => {
+                                                                                            e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
+                                                                                        }}
+                                                                                        onDrop={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
+
+                                                                                            if (draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
+                                                                                                // Update locally
+                                                                                                setGoals(prev => prev.map(g => {
+                                                                                                    if (g.id !== goal.id) return g;
+                                                                                                    return {
+                                                                                                        ...g,
+                                                                                                        rows: g.rows.map(r => {
+                                                                                                            if (!('actions' in r)) return r;
+                                                                                                            return {
+                                                                                                                ...r,
+                                                                                                                actions: r.actions.map(a =>
+                                                                                                                    a.id === draggedTask.actionId
+                                                                                                                        ? { ...a, weekId: w }
+                                                                                                                        : a
+                                                                                                                )
+                                                                                                            };
+                                                                                                        })
+                                                                                                    };
+                                                                                                }));
+
+                                                                                                // Persist
+                                                                                                const goalToSave = goals.find(g => g.id === goal.id);
+                                                                                                if (goalToSave) {
+                                                                                                    const updated = {
+                                                                                                        ...goalToSave,
+                                                                                                        rows: goalToSave.rows.map(r => {
+                                                                                                            if (!('actions' in r)) return r;
+                                                                                                            return {
+                                                                                                                ...r,
+                                                                                                                actions: r.actions.map(a =>
+                                                                                                                    a.id === draggedTask.actionId
+                                                                                                                        ? { ...a, weekId: w }
+                                                                                                                        : a
+                                                                                                                )
+                                                                                                            };
+                                                                                                        })
+                                                                                                    };
+                                                                                                    handleSaveGoal(updated);
+                                                                                                }
+                                                                                            }
+                                                                                            setDraggedTask(null);
+                                                                                        }}
+                                                                                    >
                                                                                         {weekActions.map(a => (
                                                                                             <div
                                                                                                 key={a.id}
                                                                                                 draggable
+                                                                                                onDragStart={() => setDraggedTask({ goalId: goal.id, actionId: a.id, sourceWeek: w })}
+                                                                                                onDragEnd={() => setDraggedTask(null)}
                                                                                                 className={`p-2 rounded-lg border shadow-sm text-[10px] font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
                                                                                                     a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
                                                                                                         a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
