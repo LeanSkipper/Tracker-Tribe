@@ -152,10 +152,9 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                             if (viewMode === 'tactical' && !isOKR) return null; // Hide actions in Planning
                             if (viewMode === 'strategic' && (isKPI || !isOKR)) return null; // Hide KPIs and Actions in Strategy
                             if (viewMode === 'task' && isOKR) return null; // Hide OKRs/KPIs in FUP
-                            if (viewMode === 'team-work' && isOKR) return null; // Hide OKRs/KPIs in Team Work
 
                             return (
-                                <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
+                                <div key={row.id} className={`flex ${isKPI ? 'min-h-[24px]' : viewMode === 'team-work' ? 'min-h-[32px]' : 'min-h-[60px]'} ${viewMode === 'team-work' && isOKR ? 'opacity-70' : ''}`}>
                                     {/* Sidebar Label */}
                                     <div className="sticky left-0 w-[300px] shrink-0 bg-white border-r border-slate-200 z-10 flex text-sm group">
                                         <div className={`w-6 flex-shrink-0 flex items-center justify-center
@@ -167,7 +166,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
 
                                         <div className="flex-1 p-3 flex flex-col justify-center border-r border-slate-100 overflow-hidden">
                                             {rIdx === 0 && <div className="font-bold text-slate-900 truncate mb-0.5">{goal.title}</div>}
-                                            <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : 'text-sm text-slate-700 font-bold'}`}>
+                                            <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : viewMode === 'team-work' ? 'text-xs text-slate-600 font-semibold' : 'text-sm text-slate-700 font-bold'}`}>
                                                 {isKPI && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />}
                                                 {row.label}
                                             </div>
