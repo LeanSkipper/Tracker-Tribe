@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Target, GripVertical } from 'lucide-react';
 
 // Types (mirrored from Obeya logic)
@@ -40,6 +40,30 @@ type MemberGoalTrackerProps = {
 };
 
 export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }: MemberGoalTrackerProps) {
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to current week on mount
+    useEffect(() => {
+        if (scrollContainerRef.current && viewMode === 'team-work') {
+            const now = new Date();
+            const startOfYear = new Date(now.getFullYear(), 0, 1);
+            const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+            const currentWeek = Math.floor(daysSinceStart / 7) + 1;
+
+            // Each week column is 40rem = 640px
+            const weekWidth = 640;
+
+            // Scroll to position current week in middle with 1 week on each side
+            const scrollPosition = (currentWeek - 2) * weekWidth;
+
+            setTimeout(() => {
+                if (scrollContainerRef.current) {
+                    scrollContainerRef.current.scrollLeft = Math.max(0, scrollPosition);
+                }
+            }, 100);
+        }
+    }, [viewMode]);
+
     // Process member goals into the structure expected by the renderer
     // (Similar to ObeyaPage logic)
     const goals: GoalCategory[] = (member.goals || []).map((g: any) => {
@@ -110,7 +134,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
     }
 
     return (
-        <div className="w-full overflow-x-auto pb-4">
+        <div className="w-full overflow-x-auto pb-4" ref={scrollContainerRef}>
             <div className="inline-block min-w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
 
                 {/* Header Row (Months/Weeks) */}
