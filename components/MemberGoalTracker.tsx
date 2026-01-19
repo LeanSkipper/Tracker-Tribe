@@ -42,7 +42,7 @@ type MemberGoalTrackerProps = {
 export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }: MemberGoalTrackerProps) {
     // Process member goals into the structure expected by the renderer
     // (Similar to ObeyaPage logic)
-    const goals: GoalCategory[] = member.goals.map((g: any) => {
+    const goals: GoalCategory[] = (member.goals || []).map((g: any) => {
         const okrRows = (g.okrs || []).map((o: any) => {
             let parsedMonthlyData = [];
             try {
