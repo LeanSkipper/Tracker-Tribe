@@ -109,7 +109,6 @@ export default function SessionPage() {
                         <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
                             {[
                                 { id: 'team-work', label: 'Team Work' },
-                                { id: 'operational', label: 'Execution' },
                                 { id: 'tactical', label: 'Planning' },
                                 { id: 'strategic', label: 'Strategy' }
                             ].map(view => (
@@ -186,12 +185,12 @@ export default function SessionPage() {
 
                                             return (
                                                 <div key={okr.id} className={`px-2 py-1 rounded-md text-xs font-medium border ${okr.type === 'KPI'
-                                                        ? 'bg-purple-50 border-purple-200 text-purple-700'
-                                                        : hasActual
-                                                            ? isOnTrack
-                                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                                                : 'bg-rose-50 border-rose-200 text-rose-700'
-                                                            : 'bg-slate-50 border-slate-200 text-slate-600'
+                                                    ? 'bg-purple-50 border-purple-200 text-purple-700'
+                                                    : hasActual
+                                                        ? isOnTrack
+                                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                            : 'bg-rose-50 border-rose-200 text-rose-700'
+                                                        : 'bg-slate-50 border-slate-200 text-slate-600'
                                                     }`}>
                                                     <span className="font-bold">{okr.metricName}:</span>{' '}
                                                     <span className="font-black">{hasActual ? data.actual : '—'}</span>
