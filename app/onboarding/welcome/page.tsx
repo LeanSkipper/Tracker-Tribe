@@ -3,12 +3,10 @@
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Target, Lightbulb, TrendingUp, Users } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 
-export default function WelcomePage() {
-    const router = useRouter();
+function ReferralTracker() {
     const searchParams = useSearchParams();
-    const [isCreatingGuest, setIsCreatingGuest] = useState(false);
 
     useEffect(() => {
         const refCode = searchParams.get('ref');
@@ -17,6 +15,21 @@ export default function WelcomePage() {
             document.cookie = `tracker_tribe_ref=${refCode}; path=/; max-age=${30 * 24 * 60 * 60}`;
         }
     }, [searchParams]);
+
+    return null;
+}
+
+export default function WelcomePage() {
+    return (
+        <Suspense fallback={null}>
+            <WelcomePageContent />
+        </Suspense>
+    );
+}
+
+function WelcomePageContent() {
+    const router = useRouter();
+    const [isCreatingGuest, setIsCreatingGuest] = useState(false);
 
     const handleTryAsGuest = async () => {
         // Temporary: Direct redirect until database migration is complete
@@ -48,6 +61,7 @@ export default function WelcomePage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
+            <ReferralTracker />
             <div className="max-w-2xl w-full text-center space-y-8">
                 {/* Logo/Brand */}
                 <div className="flex items-center justify-center gap-3 mb-8">
