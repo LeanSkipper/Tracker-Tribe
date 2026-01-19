@@ -148,8 +148,8 @@ export default function SessionPage() {
                                             {member.name}
                                             {(member.customTitle || member.role) && (
                                                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${(member.customTitle || member.role) === 'ADMIN' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                                        (member.customTitle || member.role) === 'MODERATOR' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
-                                                            'bg-slate-50 text-slate-500 border-slate-200'
+                                                    (member.customTitle || member.role) === 'MODERATOR' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
+                                                        'bg-slate-50 text-slate-500 border-slate-200'
                                                     }`}>
                                                     {member.customTitle || member.role}
                                                 </span>
@@ -157,6 +157,49 @@ export default function SessionPage() {
                                         </h3>
                                         <div className="text-xs font-bold text-slate-400 uppercase">Level {member.level || 1} • Grit {member.grit || 0}%</div>
                                     </div>
+                                </div>
+
+                                {/* OKR/KPI Summary - Small and Read-Only */}
+                                <div className="mb-4 flex flex-wrap gap-2">
+                                    {member.goals?.flatMap((g: any) =>
+                                        (g.okrs || []).map((okr: any) => {
+                                            // Get current month data
+                                            let monthlyData = [];
+                                            try {
+                                                monthlyData = typeof okr.monthlyData === 'string'
+                                                    ? JSON.parse(okr.monthlyData)
+                                                    : (okr.monthlyData || []);
+                                            } catch (e) { }
+
+                                            const currentMonth = new Date().getMonth();
+                                            const currentYear = new Date().getFullYear();
+                                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                                            const data = monthlyData.find((d: any) =>
+                                                d.monthId === monthNames[currentMonth] && d.year === currentYear
+                                            );
+
+                                            const hasActual = data?.actual !== null && data?.actual !== undefined;
+                                            const isOnTrack = hasActual && (
+                                                (okr.targetValue >= okr.currentValue && data.actual >= data.target) ||
+                                                (okr.targetValue < okr.currentValue && data.actual <= data.target)
+                                            );
+
+                                            return (
+                                                <div key={okr.id} className={`px-2 py-1 rounded-md text-xs font-medium border ${okr.type === 'KPI'
+                                                        ? 'bg-purple-50 border-purple-200 text-purple-700'
+                                                        : hasActual
+                                                            ? isOnTrack
+                                                                ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                                : 'bg-rose-50 border-rose-200 text-rose-700'
+                                                            : 'bg-slate-50 border-slate-200 text-slate-600'
+                                                    }`}>
+                                                    <span className="font-bold">{okr.metricName}:</span>{' '}
+                                                    <span className="font-black">{hasActual ? data.actual : '—'}</span>
+                                                    <span className="opacity-60">/{data?.target || okr.targetValue}</span>
+                                                </div>
+                                            );
+                                        })
+                                    )}
                                 </div>
 
                                 <MemberGoalTracker
