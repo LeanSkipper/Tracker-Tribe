@@ -83,6 +83,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             avatarUrl: targetUser.avatarUrl,
             level: targetUser.level,
             skills: targetUser.skills,
+            grit: targetUser.grit,
+            currentXP: targetUser.currentXP,
+            reputationScore: targetUser.reputationScore,
+            createdAt: targetUser.createdAt,
             // ... other public fields
         };
 

@@ -120,9 +120,10 @@ export default function DashboardPage() {
                                         initial={{ opacity: 0, scale: 0 }}
                                         animate={{ opacity: 1, scale: 1 }}
                                         transition={{ delay: idx * 0.05 }}
-                                        className="flex flex-col items-center gap-2"
+                                        className="flex flex-col items-center gap-2 cursor-pointer group"
+                                        onClick={() => router.push(`/profile/${member.id}`)}
                                     >
-                                        <div className="w-16 h-16 rounded-full overflow-hidden bg-indigo-100 border-2 border-indigo-200">
+                                        <div className="w-16 h-16 rounded-full overflow-hidden bg-indigo-100 border-2 border-indigo-200 group-hover:border-indigo-500 group-hover:scale-105 transition-all">
                                             {member.avatarUrl ? (
                                                 <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
                                             ) : (
@@ -131,7 +132,7 @@ export default function DashboardPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        <span className="text-xs font-bold text-slate-700">{member.name.split(' ')[0]}</span>
+                                        <span className="text-xs font-bold text-slate-700 group-hover:text-indigo-600">{member.name.split(' ')[0]}</span>
                                     </motion.div>
                                 ))}
                             </div>
