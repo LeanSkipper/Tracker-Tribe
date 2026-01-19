@@ -538,6 +538,7 @@ export default function ObeyaPage() {
     const [viewMode, setViewMode] = useState<'operational' | 'tactical' | 'strategic' | 'task' | 'chart'>('operational');
     const [isLoaded, setIsLoaded] = useState(false);
     const [goals, setGoals] = useState<GoalCategory[]>([]);
+    const [draggedTask, setDraggedTask] = useState<{ goalId: string; actionId: string; sourceWeek: string } | null>(null);
 
     const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
 
