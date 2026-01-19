@@ -93,7 +93,8 @@ export default function TribeDetailsPage() {
     const fetchTribeDetails = useCallback(async () => {
         try {
             setError(null);
-            const res = await fetch(`/api/tribes/${tribeId}/details`);
+            // Use the main endpoint which aligns with PUT and flattens member data correctly
+            const res = await fetch(`/api/tribes/${tribeId}`, { cache: 'no-store' });
             if (res.ok) {
                 const data = await res.json();
                 setTribe(data.tribe);
