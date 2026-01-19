@@ -58,10 +58,12 @@ export async function GET(
             const user = membership.user;
 
             // Use Grit directly from the user profile
-            const grit = user.grit || 0;
-            const level = user.level || 1;
-            const xp = user.currentXP || 0;
-            const reputation = user.reputationScore || 0;
+            // Casting to any to avoid potential TS inference issues with deep includes
+            const u = user as any;
+            const grit = u.grit || 0;
+            const level = u.level || 1;
+            const xp = u.currentXP || 0;
+            const reputation = u.reputationScore || 0;
 
             // Format badges
             const badges = user.achievements.slice(0, 5).map(a => ({

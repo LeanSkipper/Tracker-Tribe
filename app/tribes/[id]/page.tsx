@@ -55,17 +55,24 @@ export default function TribeDetailsPage() {
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [trackerMode, setTrackerMode] = useState<ViewMode>('operational');
 
+    const [error, setError] = useState<string | null>(null);
+
     const fetchTribeDetails = useCallback(async () => {
         try {
+            setError(null);
             const res = await fetch(`/api/tribes/${tribeId}/details`);
             if (res.ok) {
                 const data = await res.json();
                 setTribe(data.tribe);
                 setCurrentUserId(data.currentUserId);
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                setError(errData.details || errData.error || 'Failed to load tribe details');
             }
             setLoading(false);
         } catch (err) {
             console.error('Failed to fetch tribe details:', err);
+            setError(err instanceof Error ? err.message : 'Network error');
             setLoading(false);
         }
     }, [tribeId]);
@@ -86,8 +93,19 @@ export default function TribeDetailsPage() {
 
     if (!tribe) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50">
-                <div className="text-slate-600">Tribe not found</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 flex-col gap-4">
+                <div className="text-slate-600 text-xl font-bold">Tribe not found</div>
+                {error && (
+                    <div className="p-4 bg-red-50 text-red-600 rounded-lg max-w-lg text-center border border-red-100">
+                        Error details: {error}
+                    </div>
+                )}
+                <button
+                    onClick={() => router.push('/dashboard')}
+                    className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-700 transition-colors"
+                >
+                    Return to Dashboard
+                </button>
             </div>
         );
     }
