@@ -535,7 +535,7 @@ const CommentModal = ({ goalId, rowId, monthData, onClose, onSave }: {
 
 export default function ObeyaPage() {
     const [currentYear, setCurrentYear] = useState(2026);
-    const [viewMode, setViewMode] = useState<'operational' | 'tactical' | 'strategic' | 'task'>('operational');
+    const [viewMode, setViewMode] = useState<'operational' | 'tactical' | 'strategic' | 'task' | 'chart'>('operational');
     const [isLoaded, setIsLoaded] = useState(false);
     const [goals, setGoals] = useState<GoalCategory[]>([]);
 
@@ -1001,6 +1001,7 @@ export default function ObeyaPage() {
                         <button onClick={() => setViewMode('operational')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'operational' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Execution: Full weekly details">Execution</button>
                         <button onClick={() => setViewMode('tactical')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'tactical' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Planning: OKRs + KPIs">Planning</button>
                         <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategy: High-level roadmap">Strategy</button>
+                        <button onClick={() => setViewMode('chart')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'chart' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Chart: Visual analytics"><BarChart2 size={14} className="inline mr-1" />Chart</button>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1014,7 +1015,181 @@ export default function ObeyaPage() {
             </header>
 
             <main className="flex-1 overflow-auto">
-                {viewMode === 'task' ? (
+                {/* Chart Mode - Comprehensive Analytics View */}
+                {viewMode === 'chart' ? (
+                    <div className="p-6 space-y-8">
+                        {goals.map(goal => {
+                            const metrics = goal.rows.filter(r => 'type' in r) as MetricRow[];
+                            const actionRow = goal.rows.find(r => !('type' in r)) as ActionRow | undefined;
+
+                            return (
+                                <div key={goal.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                                    <div className="flex justify-between items-start mb-6">
+                                        <div>
+                                            <h3 className="text-2xl font-bold text-gray-900">{goal.title}</h3>
+                                            <p className="text-sm text-gray-500 mt-1">{goal.category}</p>
+                                        </div>
+                                        <button onClick={() => setEditingGoal(goal)} className="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                            <Edit2 size={18} />
+                                        </button>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                        {metrics.map(metric => {
+                                            const dataPoints = metric.monthlyData.filter(d => d.target !== null && d.year === currentYear);
+                                            if (dataPoints.length < 2) return null;
+
+                                            const width = 500;
+                                            const height = 250;
+                                            const padding = 50;
+
+                                            const maxVal = Math.max(...dataPoints.map(d => Math.max(d.target || 0, d.actual || 0))) * 1.1;
+                                            const minVal = Math.min(...dataPoints.map(d => Math.min(d.target || 0, d.actual || 0))) * 0.9;
+                                            const range = maxVal - minVal || 1;
+
+                                            const getX = (i: number) => padding + (i * ((width - padding * 2) / (dataPoints.length - 1)));
+                                            const getY = (val: number) => height - padding - ((val - minVal) / range) * (height - padding * 2);
+
+                                            const targetPath = dataPoints.map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(i)} ${getY(d.target!)}`).join(' ');
+                                            const actualPath = dataPoints.filter(d => d.actual !== null).map((d, i) => {
+                                                const originalIndex = dataPoints.indexOf(d);
+                                                return `${i === 0 ? 'M' : 'L'} ${getX(originalIndex)} ${getY(d.actual!)}`;
+                                            }).join(' ');
+
+                                            const isHigherBetter = metric.targetValue >= metric.startValue;
+
+                                            return (
+                                                <div key={metric.id} className="bg-gray-50 rounded-xl border border-gray-200 p-4">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div>
+                                                            <h4 className="font-bold text-gray-900 flex items-center gap-2">
+                                                                {metric.type === 'OKR' ? <Target size={16} className="text-blue-600" /> : <TrendingUp size={16} className="text-green-600" />}
+                                                                {metric.label}
+                                                            </h4>
+                                                            <p className="text-xs text-gray-500">{metric.type}</p>
+                                                        </div>
+                                                    </div>
+
+                                                    <svg width={width} height={height} className="w-full">
+                                                        {/* Grid lines */}
+                                                        {[0, 0.25, 0.5, 0.75, 1].map(t => {
+                                                            const y = height - padding - (t * (height - padding * 2));
+                                                            return <line key={t} x1={padding} y1={y} x2={width - padding} y2={y} stroke="#e5e7eb" strokeDasharray="4" />;
+                                                        })}
+
+                                                        {/* Target line */}
+                                                        <path d={targetPath} fill="none" stroke="#9ca3af" strokeWidth="2" strokeDasharray="6,4" opacity="0.5" />
+
+                                                        {/* Actual line */}
+                                                        {actualPath && <path d={actualPath} fill="none" stroke="#3b82f6" strokeWidth="3" />}
+
+                                                        {/* Data points */}
+                                                        {dataPoints.map((d, i) => {
+                                                            const x = getX(i);
+                                                            const hasActual = d.actual !== null;
+                                                            const isOnTarget = hasActual && (
+                                                                (isHigherBetter && d.actual! >= d.target!) ||
+                                                                (!isHigherBetter && d.actual! <= d.target!)
+                                                            );
+
+                                                            return (
+                                                                <g key={i}>
+                                                                    {/* Month label */}
+                                                                    <text x={x} y={height - 10} textAnchor="middle" fontSize="10" fill="#9ca3af">{d.monthId}</text>
+
+                                                                    {/* Target marker */}
+                                                                    <circle cx={x} cy={getY(d.target!)} r="3" fill="#9ca3af" opacity="0.5" />
+
+                                                                    {/* Actual value marker (clickable for comments) */}
+                                                                    {hasActual && (
+                                                                        <g>
+                                                                            <circle
+                                                                                cx={x}
+                                                                                cy={getY(d.actual!)}
+                                                                                r="6"
+                                                                                fill={isOnTarget ? "#22c55e" : "#ef4444"}
+                                                                                stroke="white"
+                                                                                strokeWidth="2"
+                                                                                className="cursor-pointer hover:r-8 transition-all"
+                                                                                onClick={() => setActiveCommentModal({ goalId: goal.id, rowId: metric.id, monthData: d })}
+                                                                            />
+                                                                            {d.comment && (
+                                                                                <text x={x} y={getY(d.actual!) - 15} textAnchor="middle" fontSize="16">💬</text>
+                                                                            )}
+                                                                        </g>
+                                                                    )}
+
+                                                                    {/* Week action markers */}
+                                                                    {actionRow && (
+                                                                        (() => {
+                                                                            const monthIndex = MONTHS.indexOf(d.monthId);
+                                                                            const monthWeeks = MONTH_WEEKS[d.monthId];
+                                                                            const weekActions = actionRow.actions.filter(a => {
+                                                                                const actionWeekNum = parseInt(a.weekId.replace('W', ''));
+                                                                                const monthWeekNums = monthWeeks.map(w => parseInt(w.replace('W', '')));
+                                                                                return a.year === d.year && monthWeekNums.includes(actionWeekNum);
+                                                                            });
+
+                                                                            if (weekActions.length === 0) return null;
+
+                                                                            return (
+                                                                                <foreignObject x={x - 10} y={padding - 25} width="20" height="20">
+                                                                                    <div
+                                                                                        className="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center text-white text-[10px] font-bold cursor-pointer hover:scale-110 transition-transform"
+                                                                                        onClick={() => {
+                                                                                            const firstWeek = monthWeeks[0];
+                                                                                            setActiveWeekModal({ week: firstWeek, goalId: goal.id });
+                                                                                        }}
+                                                                                        title={`${weekActions.length} action(s) this month`}
+                                                                                    >
+                                                                                        {weekActions.length}
+                                                                                    </div>
+                                                                                </foreignObject>
+                                                                            );
+                                                                        })()
+                                                                    )}
+                                                                </g>
+                                                            );
+                                                        })}
+
+                                                        {/* Y-axis labels */}
+                                                        {[0, 0.25, 0.5, 0.75, 1].map(t => {
+                                                            const y = height - padding - (t * (height - padding * 2));
+                                                            const value = (minVal + (range * t)).toFixed(1);
+                                                            return <text key={t} x={padding - 10} y={y + 4} textAnchor="end" fontSize="10" fill="#6b7280">{value}</text>;
+                                                        })}
+                                                    </svg>
+
+                                                    <div className="mt-3 flex items-center justify-center gap-4 text-xs text-gray-600">
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-3 h-0.5 bg-gray-400" style={{ borderTop: '2px dashed #9ca3af' }}></div>
+                                                            <span>Target</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-3 h-0.5 bg-blue-500"></div>
+                                                            <span>Actual</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                                            <span>Actions</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            );
+                        })}
+
+                        {goals.length === 0 && (
+                            <div className="text-center py-20">
+                                <BarChart2 size={48} className="mx-auto text-gray-300 mb-4" />
+                                <p className="text-gray-500">No goals to display. Create your first goal to see charts!</p>
+                            </div>
+                        )}
+                    </div>
+                ) : viewMode === 'task' ? (
                     <KanbanBoard
                         goals={goals}
                         currentYear={currentYear}
