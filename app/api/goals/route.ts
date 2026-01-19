@@ -300,7 +300,29 @@ export async function DELETE(req: Request) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        // Delete the goal (cascade will handle OKRs and actions)
+        // Manual cascade delete: First delete all related OKRs and their Actions
+        const okrs = await prisma.oKR.findMany({
+            where: { goalId: goalId }
+        });
+
+        for (const okr of okrs) {
+            // Delete all actions for this OKR
+            await prisma.action.deleteMany({
+                where: { okrId: okr.id }
+            });
+        }
+
+        // Delete all OKRs for this goal
+        await prisma.oKR.deleteMany({
+            where: { goalId: goalId }
+        });
+
+        // Delete any action plans directly linked to this goal
+        await prisma.actionPlan.deleteMany({
+            where: { goalId: goalId }
+        });
+
+        // Finally, delete the goal itself
         await prisma.goal.delete({
             where: { id: goalId }
         });
