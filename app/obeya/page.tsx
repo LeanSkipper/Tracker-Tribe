@@ -1347,27 +1347,31 @@ export default function ObeyaPage() {
                                                                                             <div
                                                                                                 key={a.id}
                                                                                                 draggable
-                                                                                                className={`p-2 rounded-lg border shadow-sm text-xs font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                                                                                                className={`p-2 rounded-lg border shadow-sm text-[10px] font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
                                                                                                     a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
                                                                                                         a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
                                                                                                             'bg-white border-gray-200 text-gray-700'
                                                                                                     }`}
                                                                                             >
-                                                                                                <div className="flex items-start gap-1">
-                                                                                                    <svg className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
-                                                                                                    </svg>
-                                                                                                    <div className="flex-1 leading-tight">{a.title}</div>
+                                                                                                <div className="flex items-start gap-1.5">
+                                                                                                    <input
+                                                                                                        type="checkbox"
+                                                                                                        checked={a.status === 'DONE'}
+                                                                                                        onChange={() => handleUpdateActionStatus(goal.id, a.id, a.status === 'DONE' ? 'TBD' : 'DONE')}
+                                                                                                        className="mt-0.5 flex-shrink-0 cursor-pointer"
+                                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                                    />
+                                                                                                    <div className="flex-1 leading-tight break-words">{a.title}</div>
                                                                                                 </div>
                                                                                             </div>
                                                                                         ))}
 
                                                                                         <button
                                                                                             onClick={() => setActiveWeekModal({ week: w, goalId: goal.id })}
-                                                                                            className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-2 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 flex items-center justify-center gap-1 text-[10px] font-bold uppercase"
+                                                                                            className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-2 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 flex items-center justify-center"
+                                                                                            title="Add task"
                                                                                         >
-                                                                                            <Plus size={12} />
-                                                                                            Add
+                                                                                            <Plus size={14} />
                                                                                         </button>
                                                                                     </div>
                                                                                 );
