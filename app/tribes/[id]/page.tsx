@@ -2,8 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import TribeCapacityVisualizer from '@/components/TribeCapacityVisualizer';
-import { ArrowLeft, Users, CheckCircle2, Settings, FileText, Share2, Edit3, Save, Copy } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus } from 'lucide-react';
 
 type Badge = {
     id: string;
@@ -336,40 +335,28 @@ export default function TribeDetailsPage() {
                         </div>
                     )}
 
-                    {/* Tribe Capacity & Invite */}
-                    <div className="flex flex-col md:flex-row gap-6 mb-8">
-                        <div className="flex-1">
-                            <TribeCapacityVisualizer members={tribe.members} maxMembers={tribe.maxMembers} />
-                        </div>
-                        <div className="md:w-72">
-                            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
-                                <h3 className="font-bold flex items-center gap-2 mb-2">
-                                    <Share2 size={18} /> Invite Peers
-                                </h3>
-                                <p className="text-indigo-100 text-xs mb-4">
-                                    Share this link to grow your tribe.
-                                </p>
-                                <button
-                                    onClick={() => {
-                                        navigator.clipboard.writeText(`${window.location.origin}/tribes/${tribe.id}`);
-                                        alert('Link copied to clipboard!');
-                                    }}
-                                    className="w-full bg-white text-indigo-600 font-bold py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors text-sm"
-                                >
-                                    <Copy size={16} /> Copy Invite Link
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* TRIBE MEMBERS - Lean View */}
+                    {/* UNIFIED TRIBE MEMBERS & CAPACITY */}
                     <div className="mb-12 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <Users size={16} />
-                            Tribe Members ({tribe.members.length})
-                        </h3>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <Users size={16} />
+                                Tribe Members ({tribe.members.length}/{tribe.maxMembers})
+                            </h3>
+                            {/* Invite Link */}
+                            <button
+                                onClick={() => {
+                                    navigator.clipboard.writeText(`${window.location.origin}/tribes/${tribe.id}`);
+                                    alert('Invite link copied!');
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-xs shadow-md"
+                            >
+                                <Share2 size={14} />
+                                Invite
+                            </button>
+                        </div>
 
                         <div className="flex flex-wrap gap-4">
+                            {/* Filled Slots - Member Cards */}
                             {tribe.members.map(member => (
                                 <div
                                     key={member.id}
@@ -398,12 +385,11 @@ export default function TribeDetailsPage() {
                                         </div>
                                     </div>
 
-                                    {/* Name */}
+                                    {/* Name & Role */}
                                     <div className="text-center">
                                         <div className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
                                             {member.name}
                                         </div>
-                                        {/* Role Label Only */}
                                         <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
                                             {member.role === 'ADMIN' && 'Admin'}
                                             {member.role === 'MODERATOR' && 'Moderator'}
@@ -414,7 +400,29 @@ export default function TribeDetailsPage() {
                                     </div>
                                 </div>
                             ))}
+
+                            {/* Empty Slots */}
+                            {Array.from({ length: Math.max(0, tribe.maxMembers - tribe.members.length) }).map((_, idx) => (
+                                <div
+                                    key={`empty-${idx}`}
+                                    className="flex flex-col items-center gap-2"
+                                    title="Open Spot"
+                                >
+                                    <div className="w-16 h-16 rounded-full bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                                        <Plus size={24} />
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xs text-slate-400 font-medium">Open</div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
+
+                        {tribe.maxMembers - tribe.members.length > 0 && (
+                            <p className="mt-4 text-xs text-slate-400 font-medium">
+                                {tribe.maxMembers - tribe.members.length} spot{tribe.maxMembers - tribe.members.length !== 1 ? 's' : ''} available. Share the invite link!
+                            </p>
+                        )}
                     </div>
 
                     {/* SOPs Read-Only View for NON-ADMINS (Displayed if exists) */}
