@@ -539,6 +539,8 @@ export default function ObeyaPage() {
     const [isLoaded, setIsLoaded] = useState(false);
     const [goals, setGoals] = useState<GoalCategory[]>([]);
     const [draggedTask, setDraggedTask] = useState<{ goalId: string; actionId: string; sourceWeek: string } | null>(null);
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+    const [editingTaskTitle, setEditingTaskTitle] = useState<string>('');
 
     const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
 
@@ -1420,7 +1422,43 @@ export default function ObeyaPage() {
                                                                                                         className="mt-0.5 flex-shrink-0 cursor-pointer"
                                                                                                         onClick={(e) => e.stopPropagation()}
                                                                                                     />
-                                                                                                    <div className="flex-1 leading-tight break-words">{a.title}</div>
+                                                                                                    {editingTaskId === a.id ? (
+                                                                                                        <input
+                                                                                                            type="text"
+                                                                                                            value={editingTaskTitle}
+                                                                                                            onChange={(e) => setEditingTaskTitle(e.target.value)}
+                                                                                                            onBlur={() => {
+                                                                                                                if (editingTaskTitle.trim()) {
+                                                                                                                    handleUpdateActionTitle(goal.id, a.id, editingTaskTitle);
+                                                                                                                }
+                                                                                                                setEditingTaskId(null);
+                                                                                                            }}
+                                                                                                            onKeyDown={(e) => {
+                                                                                                                if (e.key === 'Enter') {
+                                                                                                                    if (editingTaskTitle.trim()) {
+                                                                                                                        handleUpdateActionTitle(goal.id, a.id, editingTaskTitle);
+                                                                                                                    }
+                                                                                                                    setEditingTaskId(null);
+                                                                                                                } else if (e.key === 'Escape') {
+                                                                                                                    setEditingTaskId(null);
+                                                                                                                }
+                                                                                                            }}
+                                                                                                            className="flex-1 leading-tight break-words bg-white border border-blue-300 rounded px-1 outline-none focus:ring-1 focus:ring-blue-500 text-[10px]"
+                                                                                                            autoFocus
+                                                                                                            onClick={(e) => e.stopPropagation()}
+                                                                                                        />
+                                                                                                    ) : (
+                                                                                                        <div
+                                                                                                            className="flex-1 leading-tight break-words cursor-text"
+                                                                                                            onDoubleClick={(e) => {
+                                                                                                                e.stopPropagation();
+                                                                                                                setEditingTaskId(a.id);
+                                                                                                                setEditingTaskTitle(a.title);
+                                                                                                            }}
+                                                                                                        >
+                                                                                                            {a.title}
+                                                                                                        </div>
+                                                                                                    )}
                                                                                                 </div>
                                                                                             </div>
                                                                                         ))}
