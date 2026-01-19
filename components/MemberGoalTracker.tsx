@@ -43,28 +43,49 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
     // Process member goals into the structure expected by the renderer
     // (Similar to ObeyaPage logic)
     const goals: GoalCategory[] = member.goals.map((g: any) => {
-        const okrRows = (g.okrs || []).map((o: any) => ({
-            id: o.id,
-            type: o.type || 'OKR',
-            label: o.metricName,
-            targetValue: o.targetValue,
-            startValue: o.currentValue,
-            monthlyData: o.monthlyData ? JSON.parse(o.monthlyData) : [] // Parse JSON if needed or use existing
-        }));
+        const okrRows = (g.okrs || []).map((o: any) => {
+            let parsedMonthlyData = [];
+            try {
+                if (typeof o.monthlyData === 'string') {
+                    parsedMonthlyData = JSON.parse(o.monthlyData);
+                } else if (Array.isArray(o.monthlyData)) {
+                    parsedMonthlyData = o.monthlyData;
+                }
+            } catch (e) {
+                console.warn('Failed to parse monthlyData for OKR:', o.id, e);
+            }
+
+            return {
+                id: o.id,
+                type: o.type || 'OKR',
+                label: o.metricName,
+                targetValue: o.targetValue,
+                startValue: o.currentValue,
+                monthlyData: parsedMonthlyData
+            };
+        });
 
         const allActions = (g.okrs || []).flatMap((o: any) =>
             (o.actions || []).map((a: any) => {
-                // Assuming actions might need date processing, or just come as is
-                // For simplicity, we assume action structure is compatible or mapped here
-                const weekDate = new Date(a.weekDate);
-                const startOfYear = new Date(weekDate.getFullYear(), 0, 1);
-                const daysSinceStart = Math.floor((weekDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-                const weekNum = Math.floor(daysSinceStart / 7) + 1;
+                let weekNum = 0;
+                let year = 2026;
+                try {
+                    const weekDate = new Date(a.weekDate);
+                    // Check for invalid date
+                    if (!isNaN(weekDate.getTime())) {
+                        year = weekDate.getFullYear();
+                        const startOfYear = new Date(year, 0, 1);
+                        const daysSinceStart = Math.floor((weekDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+                        weekNum = Math.floor(daysSinceStart / 7) + 1;
+                    }
+                } catch (e) {
+                    console.warn('Invalid date for action:', a.id);
+                }
 
                 return {
                     id: a.id,
                     weekId: `W${weekNum}`,
-                    year: weekDate.getFullYear(),
+                    year: year,
                     title: a.description,
                     status: a.status === 'DONE' ? 'DONE' : 'TBD'
                 };
@@ -72,165 +93,175 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
         );
 
         return {
-            id: g.id,
-            category: g.category || 'Business',
-            title: g.vision,
-            rows: [...okrRows, { id: 'act-' + g.id, label: 'Action Plan', actions: allActions }]
+            id: a.id,
+            weekId: `W${weekNum}`,
+            year: weekDate.getFullYear(),
+            title: a.description,
+            status: a.status === 'DONE' ? 'DONE' : 'TBD'
         };
-    });
-
-    // Sort goals by category to group them visually if needed, or by creation
-    // Assuming pre-sorted or basic sort
-
-    if (goals.length === 0) {
-        return (
-            <div className="bg-slate-50 rounded-2xl p-8 text-center border border-dashed border-slate-200">
-                <Target className="mx-auto h-12 w-12 text-slate-300 mb-3" />
-                <p className="text-slate-500 font-medium">No goals visible for {member.name.split(' ')[0]}</p>
-            </div>
+    })
         );
-    }
 
+    return {
+        id: g.id,
+        category: g.category || 'Business',
+        title: g.vision,
+        rows: [...okrRows, { id: 'act-' + g.id, label: 'Action Plan', actions: allActions }]
+    };
+});
+
+// Sort goals by category to group them visually if needed, or by creation
+// Assuming pre-sorted or basic sort
+
+if (goals.length === 0) {
     return (
-        <div className="w-full overflow-x-auto pb-4">
-            <div className="inline-block min-w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-slate-50 rounded-2xl p-8 text-center border border-dashed border-slate-200">
+            <Target className="mx-auto h-12 w-12 text-slate-300 mb-3" />
+            <p className="text-slate-500 font-medium">No goals visible for {member.name.split(' ')[0]}</p>
+        </div>
+    );
+}
 
-                {/* Header Row (Months/Weeks) */}
-                <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 flex">
-                    <div className="sticky left-0 w-[300px] shrink-0 bg-slate-50 border-r border-slate-200 z-30 p-4 font-bold text-slate-400 text-xs flex items-end">
-                        STRATEGIC CONTEXT
-                    </div>
-                    {(viewMode === 'strategic' ?
-                        Array.from({ length: 36 }, (_, i) => {
-                            const yearOffset = Math.floor(i / 12);
-                            const monthIndex = i % 12;
-                            return { month: MONTHS[monthIndex], year: startYear + yearOffset, key: `${startYear + yearOffset}-${MONTHS[monthIndex]}` };
-                        })
-                        :
-                        MONTHS.map(m => ({ month: m, year: startYear, key: `${startYear}-${m}` }))
-                    ).map(({ month: m, year: y, key }) => (
-                        <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-200 transition-all duration-300`}>
-                            <div className="bg-slate-100/50 text-center py-1 font-bold text-slate-700 text-sm border-b border-slate-200 flex flex-col">
-                                <span>{m}</span>
-                                {viewMode === 'strategic' && <span className="text-[9px] text-slate-400 font-normal">{y}</span>}
-                            </div>
-                            {viewMode === 'operational' || viewMode === 'task' ? (
-                                <div className="flex bg-slate-50">
-                                    {MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[9px] text-slate-400 py-1 border-r border-slate-100 last:border-0">{w}</div>)}
-                                </div>
-                            ) : null}
-                        </div>
-                    ))}
+return (
+    <div className="w-full overflow-x-auto pb-4">
+        <div className="inline-block min-w-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+
+            {/* Header Row (Months/Weeks) */}
+            <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 flex">
+                <div className="sticky left-0 w-[300px] shrink-0 bg-slate-50 border-r border-slate-200 z-30 p-4 font-bold text-slate-400 text-xs flex items-end">
+                    STRATEGIC CONTEXT
                 </div>
-
-                {/* Goals & Rows */}
-                {goals.map((goal, gIdx) => (
-                    <div key={goal.id} className="border-b-4 border-slate-50 last:border-0 relative">
-                        {goal.rows.map((row, rIdx) => {
-                            const isOKR = 'type' in row;
-                            const isKPI = isOKR && (row as MetricRow).type === 'KPI'; // Although type on row is enough
-
-                            // View Mode Logic
-                            if (viewMode === 'tactical' && !isOKR) return null; // Hide actions in Planning
-                            if (viewMode === 'strategic' && (isKPI || !isOKR)) return null; // Hide KPIs and Actions in Strategy
-                            if (viewMode === 'task' && isOKR) return null; // Hide OKRs/KPIs in FUP
-
-                            return (
-                                <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
-                                    {/* Sidebar Label */}
-                                    <div className="sticky left-0 w-[300px] shrink-0 bg-white border-r border-slate-200 z-10 flex text-sm group">
-                                        <div className={`w-6 flex-shrink-0 flex items-center justify-center
-                                            ${goal.category === 'Health' ? 'bg-teal-500' :
-                                                goal.category === 'Wealth' ? 'bg-emerald-500' :
-                                                    goal.category === 'Family' ? 'bg-indigo-500' :
-                                                        goal.category === 'Business' ? 'bg-blue-600' : 'bg-slate-400'}
-                                         `} />
-
-                                        <div className="flex-1 p-3 flex flex-col justify-center border-r border-slate-100 overflow-hidden">
-                                            {rIdx === 0 && <div className="font-bold text-slate-900 truncate mb-0.5">{goal.title}</div>}
-                                            <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : 'text-sm text-slate-700 font-bold'}`}>
-                                                {isKPI && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />}
-                                                {row.label}
-                                            </div>
-                                        </div>
-
-                                        <div className="w-16 flex items-center justify-center bg-slate-50 text-[10px] font-bold text-slate-400 border-l border-slate-100">
-                                            {isOKR ? (isKPI ? 'KPI' : 'OKR') : 'ACT'}
-                                        </div>
-                                    </div>
-
-                                    {/* Data Cells */}
-                                    {(viewMode === 'strategic' ?
-                                        Array.from({ length: 36 }, (_, i) => {
-                                            const yearOffset = Math.floor(i / 12);
-                                            const monthIndex = i % 12;
-                                            const m = MONTHS[monthIndex] || 'Err';
-                                            return { month: m, year: startYear + yearOffset, key: `${startYear + yearOffset}-${m}` };
-                                        })
-                                        :
-                                        MONTHS.map(m => ({ month: m, year: startYear, key: `${startYear}-${m}` }))
-                                    ).map(({ month: m, year: y, key }) => (
-                                        <div key={key} className={`${(viewMode === 'operational' || viewMode === 'task') ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-100 flex items-center justify-center p-1 transition-all`}>
-                                            {isOKR ? (
-                                                (() => {
-                                                    const metricRow = row as MetricRow;
-                                                    const data = (metricRow.monthlyData || []).find((d: any) => d.monthId === m && d.year === y);
-                                                    const hasData = data && data.target !== null;
-                                                    const hasResult = data && data.actual !== null && data.actual !== undefined;
-
-                                                    if (!hasData) return <span className="text-slate-200 text-[10px]">-</span>;
-
-                                                    const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue
-                                                        ? (Number(data.actual) >= Number(data.target))
-                                                        : (Number(data.actual) <= Number(data.target)));
-
-                                                    if (isKPI) {
-                                                        if (!hasResult) return <span className="text-slate-300 text-[10px]">-</span>;
-                                                        return <span className={`text-xs font-bold ${isSuccess ? 'text-emerald-600' : 'text-rose-500'}`}>{data.actual}</span>;
-                                                    } else {
-                                                        if (!hasResult) return <div className="w-full h-full bg-slate-50/50 rounded flex items-center justify-center"><span className="text-slate-300 text-[10px]">-</span></div>;
-                                                        return (
-                                                            <div className={`w-full h-full rounded-md flex flex-col items-center justify-center shadow-sm ${isSuccess ? 'bg-emerald-500 shadow-emerald-200' : 'bg-rose-500 shadow-rose-200'}`}>
-                                                                <span className="text-white font-black text-sm">{data.actual}</span>
-                                                            </div>
-                                                        );
-                                                    }
-                                                })()
-                                            ) : (
-                                                // Action Row
-                                                (viewMode === 'operational' || viewMode === 'task') ? (
-                                                    <div className="flex w-full h-full">
-                                                        {MONTH_WEEKS[m].map(w => {
-                                                            const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === y);
-                                                            const tbd = weekActions.filter(a => a.status === 'TBD').length;
-                                                            const done = weekActions.filter(a => a.status === 'DONE').length;
-
-                                                            return (
-                                                                <div key={w} className="flex-1 border-r border-slate-50 last:border-0 flex items-center justify-center hover:bg-slate-50 transition-colors cursor-help" title={weekActions.map(a => `- ${a.title}`).join('\n')}>
-                                                                    {weekActions.length > 0 && (
-                                                                        <div className="flex flex-col gap-0.5 items-center">
-                                                                            {done > 0 && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm" />}
-                                                                            {tbd > 0 && <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-sm" />}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                ) : (
-                                                    // Tactical/Strategic - No actions shown or simple summary
-                                                    null
-                                                )
-                                            )}
-
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        })}
+                {(viewMode === 'strategic' ?
+                    Array.from({ length: 36 }, (_, i) => {
+                        const yearOffset = Math.floor(i / 12);
+                        const monthIndex = i % 12;
+                        return { month: MONTHS[monthIndex], year: startYear + yearOffset, key: `${startYear + yearOffset}-${MONTHS[monthIndex]}` };
+                    })
+                    :
+                    MONTHS.map(m => ({ month: m, year: startYear, key: `${startYear}-${m}` }))
+                ).map(({ month: m, year: y, key }) => (
+                    <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-200 transition-all duration-300`}>
+                        <div className="bg-slate-100/50 text-center py-1 font-bold text-slate-700 text-sm border-b border-slate-200 flex flex-col">
+                            <span>{m}</span>
+                            {viewMode === 'strategic' && <span className="text-[9px] text-slate-400 font-normal">{y}</span>}
+                        </div>
+                        {viewMode === 'operational' || viewMode === 'task' ? (
+                            <div className="flex bg-slate-50">
+                                {MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[9px] text-slate-400 py-1 border-r border-slate-100 last:border-0">{w}</div>)}
+                            </div>
+                        ) : null}
                     </div>
                 ))}
             </div>
+
+            {/* Goals & Rows */}
+            {goals.map((goal, gIdx) => (
+                <div key={goal.id} className="border-b-4 border-slate-50 last:border-0 relative">
+                    {goal.rows.map((row, rIdx) => {
+                        const isOKR = 'type' in row;
+                        const isKPI = isOKR && (row as MetricRow).type === 'KPI'; // Although type on row is enough
+
+                        // View Mode Logic
+                        if (viewMode === 'tactical' && !isOKR) return null; // Hide actions in Planning
+                        if (viewMode === 'strategic' && (isKPI || !isOKR)) return null; // Hide KPIs and Actions in Strategy
+                        if (viewMode === 'task' && isOKR) return null; // Hide OKRs/KPIs in FUP
+
+                        return (
+                            <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
+                                {/* Sidebar Label */}
+                                <div className="sticky left-0 w-[300px] shrink-0 bg-white border-r border-slate-200 z-10 flex text-sm group">
+                                    <div className={`w-6 flex-shrink-0 flex items-center justify-center
+                                            ${goal.category === 'Health' ? 'bg-teal-500' :
+                                            goal.category === 'Wealth' ? 'bg-emerald-500' :
+                                                goal.category === 'Family' ? 'bg-indigo-500' :
+                                                    goal.category === 'Business' ? 'bg-blue-600' : 'bg-slate-400'}
+                                         `} />
+
+                                    <div className="flex-1 p-3 flex flex-col justify-center border-r border-slate-100 overflow-hidden">
+                                        {rIdx === 0 && <div className="font-bold text-slate-900 truncate mb-0.5">{goal.title}</div>}
+                                        <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : 'text-sm text-slate-700 font-bold'}`}>
+                                            {isKPI && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />}
+                                            {row.label}
+                                        </div>
+                                    </div>
+
+                                    <div className="w-16 flex items-center justify-center bg-slate-50 text-[10px] font-bold text-slate-400 border-l border-slate-100">
+                                        {isOKR ? (isKPI ? 'KPI' : 'OKR') : 'ACT'}
+                                    </div>
+                                </div>
+
+                                {/* Data Cells */}
+                                {(viewMode === 'strategic' ?
+                                    Array.from({ length: 36 }, (_, i) => {
+                                        const yearOffset = Math.floor(i / 12);
+                                        const monthIndex = i % 12;
+                                        const m = MONTHS[monthIndex] || 'Err';
+                                        return { month: m, year: startYear + yearOffset, key: `${startYear + yearOffset}-${m}` };
+                                    })
+                                    :
+                                    MONTHS.map(m => ({ month: m, year: startYear, key: `${startYear}-${m}` }))
+                                ).map(({ month: m, year: y, key }) => (
+                                    <div key={key} className={`${(viewMode === 'operational' || viewMode === 'task') ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-100 flex items-center justify-center p-1 transition-all`}>
+                                        {isOKR ? (
+                                            (() => {
+                                                const metricRow = row as MetricRow;
+                                                const data = (metricRow.monthlyData || []).find((d: any) => d.monthId === m && d.year === y);
+                                                const hasData = data && data.target !== null;
+                                                const hasResult = data && data.actual !== null && data.actual !== undefined;
+
+                                                if (!hasData) return <span className="text-slate-200 text-[10px]">-</span>;
+
+                                                const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue
+                                                    ? (Number(data.actual) >= Number(data.target))
+                                                    : (Number(data.actual) <= Number(data.target)));
+
+                                                if (isKPI) {
+                                                    if (!hasResult) return <span className="text-slate-300 text-[10px]">-</span>;
+                                                    return <span className={`text-xs font-bold ${isSuccess ? 'text-emerald-600' : 'text-rose-500'}`}>{data.actual}</span>;
+                                                } else {
+                                                    if (!hasResult) return <div className="w-full h-full bg-slate-50/50 rounded flex items-center justify-center"><span className="text-slate-300 text-[10px]">-</span></div>;
+                                                    return (
+                                                        <div className={`w-full h-full rounded-md flex flex-col items-center justify-center shadow-sm ${isSuccess ? 'bg-emerald-500 shadow-emerald-200' : 'bg-rose-500 shadow-rose-200'}`}>
+                                                            <span className="text-white font-black text-sm">{data.actual}</span>
+                                                        </div>
+                                                    );
+                                                }
+                                            })()
+                                        ) : (
+                                            // Action Row
+                                            (viewMode === 'operational' || viewMode === 'task') ? (
+                                                <div className="flex w-full h-full">
+                                                    {MONTH_WEEKS[m].map(w => {
+                                                        const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === y);
+                                                        const tbd = weekActions.filter(a => a.status === 'TBD').length;
+                                                        const done = weekActions.filter(a => a.status === 'DONE').length;
+
+                                                        return (
+                                                            <div key={w} className="flex-1 border-r border-slate-50 last:border-0 flex items-center justify-center hover:bg-slate-50 transition-colors cursor-help" title={weekActions.map(a => `- ${a.title}`).join('\n')}>
+                                                                {weekActions.length > 0 && (
+                                                                    <div className="flex flex-col gap-0.5 items-center">
+                                                                        {done > 0 && <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-sm" />}
+                                                                        {tbd > 0 && <span className="h-1.5 w-1.5 rounded-full bg-amber-400 shadow-sm" />}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            ) : (
+                                                // Tactical/Strategic - No actions shown or simple summary
+                                                null
+                                            )
+                                        )}
+
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    })}
+                </div>
+            ))}
         </div>
-    );
+    </div>
+);
 }
