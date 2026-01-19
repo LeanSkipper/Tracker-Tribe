@@ -109,14 +109,25 @@ export default function TribeDetailsPage() {
 
                 // Check for SOP signature (if member and not creator/admin)
                 // Note: We need to check the current user's membership details
-                const currentMember = data.tribe.members.find((m: any) => m.id === data.currentUserId);
+                // Check for SOP signature (if member and not creator/admin)
+                // Note: We need to check the current user's membership details
+                // API returns member with flattened user details, but userId is the key connector
+                const currentMember = data.tribe.members.find((m: any) => m.userId === data.currentUserId);
+
+                // Only show modal if:
+                // 1. Member exists
+                // 2. SOPs exist
+                // 3. Member hasn't signed
+                // 4. User is NOT the creator (creators implicitly agree)
                 if (currentMember && data.tribe.standardProcedures && !currentMember.signedSOPAt && data.tribe.creatorId !== data.currentUserId) {
                     setShowSOPModal(true);
                 }
 
                 // If Admin, fetch applications
                 const isCreator = data.tribe.creatorId === data.currentUserId;
-                const isAdmin = isCreator || data.tribe.members.some((m: any) => m.id === data.currentUserId && m.role === 'ADMIN');
+                // Fix admin check: use userId for comparison
+                const isAdmin = isCreator || (currentMember?.role === 'ADMIN');
+
 
                 if (isAdmin) {
                     const appRes = await fetch(`/api/tribes/${tribeId}/applications`);
