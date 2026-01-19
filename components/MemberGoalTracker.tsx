@@ -136,7 +136,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
     return (
         <div className="flex-1 overflow-x-auto" ref={scrollContainerRef}>
             <div className="inline-block min-w-full">
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">n
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
 
                     {/* Header Row (Months/Weeks) */}
                     <div className="sticky top-0 z-20 bg-slate-50 border-b border-slate-200 flex">
