@@ -267,6 +267,9 @@ model Tribe {
   meetingTimeHour     Int?     // 0-23
   meetingTimeMinute   Int?     // 0-59
   
+  // Admin Content
+  standardProcedures  String?  // Markdown content for SOPs, rules, etc.
+  
   // Matchmaking Criteria (11 categories)
   matchmakingAgeRange         Boolean @default(false)
   matchmakingAgeRangeDesc     String?

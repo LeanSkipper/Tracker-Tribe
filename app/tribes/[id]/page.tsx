@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, CheckCircle2, Target } from 'lucide-react';
+import TribeCapacityVisualizer from '@/components/TribeCapacityVisualizer';
+import { ArrowLeft, Users, CheckCircle2, Target, Settings, FileText, UserPlus, Share2, Edit3, X, Save, Copy } from 'lucide-react';
 import TribeReliabilityCircle from '@/components/TribeReliabilityCircle';
 import MemberGoalTracker from '@/components/MemberGoalTracker';
 
@@ -40,6 +41,8 @@ type Tribe = {
     topic?: string;
     meetingTime?: string;
     creatorId?: string;
+    maxMembers: number;
+    standardProcedures?: string;
     members: Member[];
 };
 
@@ -54,8 +57,14 @@ export default function TribeDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [trackerMode, setTrackerMode] = useState<ViewMode>('operational');
-
     const [error, setError] = useState<string | null>(null);
+
+    // Admin Console State
+    const [adminTab, setAdminTab] = useState<'info' | 'sops' | 'members' | 'apps'>('info');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<any>({});
+    const [applications, setApplications] = useState<any[]>([]);
+    const [saving, setSaving] = useState(false);
 
     const fetchTribeDetails = useCallback(async () => {
         try {
@@ -65,6 +74,25 @@ export default function TribeDetailsPage() {
                 const data = await res.json();
                 setTribe(data.tribe);
                 setCurrentUserId(data.currentUserId);
+                setEditForm({
+                    name: data.tribe.name,
+                    description: data.tribe.description,
+                    meetingTime: data.tribe.meetingTime,
+                    topic: data.tribe.topic,
+                    standardProcedures: data.tribe.standardProcedures || ''
+                });
+
+                // If Admin, fetch applications
+                const isCreator = data.tribe.creatorId === data.currentUserId;
+                const isAdmin = isCreator || data.tribe.members.some((m: any) => m.id === data.currentUserId && m.role === 'ADMIN');
+
+                if (isAdmin) {
+                    const appRes = await fetch(`/api/tribes/${tribeId}/applications`);
+                    if (appRes.ok) {
+                        const appData = await appRes.json();
+                        setApplications(appData.applications || []);
+                    }
+                }
             } else {
                 const errData = await res.json().catch(() => ({}));
                 setError(errData.details || errData.error || 'Failed to load tribe details');
@@ -82,6 +110,43 @@ export default function TribeDetailsPage() {
             fetchTribeDetails();
         }
     }, [tribeId, fetchTribeDetails]);
+
+    const handleUpdateTribe = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/tribes/${tribeId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editForm)
+            });
+            if (res.ok) {
+                setIsEditing(false);
+                fetchTribeDetails();
+                alert('Tribe updated successfully!');
+            } else {
+                alert('Failed to update tribe');
+            }
+        } catch (e) {
+            alert('Error updating tribe');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleAppAction = async (appId: string, action: 'accept' | 'deny') => {
+        try {
+            const res = await fetch(`/api/tribes/${tribeId}/applications/${appId}/${action}`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                fetchTribeDetails(); // Refresh list and members
+            } else {
+                alert('Failed to process application');
+            }
+        } catch (e) {
+            alert('Error processing application');
+        }
+    };
 
     if (loading) {
         return (
@@ -216,81 +281,249 @@ export default function TribeDetailsPage() {
                         </div>
                     )}
 
-                    {/* Admin Console - Only visible to ADMINs */}
-                    {isAdmin && (
-                        <div className="mt-6 bg-slate-800 text-white p-6 rounded-2xl">
-                            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                🛡️ Admin Console (Hats)
+                    {/* Tribe Capacity & Invite */}
+                    <div className="flex flex-col md:flex-row gap-6 mb-8">
+                        <div className="flex-1">
+                            <TribeCapacityVisualizer members={tribe.members} maxMembers={tribe.maxMembers} />
+                        </div>
+                        <div className="md:w-72">
+                            <div className="bg-indigo-600 rounded-2xl p-6 text-white shadow-lg shadow-indigo-200">
+                                <h3 className="font-bold flex items-center gap-2 mb-2">
+                                    <Share2 size={18} /> Invite Peers
+                                </h3>
+                                <p className="text-indigo-100 text-xs mb-4">
+                                    Share this link to grow your tribe.
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(`${window.location.origin}/tribes/${tribe.id}`);
+                                        alert('Link copied to clipboard!');
+                                    }}
+                                    className="w-full bg-white text-indigo-600 font-bold py-2 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-50 transition-colors text-sm"
+                                >
+                                    <Copy size={16} /> Copy Invite Link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* VISUALIZATION: Tribe Reliability Circle (Hats) - Moved Up */}
+                    <div className="mb-12">
+                        <TribeReliabilityCircle
+                            members={tribe.members}
+                            averageGrit={averageGrit}
+                        />
+                    </div>
+
+                    {/* SOPs Read-Only View for NON-ADMINS (Displayed if exists) */}
+                    {!isAdmin && tribe.standardProcedures && (
+                        <div className="mb-12 bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                            <h3 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
+                                <FileText className="text-indigo-600" /> Standard Procedures
                             </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="bg-slate-700 p-4 rounded-xl">
-                                    <h4 className="font-bold mb-2">Manage Hats</h4>
+                            <div className="prose prose-slate max-w-none">
+                                <pre className="whitespace-pre-wrap font-sans text-slate-600">{tribe.standardProcedures}</pre>
+                            </div>
+                        </div>
+                    )}
+
+
+                    {/* ADMIN CONSOLE */}
+                    {isAdmin && (
+                        <div className="mb-12 bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+                            <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
+                                <h3 className="text-xl font-black flex items-center gap-3">
+                                    🛡️ Admin Console
+                                </h3>
+                                <div className="flex bg-slate-800 rounded-lg p-1">
+                                    <button onClick={() => setAdminTab('info')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${adminTab === 'info' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Info</button>
+                                    <button onClick={() => setAdminTab('sops')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${adminTab === 'sops' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>SOPs</button>
+                                    <button onClick={() => setAdminTab('members')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${adminTab === 'members' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>Roles</button>
+                                    <button onClick={() => setAdminTab('apps')} className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${adminTab === 'apps' ? 'bg-indigo-500 text-white shadow' : 'text-slate-400 hover:text-white'}`}>
+                                        Apps {applications.length > 0 && <span className="ml-1 bg-red-500 text-white px-1.5 py-0.5 rounded-full text-[10px]">{applications.length}</span>}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="p-8">
+                                {/* TAB: INFO */}
+                                {adminTab === 'info' && (
+                                    <div className="space-y-6">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h4 className="font-bold text-slate-700">General Information</h4>
+                                            <button
+                                                onClick={() => isEditing ? handleUpdateTribe() : setIsEditing(true)}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-colors ${isEditing ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                            >
+                                                {isEditing ? <><Save size={16} /> Save Changes</> : <><Edit3 size={16} /> Edit Info</>}
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Tribe Name</label>
+                                                <input
+                                                    disabled={!isEditing}
+                                                    className="w-full text-lg font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0"
+                                                    value={editForm.name || ''}
+                                                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Topic</label>
+                                                <input
+                                                    disabled={!isEditing}
+                                                    className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0"
+                                                    value={editForm.topic || ''}
+                                                    onChange={e => setEditForm({ ...editForm, topic: e.target.value })}
+                                                />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
+                                                <textarea
+                                                    disabled={!isEditing}
+                                                    rows={3}
+                                                    className="w-full text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0 disabled:resize-none"
+                                                    value={editForm.description || ''}
+                                                    onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Meeting Time</label>
+                                                <input
+                                                    disabled={!isEditing}
+                                                    className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0"
+                                                    value={editForm.meetingTime || ''}
+                                                    onChange={e => setEditForm({ ...editForm, meetingTime: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* TAB: SOPs */}
+                                {adminTab === 'sops' && (
+                                    <div>
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h4 className="font-bold text-slate-700">Standard Operating Procedures</h4>
+                                            <button
+                                                onClick={handleUpdateTribe}
+                                                disabled={saving}
+                                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-sm hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                                            >
+                                                <Save size={16} /> Save SOPs
+                                            </button>
+                                        </div>
+                                        <p className="text-sm text-slate-500 mb-4">Define your tribe's rules, roles, and rituals here. All members can view this.</p>
+                                        <textarea
+                                            rows={12}
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 font-mono text-sm text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none shadow-inner"
+                                            placeholder="# Tribe Rules\n\n1. Be on time.\n2. Respect the circle."
+                                            value={editForm.standardProcedures || ''}
+                                            onChange={e => setEditForm({ ...editForm, standardProcedures: e.target.value })}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* TAB: ROLES (Existing Logic) */}
+                                {adminTab === 'members' && (
                                     <div className="grid grid-cols-1 gap-3">
                                         {tribe.members.map(member => (
-                                            <div key={member.id} className="bg-slate-600 p-3 rounded-lg flex flex-col gap-2 shadow-sm border border-slate-500/50">
-                                                <div className="flex items-center justify-between">
-                                                    <span className="text-sm font-bold truncate pr-2">{member.name}</span>
+                                            <div key={member.id} className="bg-slate-50 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-100">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+                                                        {member.avatarUrl ? <img src={member.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-slate-500">{member.name[0]}</div>}
+                                                    </div>
+                                                    <div>
+                                                        <div className="font-bold text-slate-900">{member.name}</div>
+                                                        <div className="text-xs text-slate-500">Grit: {member.grit}%</div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex flex-col md:flex-row gap-3">
                                                     <select
                                                         value={member.role}
                                                         onChange={async (e) => {
                                                             const newRole = e.target.value;
-                                                            try {
-                                                                const res = await fetch(`/api/tribes/${tribe.id}/roles`, {
-                                                                    method: 'PATCH',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    // Determine if we should preserve custom title or clear it? 
-                                                                    // Use case: Admin changes hat, custom title likely stays unless cleared.
-                                                                    // We pass the current customTitle to ensure it's not lost if the API did a full replace (it does update).
-                                                                    body: JSON.stringify({ memberId: member.id, role: newRole, customTitle: member.customTitle })
-                                                                });
-                                                                if (res.ok) fetchTribeDetails();
-                                                            } catch (err) { alert('Failed'); }
+                                                            await fetch(`/api/tribes/${tribe.id}/roles`, {
+                                                                method: 'PATCH',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ memberId: member.id, role: newRole, customTitle: member.customTitle })
+                                                            });
+                                                            fetchTribeDetails();
                                                         }}
-                                                        className="bg-slate-800 text-white text-xs p-1.5 rounded border border-slate-500 focus:border-indigo-500 focus:outline-none"
+                                                        className="bg-white text-slate-700 text-sm p-2 rounded-lg border border-slate-300 focus:border-indigo-500 outline-none"
                                                     >
-                                                        <option value="ADMIN">Admin (Green)</option>
-                                                        <option value="MODERATOR">Moderator (Orange)</option>
-                                                        <option value="TIME_KEEPER">Time Keeper (Black)</option>
-                                                        <option value="SPECIAL_GUEST">Special Guest (Purple)</option>
-                                                        <option value="PLAYER">Player (None/Custom)</option>
+                                                        <option value="ADMIN">Admin (Leader)</option>
+                                                        <option value="MODERATOR">Moderator</option>
+                                                        <option value="TIME_KEEPER">Time Keeper</option>
+                                                        <option value="SPECIAL_GUEST">Special Guest</option>
+                                                        <option value="PLAYER">Player</option>
                                                     </select>
-                                                </div>
-                                                {/* Custom Title Input */}
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] text-slate-300 uppercase tracking-wide w-12 shrink-0">Specific Role:</span>
                                                     <input
                                                         type="text"
-                                                        placeholder="e.g. Finance Wizard"
-                                                        className="flex-1 bg-slate-800 text-white text-xs p-1.5 rounded border border-slate-500 focus:border-indigo-500 focus:outline-none"
+                                                        placeholder="Specific Role (e.g. Scribe)"
+                                                        className="bg-white text-slate-700 text-sm p-2 rounded-lg border border-slate-300 focus:border-indigo-500 outline-none"
                                                         defaultValue={member.customTitle || ''}
                                                         onBlur={async (e) => {
                                                             const val = e.target.value;
-                                                            if (val === member.customTitle) return; // No change
-                                                            try {
-                                                                await fetch(`/api/tribes/${tribe.id}/roles`, {
-                                                                    method: 'PATCH',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ memberId: member.id, role: member.role, customTitle: val })
-                                                                });
-                                                                fetchTribeDetails();
-                                                            } catch (err) { console.error(err); }
+                                                            if (val === member.customTitle) return;
+                                                            await fetch(`/api/tribes/${tribe.id}/roles`, {
+                                                                method: 'PATCH',
+                                                                headers: { 'Content-Type': 'application/json' },
+                                                                body: JSON.stringify({ memberId: member.id, role: member.role, customTitle: val })
+                                                            });
+                                                            fetchTribeDetails();
                                                         }}
                                                     />
                                                 </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                )}
+
+                                {/* TAB: APPLICATIONS */}
+                                {adminTab === 'apps' && (
+                                    <div>
+                                        <h4 className="font-bold text-slate-700 mb-4">Pending Applications ({applications.length})</h4>
+                                        {applications.length === 0 ? (
+                                            <div className="text-center py-8 text-slate-400 font-bold bg-slate-50 rounded-xl border border-slate-100 border-dashed">
+                                                No pending applications.
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {applications.map(app => (
+                                                    <div key={app.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between gap-4">
+                                                        <div>
+                                                            <div className="font-bold text-slate-900 text-lg">{app.user.name}</div>
+                                                            <div className="text-sm text-slate-500 italic">"{app.message || 'No message provided.'}"</div>
+                                                            <div className="text-xs text-slate-400 mt-1">Applied: {new Date(app.createdAt).toLocaleDateString()}</div>
+                                                        </div>
+                                                        <div className="flex gap-2 items-center">
+                                                            <button
+                                                                onClick={() => handleAppAction(app.id, 'accept')}
+                                                                className="px-4 py-2 bg-emerald-500 text-white rounded-lg font-bold hover:bg-emerald-600 transition-colors shadow-emerald-100 shadow-md"
+                                                            >
+                                                                Accept
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleAppAction(app.id, 'deny')}
+                                                                className="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold hover:bg-slate-200 transition-colors"
+                                                            >
+                                                                Deny
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
-                </div>
 
-                {/* VISUALIZATION: Tribe Reliability Circle (Hats) */}
-                <TribeReliabilityCircle
-                    members={tribe.members}
-                    averageGrit={averageGrit}
-                />
+                </div>
 
                 {/* SHARED TRACKER VIEW */}
                 <div className="mt-12">
