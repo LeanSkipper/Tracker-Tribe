@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
     try {
         const { id: tribeId } = await params;
-        const { memberId, role } = await req.json();
+        const { memberId, role, customTitle } = await req.json();
 
         // 1. Authenticate user
         const user = await getSession();
@@ -36,7 +36,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
                 id: memberId
             },
             data: {
-                role: role // 'ADMIN', 'MODERATOR', 'TIME_KEEPER', 'PLAYER'
+                role: role, // 'ADMIN', 'MODERATOR', 'TIME_KEEPER', 'PLAYER', 'SPECIAL_GUEST'
+                customTitle: customTitle
             }
         });
 
