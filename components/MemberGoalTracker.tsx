@@ -297,5 +297,5 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
             </div>
         </div>
         </div >
-            );
+    );
 }
