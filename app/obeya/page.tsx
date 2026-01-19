@@ -19,7 +19,7 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
 }, {} as Record<string, string[]>);
 
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
-type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'DONE'; };
+type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; };
 type MetricRow = {
     id: string;
     type: 'OKR' | 'KPI';
@@ -1336,22 +1336,44 @@ export default function ObeyaPage() {
                                                                         );
                                                                     })()
                                                                 ) : (
-                                                                    viewMode === 'operational' ? MONTH_WEEKS[m].map(w => {
-                                                                        const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
-                                                                        const tbdCount = weekActions.filter(a => a.status === 'TBD').length;
-                                                                        const doneCount = weekActions.filter(a => a.status === 'DONE').length;
+                                                                    viewMode === 'operational' ? (
+                                                                        <div className="flex w-full h-full gap-1">
+                                                                            {MONTH_WEEKS[m].map(w => {
+                                                                                const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
 
-                                                                        return (
-                                                                            <button key={w} onClick={() => setActiveWeekModal({ week: w, goalId: goal.id })} className="flex-1 h-full border-r border-gray-50 last:border-0 hover:bg-blue-50 transition-colors flex flex-col items-center justify-center p-1 group/btn gap-1">
-                                                                                {weekActions.length > 0 ? (
-                                                                                    <div className="flex gap-1 items-center">
-                                                                                        {tbdCount > 0 && <span className="text-[9px] font-bold text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{tbdCount}</span>}
-                                                                                        {doneCount > 0 && <span className="text-[9px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded-full">{doneCount}</span>}
+                                                                                return (
+                                                                                    <div key={w} className="flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 bg-gray-50/30 min-h-[80px]">
+                                                                                        {weekActions.map(a => (
+                                                                                            <div
+                                                                                                key={a.id}
+                                                                                                draggable
+                                                                                                className={`p-2 rounded-lg border shadow-sm text-xs font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                                                                                                        a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+                                                                                                            a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                                                                                                'bg-white border-gray-200 text-gray-700'
+                                                                                                    }`}
+                                                                                            >
+                                                                                                <div className="flex items-start gap-1">
+                                                                                                    <svg className="w-3 h-3 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8h16M4 16h16" />
+                                                                                                    </svg>
+                                                                                                    <div className="flex-1 leading-tight">{a.title}</div>
+                                                                                                </div>
+                                                                                            </div>
+                                                                                        ))}
+
+                                                                                        <button
+                                                                                            onClick={() => setActiveWeekModal({ week: w, goalId: goal.id })}
+                                                                                            className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-2 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 flex items-center justify-center gap-1 text-[10px] font-bold uppercase"
+                                                                                        >
+                                                                                            <Plus size={12} />
+                                                                                            Add
+                                                                                        </button>
                                                                                     </div>
-                                                                                ) : <Plus size={14} className="text-gray-300 opacity-0 group-hover/btn:opacity-100" />}
-                                                                            </button>
-                                                                        );
-                                                                    }) : null
+                                                                                );
+                                                                            })}
+                                                                        </div>
+                                                                    ) : null
                                                                 )
                                                                 }
                                                             </div>
