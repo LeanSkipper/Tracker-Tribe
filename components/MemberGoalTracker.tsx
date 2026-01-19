@@ -10,7 +10,7 @@ type MetricRow = { id: string; type: 'OKR' | 'KPI'; label: string; monthlyData: 
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
 type GoalCategory = { id: string; category: string; title: string; rows: (MetricRow | ActionRow)[]; };
 
-type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task';
+type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'team-work';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
@@ -127,12 +127,12 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                         :
                         MONTHS.map(m => ({ month: m, year: startYear, key: `${startYear}-${m}` }))
                     ).map(({ month: m, year: y, key }) => (
-                        <div key={key} className={`${viewMode === 'operational' ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-200 transition-all duration-300`}>
+                        <div key={key} className={`${(viewMode === 'operational' || viewMode === 'task') ? 'w-[20rem]' : viewMode === 'team-work' ? 'w-[64rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-200 transition-all duration-300`}>
                             <div className="bg-slate-100/50 text-center py-1 font-bold text-slate-700 text-sm border-b border-slate-200 flex flex-col">
                                 <span>{m}</span>
                                 {viewMode === 'strategic' && <span className="text-[9px] text-slate-400 font-normal">{y}</span>}
                             </div>
-                            {viewMode === 'operational' || viewMode === 'task' ? (
+                            {viewMode === 'operational' || viewMode === 'task' || viewMode === 'team-work' ? (
                                 <div className="flex bg-slate-50">
                                     {MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[9px] text-slate-400 py-1 border-r border-slate-100 last:border-0">{w}</div>)}
                                 </div>
@@ -151,7 +151,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                             // View Mode Logic
                             if (viewMode === 'tactical' && !isOKR) return null; // Hide actions in Planning
                             if (viewMode === 'strategic' && (isKPI || !isOKR)) return null; // Hide KPIs and Actions in Strategy
-                            if (viewMode === 'task' && isOKR) return null; // Hide OKRs/KPIs in FUP
+                            if ((viewMode === 'task' || viewMode === 'team-work') && isOKR) return null; // Hide OKRs/KPIs in FUP/Team Work
 
                             return (
                                 <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
@@ -188,7 +188,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                         :
                                         MONTHS.map(m => ({ month: m, year: startYear, key: `${startYear}-${m}` }))
                                     ).map(({ month: m, year: y, key }) => (
-                                        <div key={key} className={`${(viewMode === 'operational' || viewMode === 'task') ? 'w-[20rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-100 flex items-center justify-center p-1 transition-all`}>
+                                        <div key={key} className={`${(viewMode === 'operational' || viewMode === 'task') ? 'w-[20rem]' : viewMode === 'team-work' ? 'w-[64rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-slate-100 flex items-center justify-center p-1 transition-all`}>
                                             {isOKR ? (
                                                 (() => {
                                                     const metricRow = row as MetricRow;
@@ -216,12 +216,29 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                                 })()
                                             ) : (
                                                 // Action Row
-                                                (viewMode === 'operational' || viewMode === 'task') ? (
-                                                    <div className="flex w-full h-full">
+                                                (viewMode === 'operational' || viewMode === 'task' || viewMode === 'team-work') ? (
+                                                    <div className="flex w-full h-full gap-1">
                                                         {MONTH_WEEKS[m].map(w => {
                                                             const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === y);
                                                             const tbd = weekActions.filter(a => a.status === 'TBD').length;
                                                             const done = weekActions.filter(a => a.status === 'DONE').length;
+
+                                                            if (viewMode === 'team-work') {
+                                                                // CARD VIEW
+                                                                return (
+                                                                    <div key={w} className="flex-1 min-w-[15rem] border-r border-slate-100 last:border-0 p-2 flex flex-col gap-2 bg-slate-50/30">
+                                                                        {weekActions.length === 0 && <div className="text-[9px] text-slate-300 text-center mt-2">{w}</div>}
+                                                                        {weekActions.map(a => (
+                                                                            <div key={a.id} className={`p-3 rounded-lg border shadow-sm text-xs font-medium flex flex-col gap-1 ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' : 'bg-white border-slate-200 text-slate-700'}`}>
+                                                                                <div className="font-bold">{a.title}</div>
+                                                                                <div className="flex justify-between items-center mt-1 opacity-60 text-[10px] uppercase">
+                                                                                    <span>{a.status}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                );
+                                                            }
 
                                                             return (
                                                                 <div key={w} className="flex-1 border-r border-slate-50 last:border-0 flex items-center justify-center hover:bg-slate-50 transition-colors cursor-help" title={weekActions.map(a => `- ${a.title}`).join('\n')}>

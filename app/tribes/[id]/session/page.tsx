@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Users, Target, Calendar, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import MemberGoalTracker from '@/components/MemberGoalTracker';
 
-type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task';
+type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'team-work';
 
 export default function SessionPage() {
     const params = useParams();
@@ -15,7 +15,7 @@ export default function SessionPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [tribe, setTribe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [trackerMode, setTrackerMode] = useState<ViewMode>('operational');
+    const [trackerMode, setTrackerMode] = useState<ViewMode>('team-work');
 
     useEffect(() => {
         if (tribeId) {
@@ -108,7 +108,7 @@ export default function SessionPage() {
                         {/* View Switcher */}
                         <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
                             {[
-                                { id: 'task', label: 'FUP' },
+                                { id: 'team-work', label: 'Team Work' },
                                 { id: 'operational', label: 'Execution' },
                                 { id: 'tactical', label: 'Planning' },
                                 { id: 'strategic', label: 'Strategy' }
