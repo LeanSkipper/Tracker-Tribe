@@ -489,7 +489,7 @@ export default function TribeDetailsPage() {
                                             <div key={member.id} className="bg-slate-50 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-100">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
-                                                        {member.avatarUrl ? <img src={member.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-slate-500">{member.name[0]}</div>}
+                                                        {member.avatarUrl ? <img src={member.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-slate-500">{(member.name || '?')[0]}</div>}
                                                     </div>
                                                     <div>
                                                         <div className="font-bold text-slate-900">{member.name}</div>
@@ -624,7 +624,7 @@ export default function TribeDetailsPage() {
                                             <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
-                                                {member.name.charAt(0)}
+                                                {(member.name || '?').charAt(0)}
                                             </div>
                                         )}
                                     </div>
