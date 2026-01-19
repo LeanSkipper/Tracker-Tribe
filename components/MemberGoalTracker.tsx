@@ -277,7 +277,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                                 })()
                                             ) : (
                                                 // Action Row
-                                                (viewMode === 'operational' || viewMode === 'task' || viewMode === 'team-work') ? (
+                                                (viewMode === 'operational' || viewMode === 'task') ? (
                                                     <div className="flex w-full h-full gap-1">
                                                         {MONTH_WEEKS[m].map(w => {
                                                             const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === y);
