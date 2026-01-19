@@ -50,7 +50,7 @@ export default function TribeCapacityVisualizer({ members, maxMembers }: TribeCa
                                 />
                             ) : (
                                 <span className="text-indigo-600 font-bold text-sm">
-                                    {slot.data?.name.charAt(0)}
+                                    {(slot.data?.name || '?').charAt(0)}
                                 </span>
                             )
                         ) : (

@@ -133,7 +133,7 @@ export default function TribeReliabilityCircle({ members, averageGrit }: TribeRe
 
                                     {/* Member Name */}
                                     <div className="absolute top-5 w-full text-center px-1 z-20">
-                                        <div className="text-sm font-bold text-slate-800 truncate">{member.name.split(' ')[0]}</div>
+                                        <div className="text-sm font-bold text-slate-800 truncate">{(member.name || 'Unknown').split(' ')[0]}</div>
                                         {/* Optional stats or avatar background? For now keeping it clean as per "Bubble" model text based */}
                                     </div>
 
