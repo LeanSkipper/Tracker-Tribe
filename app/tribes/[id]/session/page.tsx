@@ -144,8 +144,16 @@ export default function SessionPage() {
                                         )}
                                     </div>
                                     <div>
-                                        <h3 className="text-xl font-bold text-slate-900">
+                                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                                             {member.name}
+                                            {(member.customTitle || member.role) && (
+                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${(member.customTitle || member.role) === 'ADMIN' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                                        (member.customTitle || member.role) === 'MODERATOR' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
+                                                            'bg-slate-50 text-slate-500 border-slate-200'
+                                                    }`}>
+                                                    {member.customTitle || member.role}
+                                                </span>
+                                            )}
                                         </h3>
                                         <div className="text-xs font-bold text-slate-400 uppercase">Level {member.level || 1} • Grit {member.grit || 0}%</div>
                                     </div>
