@@ -32,7 +32,7 @@ export default function TableCard({ id, name, reliabilityRate, members, maxSeats
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
             className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 hover:shadow-2xl hover:border-indigo-200 transition-all cursor-pointer group"
-            onClick={() => router.push(`/tribes/${id}/session`)}
+            onClick={() => router.push(`/tribes/${id}`)}
         >
             {/* Reliability indicator and mini table */}
             <div className="flex items-center justify-between mb-6">

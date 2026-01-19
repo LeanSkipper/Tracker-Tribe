@@ -184,8 +184,17 @@ export default function TribeDetailsPage() {
                     <h1 className="text-4xl font-black text-slate-900 mb-2">TABLE details</h1>
                     <h2 className="text-2xl font-bold text-indigo-600 mb-2">{tribe.name}</h2>
                     {tribe.meetingTime && (
-                        <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm text-sm font-bold text-slate-700">
-                            <span>📅</span> {tribe.meetingTime}
+                        <div className="flex items-center gap-4">
+                            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm text-sm font-bold text-slate-700">
+                                <span>📅</span> {tribe.meetingTime}
+                            </div>
+                            <button
+                                onClick={() => router.push(`/tribes/${tribe.id}/session`)}
+                                className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-sm flex items-center gap-2"
+                            >
+                                <Users size={16} />
+                                Enter Live Session
+                            </button>
                         </div>
                     )}
 
