@@ -27,7 +27,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
                     include: {
                         okrs: {
                             include: {
-                                actions: true
+                                actions: true,
+                                sharedTribes: true,
                             }
                         }
                     }
@@ -97,22 +98,54 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
             });
         }
 
-        // Filter Goals based on Visibility if PARTIAL
+        // 4. Granular Goal/OKR Filtering
         let visibleGoals = targetUser.goals;
 
-        if (accessLevel === 'PARTIAL') {
-            visibleGoals = targetUser.goals.filter(g => g.visibility === 'PUBLIC');
-            // If 'TRIBE' visibility, but we are not in tribe (otherwise we'd be FULL), then hide? 
-            // Logic: 'TRIBE' means only Tribe members can see.
-            // So PARTIAL (Level match but not Tribe) sees ONLY PUBLIC.
-        }
+        if (currentUserId !== targetUserId) {
+            const viewerTribeIds = currentUser.memberships.map(m => m.tribeId);
+            const targetTribeIds = targetUser.memberships.map(m => m.tribeId);
+            const commonTribes = targetTribeIds.filter(id => viewerTribeIds.includes(id));
+            const hasCommonTribe = commonTribes.length > 0;
 
-        // If FULL (Self or Tribe Member), show everything (maybe excluding PRIVATE unless Self?)
-        // Requirement: "every member can see the shared OKR/KPI... no matter level."
-        if (accessLevel === 'FULL' && currentUserId !== targetUserId) {
-            // Even tribe members shouldn't see PRIVATE goals?
-            // Usually PRIVATE is self-only.
-            visibleGoals = targetUser.goals.filter(g => g.visibility !== 'PRIVATE');
+            visibleGoals = targetUser.goals.map(goal => {
+                // 1. Check Goal Visibility
+                if (goal.visibility === 'PRIVATE') return null;
+                if (goal.visibility === 'PUBLIC') return goal; // Public goals show all OKRs
+
+                // 2. Handle TRIBE Visibility (Granular Check)
+                if (goal.visibility === 'TRIBE') {
+                    // Pre-check: Must share at least one tribe generally, OR be exempt?
+                    // "Partial" access (Level check) sees only Public. 
+                    // "Full" access (Tribe or Self) gets here.
+                    // If we are here, we likely have accessLevel='FULL' OR 'PARTIAL'.
+
+                    if (accessLevel === 'PARTIAL' && !hasCommonTribe) return null; // Partial/Level only -> See Public ONLY.
+
+                    // Filter OKRs
+                    const visibleOKRs = goal.okrs.filter(okr => {
+                        // Cast to any because sharedTribes might not be in the default type unless included
+                        // We must ensure 'sharedTribes' was included in the query.
+                        // sharedTribes is included in the query
+                        const sharedTribes = okr.sharedTribes as { id: string }[] | undefined;
+
+                        // Case A: Granular sharing is defined
+                        if (sharedTribes && sharedTribes.length > 0) {
+                            // Visible if Viewer is in one of the shared tribes
+                            return sharedTribes.some(t => viewerTribeIds.includes(t.id));
+                        }
+
+                        // Case B: No granular sharing defined (Legacy/Default)
+                        // Visible if Viewer shares ANY tribe with Target (which we already checked with hasCommonTribe)
+                        return true;
+                    });
+
+                    if (visibleOKRs.length === 0) return null;
+
+                    return { ...goal, okrs: visibleOKRs };
+                }
+
+                return null;
+            }).filter(g => g !== null) as any;
         }
 
         return NextResponse.json({

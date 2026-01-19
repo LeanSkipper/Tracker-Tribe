@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { Target, Plus, ChevronLeft, ChevronRight, Edit2, X, Layout, BarChart2, ZoomIn, ZoomOut, Trash2, TrendingUp, Circle, Clock, CheckCircle2, Users, Lightbulb } from 'lucide-react';
+import { Target, Plus, Edit2, X, Layout, BarChart2, Trash2, CheckCircle2, Users, ChevronLeft, ChevronRight, TrendingUp, Circle } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import { GoalTemplate } from '@/lib/goalTemplates';
 import KanbanBoard from '@/components/KanbanBoard';
@@ -20,7 +20,20 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
 
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
 type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'DONE'; };
-type MetricRow = { id: string; type: 'OKR' | 'KPI'; label: string; unit: string; startValue: number; targetValue: number; startYear: number; startMonth: number; deadlineYear: number; deadlineMonth: number; monthlyData: MonthlyData[]; };
+type MetricRow = {
+    id: string;
+    type: 'OKR' | 'KPI';
+    label: string;
+    unit: string;
+    startValue: number;
+    targetValue: number;
+    startYear: number;
+    startMonth: number;
+    deadlineYear: number;
+    deadlineMonth: number;
+    monthlyData: MonthlyData[];
+    sharedTribeIds?: string[]; // Granular sharing
+};
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
 type GoalCategory = { id: string; category: string; title: string; isShared?: boolean; rows: (MetricRow | ActionRow)[]; };
 
@@ -52,16 +65,80 @@ const generateMonthlyTargets = (start: number, end: number, startYear: number, s
 
 // --- COMPONENTS ---
 
+type Tribe = { id: string; name: string };
+
+const TribeSelector = ({ selectedTribeIds, allTribes, onChange }: { selectedTribeIds: string[], allTribes: Tribe[], onChange: (ids: string[]) => void }) => {
+    const [isOpen, setIsOpen] = useState(false);
+
+    return (
+        <div className="relative">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className={`text-[9px] px-2 py-1 rounded-full border flex items-center gap-1 font-bold whitespace-nowrap transition-colors
+                    ${selectedTribeIds.length > 0
+                        ? 'bg-indigo-50 text-indigo-600 border-indigo-200 hover:bg-indigo-100'
+                        : 'bg-gray-50 text-gray-400 border-gray-200 hover:bg-gray-100'
+                    }`}
+            >
+                <Users size={10} />
+                {selectedTribeIds.length === 0 ? 'Share...' :
+                    selectedTribeIds.length === allTribes.length ? 'All Tribes' :
+                        `${selectedTribeIds.length} Tribe${selectedTribeIds.length > 1 ? 's' : ''}`}
+            </button>
+
+            {isOpen && (
+                <>
+                    <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+                    <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-xl z-20 p-2 overflow-hidden">
+                        <div className="text-[10px] uppercase font-bold text-gray-400 mb-2 px-2">Share with...</div>
+                        <div className="space-y-1 max-h-40 overflow-y-auto">
+                            {allTribes.map(tribe => {
+                                const isSelected = selectedTribeIds.includes(tribe.id);
+                                return (
+                                    <button
+                                        key={tribe.id}
+                                        onClick={() => {
+                                            if (isSelected) onChange(selectedTribeIds.filter(id => id !== tribe.id));
+                                            else onChange([...selectedTribeIds, tribe.id]);
+                                        }}
+                                        className={`w-full text-left px-2 py-1.5 rounded-lg text-xs font-medium flex items-center justify-between group
+                                            ${isSelected ? 'bg-indigo-50 text-indigo-700' : 'hover:bg-gray-50 text-gray-700'}`}
+                                    >
+                                        <span className="truncate">{tribe.name}</span>
+                                        {isSelected && <CheckCircle2 size={12} />}
+                                    </button>
+                                )
+                            })}
+                            {allTribes.length === 0 && <div className="text-xs text-gray-400 px-2 italic">You are not in any tribes</div>}
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    );
+};
+
 const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, onClose: () => void, onSave: (g: GoalCategory) => void, onDelete: (id: string) => void }) => {
     const existingOKRs = (goal?.rows?.filter(r => 'type' in r && r.type === 'OKR') as MetricRow[]) || [];
     const existingKPIs = (goal?.rows?.filter(r => 'type' in r && r.type === 'KPI') as MetricRow[]) || [];
 
     const [vision, setVision] = useState(goal?.title || '');
     const [category, setCategory] = useState(goal?.category || LIFE_AREAS[0]);
-    const [isShared, setIsShared] = useState(!!goal?.isShared); // New: Sharing state
+    const [isShared, setIsShared] = useState(!!goal?.isShared);
+    const [myTribes, setMyTribes] = useState<Tribe[]>([]);
 
-    const [okrs, setOkrs] = useState<Omit<MetricRow, 'monthlyData'>[]>(
+    useEffect(() => {
+        fetch('/api/tribes/mine')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setMyTribes(data);
+            })
+            .catch(err => console.error("Failed to fetch my tribes", err));
+    }, []);
+
+    const [okrs, setOkrs] = useState<Omit<MetricRow, 'monthlyData'>[]>(() =>
         existingOKRs.length > 0
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             ? existingOKRs.map(({ monthlyData, ...rest }) => rest)
             : [{
                 id: 'okr-' + Date.now(),
@@ -94,7 +171,7 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                         `}
                     >
                         <Users size={12} />
-                        {isShared ? 'Shared with Tribe' : 'Private Goal'}
+                        {isShared ? 'Shared (Custom)' : 'Private Goal'}
                     </button>
                 </div>
                 <div className="space-y-4">
@@ -114,7 +191,22 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                         {okrs.map((okr, idx) => (
                             <div key={okr.id} className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 relative group/okr">
                                 {idx > 0 && <button onClick={() => setOkrs(okrs.filter((_, i) => i !== idx))} className="absolute right-2 top-2 p-1 text-blue-300 hover:text-red-500 opacity-0 group-hover/okr:opacity-100 transition-opacity"><X size={14} /></button>}
-                                <div className="mb-3"><input className="w-full p-2 border rounded-lg bg-white font-bold text-gray-700 text-sm" value={okr.label} onChange={e => { const n = [...okrs]; n[idx].label = e.target.value; setOkrs(n) }} placeholder="OKR Metric Name" /></div>
+                                <div className="flex justify-between items-start mb-3 gap-2">
+                                    <input className="w-full p-2 border rounded-lg bg-white font-bold text-gray-700 text-sm" value={okr.label} onChange={e => { const n = [...okrs]; n[idx].label = e.target.value; setOkrs(n) }} placeholder="OKR Metric Name" />
+                                    {isShared && (
+                                        <div className="pt-2">
+                                            <TribeSelector
+                                                allTribes={myTribes}
+                                                selectedTribeIds={okr.sharedTribeIds || []}
+                                                onChange={(ids) => {
+                                                    const n = [...okrs];
+                                                    n[idx].sharedTribeIds = ids;
+                                                    setOkrs(n);
+                                                }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                                 <div className="grid grid-cols-2 gap-4">
                                     <div><label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Start Val</label><input type="number" className="w-full p-2 border rounded-lg bg-white text-sm" value={okr.startValue} onChange={e => { const n = [...okrs]; n[idx].startValue = Number(e.target.value); setOkrs(n) }} /></div>
                                     <div><label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Target Val</label><input type="number" className="w-full p-2 border rounded-lg bg-white text-sm" value={okr.targetValue} onChange={e => { const n = [...okrs]; n[idx].targetValue = Number(e.target.value); setOkrs(n) }} /></div>
@@ -476,7 +568,8 @@ export default function ObeyaPage() {
                                 o.startMonth || 0,
                                 o.deadlineYear || 2026,
                                 o.deadlineMonth || 11
-                            )
+                            ),
+                            sharedTribeIds: o.sharedTribes ? o.sharedTribes.map((t: any) => t.id) : []
                         }));
 
                         // Collect Actions from all OKRs into one ActionRow for the UI group
@@ -526,9 +619,6 @@ export default function ObeyaPage() {
     const [activeWeekModal, setActiveWeekModal] = useState<{ week: string, goalId: string } | null>(null);
     const [activeGraphModal, setActiveGraphModal] = useState<MetricRow | null>(null);
     const [activeCommentModal, setActiveCommentModal] = useState<{ goalId: string, rowId: string, monthData: MonthlyData } | null>(null);
-    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-    const [editingTaskValue, setEditingTaskValue] = useState('');
-    const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
     const [activeTaskDetailModal, setActiveTaskDetailModal] = useState<{ goalId: string, action: ActionCard } | null>(null);
     const [isInspirationOpen, setIsInspirationOpen] = useState(false);
 
@@ -570,7 +660,8 @@ export default function ObeyaPage() {
                             o.currentValue, o.targetValue,
                             o.startYear || 2026, o.startMonth || 0,
                             o.deadlineYear || 2026, o.deadlineMonth || 11
-                        )
+                        ),
+                        sharedTribeIds: o.sharedTribes ? o.sharedTribes.map((t: any) => t.id) : []
                     }));
 
                     const allActions = (g.okrs || []).flatMap((o: any) =>

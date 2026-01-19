@@ -33,6 +33,7 @@ export async function GET() {
                 okrs: {
                     include: {
                         actions: true,
+                        sharedTribes: true,
                     }
                 }
             }
@@ -191,6 +192,9 @@ export async function POST(req: Request) {
                             deadlineYear: row.deadlineYear || 2026,
                             deadlineMonth: row.deadlineMonth || 11,
                             monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
+                            sharedTribes: {
+                                connect: row.sharedTribeIds?.map((id: string) => ({ id })) || []
+                            }
                         }
                     });
                     if (!firstOkrId) firstOkrId = okr.id;
@@ -241,6 +245,7 @@ export async function POST(req: Request) {
                 okrs: {
                     include: {
                         actions: true,
+                        sharedTribes: true,
                     }
                 }
             }
