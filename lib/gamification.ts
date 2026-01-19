@@ -1,50 +1,111 @@
-export interface RankInfo {
-    name: string;
-    icon: string;
-    level: number;
+import { prisma } from '@/lib/prisma'; // Assuming global prisma client exists here, or I will adapt import
+
+// XP Values
+export const XP_TABLE = {
+    FEEDBACK_GIVEN: 1,
+    TASK_GENERATED: 2,
+    TASK_COMPLETED: 3,
+    KPI_RED: 5,
+    KPI_GREEN: 10,
+    OKR_GREEN: 30,
+    SESSION_ATTENDED: 5,
+    PEER_EVALUATION_GIVEN: 5,
+    WEEKLY_CHECKIN: 10,
+
+    // Negatives
+    SESSION_MISSED: -5,
+    TASK_LATE: -2,
+    NO_WEEKLY_CHECKIN: -10
+} as const;
+
+export type XPAction = keyof typeof XP_TABLE;
+
+/**
+ * Calculates Grit based on lifetime positive and negative XP.
+ * Formula: (1 - (TotalNegativeXP / TotalPositiveXP)) * 100
+ * Clamped between 0 and 100.
+ * If TotalPositiveXP is 0, Grit is 100 (benefit of doubt) or 0? 
+ * Let's say 100 for now to avoid punishing new users, unless they have negatives.
+ */
+export function calculateGrit(positive: number, negative: number): number {
+    if (positive === 0) return negative > 0 ? 0 : 100;
+
+    // Use absolute values just in case
+    const pos = Math.abs(positive);
+    const neg = Math.abs(negative);
+
+    const ratio = neg / pos;
+    const grit = (1 - ratio) * 100;
+
+    return Math.max(0, Math.min(100, Math.round(grit)));
 }
 
-export const RANKS: Record<string, RankInfo> = {
-    SCOUT: { name: "Scout", icon: "Bronze Chevron", level: 1 },
-    RANGER: { name: "Ranger", icon: "Silver Shield", level: 2 },
-    GUARDIAN: { name: "Guardian", icon: "Gold Shield with Wings", level: 3 },
-    CAPTAIN: { name: "Captain", icon: "Gold Bars", level: 4 },
-    COMMANDER: { name: "Commander", icon: "Diamond Eagle", level: 5 },
-};
+/**
+ * Awards XP to a user and handles levelling and grit updates.
+ * Usage: await awardXP('user-id', 'TASK_COMPLETED');
+ */
+export async function awardXP(userId: string, action: XPAction) {
+    const xpAmount = XP_TABLE[action];
+    const isPositive = xpAmount > 0;
 
-export function calculateRank(user: any): RankInfo {
-    if (user.manualRank && RANKS[user.manualRank.toUpperCase()]) {
-        return RANKS[user.manualRank.toUpperCase()];
+    try {
+        // Fetch current state
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true,
+                currentXP: true,
+                level: true,
+                lifetimePositiveXP: true,
+                lifetimeNegativeXP: true
+            }
+        });
+
+        if (!user) throw new Error('User not found');
+
+        // Calculate new values
+        let newCurrentXP = user.currentXP + xpAmount;
+        let newLevel = user.level;
+
+        // Handle Level Up (Unlimited levels, every 1000 XP)
+        if (newCurrentXP >= 1000) {
+            const levelsGained = Math.floor(newCurrentXP / 1000);
+            newLevel += levelsGained;
+            newCurrentXP = newCurrentXP % 1000;
+        }
+
+        // Handle negative XP dropping level? 
+        // User said "Level will be increased every 1000XP". Didn't specify dropping.
+        // Assuming level never drops, but currentXP can go negative? 
+        // Let's prevent currentXP from going below 0 for now to keep it simple, 
+        // OR allow it. "Level ... start from 0 of the next level".
+        // If I have 50 XP and get -10, I have 40. 
+        // If I have 0 XP and get -10? 
+        // Let's just track the raw change for currentXP.
+
+        // Update Lifetimes
+        const newLifetimePos = user.lifetimePositiveXP + (isPositive ? xpAmount : 0);
+        const newLifetimeNeg = user.lifetimeNegativeXP + (isPositive ? 0 : Math.abs(xpAmount));
+
+        // Recalculate Grit
+        const newGrit = calculateGrit(newLifetimePos, newLifetimeNeg);
+
+        // Update User
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                currentXP: newCurrentXP,
+                level: newLevel,
+                lifetimePositiveXP: newLifetimePos,
+                lifetimeNegativeXP: newLifetimeNeg,
+                grit: newGrit
+            }
+        });
+
+        return { success: true, newLevel, newCurrentXP, newGrit, amount: xpAmount };
+
+    } catch (error) {
+        console.error('Error in awardXP:', error);
+        return { success: false, error };
     }
-
-    const now = new Date();
-    const createdAt = new Date(user.createdAt);
-    const monthsActive = (now.getFullYear() - createdAt.getFullYear()) * 12 + (now.getMonth() - createdAt.getMonth());
-    const yearsActive = monthsActive / 12;
-
-    const hasGoGiver = user.achievements?.some((a: any) => a.badge?.name === "The Go-Giver");
-    const taskCompletion = user.taskCompletionRate || 0;
-    const attendance = user.sessionsAttended; // This would ideally be a rate for Ranger, but using raw count as requested or assuming last 10 weeks logic
-
-    // Using a simplified logic for the "80% last 10 weeks" since we don't have the history query here, 
-    // we assume sessionsAttended represents the relevant metric for this calculation in the simplified model.
-    const attendanceRate = user.sessionsAttended > 0 ? (user.sessionsAttended / Math.max(user.sessionsAttended, 10)) : 0;
-
-    // Rank 4: Captain
-    if (yearsActive >= 1 && taskCompletion >= 0.85) {
-        return RANKS.CAPTAIN;
-    }
-
-    // Rank 3: Guardian
-    if (monthsActive >= 6 && user.totalSponsorship >= 500 && hasGoGiver) {
-        return RANKS.GUARDIAN;
-    }
-
-    // Rank 2: Ranger
-    if (attendanceRate >= 0.8 && taskCompletion >= 0.6) {
-        return RANKS.RANGER;
-    }
-
-    // Rank 1: Scout (Default)
-    return RANKS.SCOUT;
 }

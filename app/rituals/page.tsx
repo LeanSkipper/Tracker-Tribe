@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, AlertCircle } from 'lucide-react';
+import { Save } from 'lucide-react';
 
 export default function RitualsPage() {
     const [form, setForm] = useState({
@@ -14,10 +14,27 @@ export default function RitualsPage() {
     const [submitted, setSubmitted] = useState(false);
 
     // Mock submission
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitted(true);
-        // In a real app, POST to /api/rituals
+
+        try {
+            const res = await fetch('/api/rituals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(form)
+            });
+
+            if (res.ok) {
+                setSubmitted(true);
+                // Reset form
+                setForm({ win: '', stuck: '', planVsActual: '', mood: 3 });
+            } else {
+                alert('Failed to submit ritual. Please try again.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error submitting ritual.');
+        }
     };
 
     if (submitted) {

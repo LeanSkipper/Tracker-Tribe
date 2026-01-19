@@ -75,9 +75,13 @@ model User {
   totalReliability Float @default(0) // Average of last calculations
   
   // Gamification Module (Grit System)
-  grit             Int      @default(0)
+  grit             Int      @default(0)    // Calculated score (0-100) based on Neg/Pos XP ratio
+  currentXP        Int      @default(0)    // Progress to next level (0-1000)
+  lifetimePositiveXP Int    @default(0)
+  lifetimeNegativeXP Int    @default(0)
+  
   sessionsAttended Int      @default(0)
-  taskCompletionRate Float  @default(0)
+  taskCompletionRate Float  @default(0) // DEPRECATED in favor of Grit/XP
   totalSponsorship   Float  @default(0)
   manualRank         String? // For Commander/Admin override
   projectROI         Float?  // For ROI King medal
@@ -177,9 +181,29 @@ model User {
   // Peer Matching
   sentMatches     Match[]         @relation("MatchInitiator")
   receivedMatches Match[]         @relation("MatchTarget")
+  
+  // Peer Reviews (Reputation)
+  reviewsReceived PeerReview[]    @relation("UserReviews")
+  reviewsGiven    PeerReview[]    @relation("UserGivenReviews")
+  reviewCount     Int             @default(0)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model PeerReview {
+  id          String   @id @default(cuid())
+  reviewerId  String
+  reviewer    User     @relation("UserGivenReviews", fields: [reviewerId], references: [id])
+  
+  userId      String   // The person being reviewed
+  user        User     @relation("UserReviews", fields: [userId], references: [id])
+  
+  stars       Int      // 1-5
+  badges      String[] // e.g. ["Helpful", "Visionary", "Executor"]
+  comment     String?
+  
+  createdAt   DateTime @default(now())
 }
 
 model BadgeCatalog {

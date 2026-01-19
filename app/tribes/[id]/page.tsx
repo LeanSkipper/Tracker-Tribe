@@ -26,7 +26,7 @@ type Member = {
     avatarUrl?: string;
     role: string;
     customTitle?: string;
-    reliability: number;
+    grit: number;
     badges: Badge[];
     goals: Goal[];
     actionPlansCount: number;
@@ -165,7 +165,7 @@ export default function TribeDetailsPage() {
         );
     }
 
-    const overallReliability = tribe.members.reduce((acc, m) => acc + m.reliability, 0) / (tribe.members.length || 1);
+    const averageGrit = tribe.members.reduce((acc, m) => acc + m.grit, 0) / (tribe.members.length || 1);
 
     // --- MEMBER VIEW (TRIBE ROOM) ---
     return (
@@ -271,7 +271,7 @@ export default function TribeDetailsPage() {
                 {/* VISUALIZATION: Tribe Reliability Circle (Hats) */}
                 <TribeReliabilityCircle
                     members={tribe.members}
-                    overallReliability={overallReliability}
+                    averageGrit={averageGrit}
                 />
 
                 {/* SHARED TRACKER VIEW */}

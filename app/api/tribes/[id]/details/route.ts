@@ -57,15 +57,11 @@ export async function GET(
         const membersWithStats = tribe.members.map(membership => {
             const user = membership.user;
 
-            // Calculate reliability based on action completion from goals
-            const allActions = user.goals.flatMap(g => g.okrs.flatMap(okr => okr.actions));
-            const totalActions = allActions.length;
-            const doneActions = allActions.filter(a => a.status === 'DONE').length;
-            const actionScore = totalActions > 0 ? (doneActions / totalActions) : 0.5;
-
-            // For now, use action score as the primary reliability metric
-            // In the future, this can be enhanced with attendance and ritual data
-            const reliability = Math.round(actionScore * 100);
+            // Use Grit directly from the user profile
+            const grit = user.grit || 0;
+            const level = user.level || 1;
+            const xp = user.currentXP || 0;
+            const reputation = user.reputationScore || 0;
 
             // Format badges
             const badges = user.achievements.slice(0, 5).map(a => ({
@@ -88,10 +84,13 @@ export async function GET(
                 name: user.name,
                 avatarUrl: user.avatarUrl,
                 role: membership.role,
-                reliability,
+                grit,
+                level,
+                xp,
+                reputation,
                 badges,
                 goals,
-                attendanceRate: 100 // Default to 100% for now
+                attendanceRate: 100 // To be implemented later with session tracking
             };
         });
 

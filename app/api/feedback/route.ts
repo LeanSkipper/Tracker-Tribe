@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
+import { awardXP } from '@/lib/gamification';
 
 export async function POST(req: NextRequest) {
     try {
@@ -21,23 +22,11 @@ export async function POST(req: NextRequest) {
 
         if (session) {
             userId = session.id;
-            // Base XP for feedback
-            xpEarned += 1;
 
-            // Extra XP for email (if provided)
-            if (email) {
-                xpEarned += 1;
-            }
-
-            // Update user XP
-            if (xpEarned > 0) {
-                await prisma.user.update({
-                    where: { id: userId },
-                    data: {
-                        experience: { increment: xpEarned }
-                    }
-                });
-            }
+            // Award XP using central engine
+            // Feedback Given: +1 XP
+            await awardXP(userId, 'FEEDBACK_GIVEN');
+            xpEarned = 1;
         }
 
         // Store feedback in database
@@ -50,9 +39,6 @@ export async function POST(req: NextRequest) {
                 createdAt: timestamp ? new Date(timestamp) : new Date(),
             },
         });
-
-        // Optionally, you could also send an email notification here
-        // or integrate with a service like Slack, Discord, etc.
 
         return NextResponse.json(
             {

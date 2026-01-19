@@ -34,8 +34,10 @@ export async function GET() {
                 // KPI fields
                 grit: true,
                 level: true,
-                experience: true,
-                taskCompletionRate: true,
+                currentXP: true,
+                lifetimePositiveXP: true,
+                lifetimeNegativeXP: true,
+                reviewCount: true,
                 createdAt: true,
             },
         });
@@ -156,8 +158,10 @@ export async function PUT(req: Request) {
                 // KPI fields
                 grit: true,
                 level: true,
-                experience: true,
-                taskCompletionRate: true,
+                currentXP: true,
+                lifetimePositiveXP: true,
+                lifetimeNegativeXP: true,
+                reviewCount: true,
                 createdAt: true,
             },
         });

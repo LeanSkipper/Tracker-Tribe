@@ -27,10 +27,12 @@ export async function GET(req: Request) {
     }
 }
 
+import { awardXP } from "@/lib/gamification";
+
 export async function POST(req: Request) {
     try {
         const data = await req.json();
-        const { win, stuckPoint, mood, attendance } = data;
+        const { win, stuckPoint, planVsActual, mood, attendance } = data;
 
         // Get user from session
         const user = await getSession();
@@ -41,25 +43,26 @@ export async function POST(req: Request) {
                 userId: user.id,
                 win,
                 stuckPoint,
+                planVsActual,
                 mood: parseInt(mood) || 5,
                 attendance: attendance ?? true,
                 date: new Date(),
             }
         });
 
-        // Update gamification metrics
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                sessionsAttended: { increment: attendance ? 1 : 0 },
-                grit: { increment: 5 } // Basic engagement boost
-            }
-        });
+        // Award XP for Weekly Check-in
+        const xpResult = await awardXP(user.id, 'WEEKLY_CHECKIN');
 
-        // Trigger Achievement Check
+        // Optional: Trigger Achievement Check (if not handled by awardXP)
         const awarded = await checkAndAwardAchievements(user.id);
 
-        return NextResponse.json({ ...ritual, newlyAwarded: awarded });
+        return NextResponse.json({
+            ...ritual,
+            xpAwarded: xpResult.amount,
+            newLevel: xpResult.level,
+            newXP: xpResult.currentXP,
+            newlyAwarded: awarded
+        });
     } catch (error) {
         console.error("POST Ritual Error:", error);
         return NextResponse.json({ error: "Failed to submit ritual" }, { status: 500 });

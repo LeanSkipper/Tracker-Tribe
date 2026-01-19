@@ -34,16 +34,16 @@ type Member = {
     avatarUrl?: string;
     role: string;
     customTitle?: string;
-    reliability: number;
+    grit: number;
     badges: any[];
 };
 
 type TribeReliabilityCircleProps = {
     members: Member[];
-    overallReliability: number;
+    averageGrit: number;
 };
 
-export default function TribeReliabilityCircle({ members, overallReliability }: TribeReliabilityCircleProps) {
+export default function TribeReliabilityCircle({ members, averageGrit }: TribeReliabilityCircleProps) {
 
     const getHat = (role: string, customTitle?: string) => {
         // If it's a specific role (custom title set and role is likely PLAYER or CUSTOM), show Grey hat
@@ -86,13 +86,13 @@ export default function TribeReliabilityCircle({ members, overallReliability }: 
 
                 <div className="relative z-20">
                     <h2 className="text-3xl font-black text-slate-800 leading-none mb-1">Tribe</h2>
-                    <h2 className="text-2xl font-black text-slate-800 leading-none mb-2 underline decoration-indigo-300 underline-offset-4">reliability</h2>
+                    <h2 className="text-2xl font-black text-slate-800 leading-none mb-2 underline decoration-indigo-300 underline-offset-4">Grit</h2>
 
                     <div className="my-3">
-                        <span className="text-5xl font-black text-indigo-600 drop-shadow-sm">{Math.round(overallReliability)}%</span>
+                        <span className="text-5xl font-black text-indigo-600 drop-shadow-sm">{Math.round(averageGrit)}</span>
                     </div>
 
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">(members average %)</p>
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-tight">(average score)</p>
                 </div>
             </div>
 
@@ -137,13 +137,13 @@ export default function TribeReliabilityCircle({ members, overallReliability }: 
                                         {/* Optional stats or avatar background? For now keeping it clean as per "Bubble" model text based */}
                                     </div>
 
-                                    {/* Reliability % */}
+                                    {/* Grit % */}
                                     <div className="mt-4 flex flex-col items-center z-20">
-                                        <div className="text-[9px] font-bold text-slate-500 uppercase">Reliability</div>
-                                        <div className={`text-2xl font-black ${member.reliability >= 80 ? 'text-green-600' :
-                                            member.reliability >= 50 ? 'text-amber-600' : 'text-rose-500'
+                                        <div className="text-[9px] font-bold text-slate-500 uppercase">Grit</div>
+                                        <div className={`text-2xl font-black ${member.grit >= 80 ? 'text-purple-600' :
+                                            member.grit >= 50 ? 'text-blue-600' : 'text-slate-400'
                                             }`}>
-                                            {member.reliability}%
+                                            {member.grit}
                                         </div>
                                     </div>
 

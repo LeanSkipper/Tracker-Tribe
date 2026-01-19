@@ -156,8 +156,8 @@ export default function ProfilePage() {
 
     const level = profile?.level || 1;
     const grit = profile?.grit || 0;
-    const xp = profile?.experience || 0;
-    const completion = profile?.taskCompletionRate ? Math.round(profile.taskCompletionRate * 100) : 0;
+    const xp = profile?.currentXP || 0;
+    // const completion = profile?.taskCompletionRate ? Math.round(profile.taskCompletionRate * 100) : 0; // Deprecated
     const reputation = profile?.reputationScore || 0;
 
     // Calculate progress percentages for visual scales
@@ -327,55 +327,7 @@ export default function ProfilePage() {
                             )}
                         </div>
 
-                        {/* Completion KPI */}
-                        <div
-                            onClick={() => toggleKPI('completion')}
-                            className="bg-gradient-to-br from-orange-50 to-orange-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-orange-300"
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-14 h-14 bg-orange-600 rounded-xl flex items-center justify-center">
-                                        <Target className="text-white" size={28} />
-                                    </div>
-                                    <div>
-                                        <div className="text-sm font-bold text-gray-600">Completion Rate</div>
-                                        <div className="text-3xl font-black text-orange-600">{completion}%</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="text-right">
-                                        <div className="w-32 bg-orange-200 rounded-full h-3">
-                                            <div
-                                                className="bg-gradient-to-r from-orange-500 to-orange-700 h-3 rounded-full transition-all duration-500"
-                                                style={{ width: `${completion}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="text-xs text-gray-600 mt-1">{completion < 70 ? 'Needs work' : completion < 90 ? 'Good!' : 'Excellent!'}</div>
-                                    </div>
-                                    {expandedKPI === 'completion' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                                </div>
-                            </div>
-
-                            {expandedKPI === 'completion' && (
-                                <div className="mt-4 pt-4 border-t border-orange-200">
-                                    <h4 className="font-bold text-gray-900 mb-2">How to Improve Completion:</h4>
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-orange-600 font-bold">•</span>
-                                            <span>Focus on finishing started tasks before adding new ones</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-orange-600 font-bold">•</span>
-                                            <span>Break large tasks into smaller, achievable steps</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-orange-600 font-bold">•</span>
-                                            <span>Set realistic deadlines and stick to them</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            )}
-                        </div>
+                        {/* Completion KPI Removed */}
 
                         {/* Reputation KPI */}
                         <div

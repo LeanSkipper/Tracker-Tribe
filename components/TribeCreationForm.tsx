@@ -28,7 +28,7 @@ interface TribeFormData {
     minLevel: number;
     minGrit: number;
     minExperience: number;
-    minCompletionRate: number;
+    // Removed minCompletionRate
     minReputation: number;
 
     // Pricing
@@ -66,7 +66,7 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
         minLevel: 1,
         minGrit: 0,
         minExperience: 0,
-        minCompletionRate: 0,
+        // minCompletionRate removed
         minReputation: 0,
 
         isPaid: false,
@@ -96,7 +96,7 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
                         minLevel: formData.minLevel,
                         minGrit: formData.minGrit,
                         minExperience: formData.minExperience,
-                        minCompletionRate: formData.minCompletionRate,
+                        // minCompletionRate removed
                         minReputation: formData.minReputation,
                     }),
                 });
@@ -110,7 +110,7 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
         };
 
         fetchEstimate();
-    }, [formData.minLevel, formData.minGrit, formData.minExperience, formData.minCompletionRate, formData.minReputation]);
+    }, [formData.minLevel, formData.minGrit, formData.minExperience, formData.minReputation]);
 
     const toggleCriteria = (key: keyof MatchmakingCriteria) => {
         setFormData(prev => ({
@@ -520,24 +520,7 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
                                     </div>
 
                                     {/* Completion Rate */}
-                                    <div>
-                                        <label className="block text-sm font-bold text-gray-700 mb-2">
-                                            Minimum Completion Rate (%)
-                                        </label>
-                                        <div className="flex items-center gap-2">
-                                            <input
-                                                type="range"
-                                                min="0"
-                                                max="100"
-                                                value={formData.minCompletionRate}
-                                                onChange={(e) => setFormData({ ...formData, minCompletionRate: parseInt(e.target.value) })}
-                                                className="flex-1"
-                                            />
-                                            <span className="w-12 text-center text-sm font-bold text-blue-600">
-                                                {formData.minCompletionRate}%
-                                            </span>
-                                        </div>
-                                    </div>
+                                    {/* Completion Rate Removed */}
                                 </div>
                             )}
                         </div>

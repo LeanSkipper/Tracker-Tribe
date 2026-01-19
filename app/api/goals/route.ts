@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Visibility } from "@prisma/client";
 import { checkPermission, unauthorizedResponse, forbiddenResponse, getSession } from "@/lib/auth";
 import { getDemoGoalsData } from "@/lib/guestSession";
+import { awardXP } from "@/lib/gamification";
 
 export const runtime = "nodejs";
 
@@ -111,6 +112,62 @@ export async function POST(req: Request) {
 
         // Handle OKRs and Actions
         if (rows) {
+            // Fetch existing state for Gamification (only if not new)
+            let oldGoal = null;
+            if (!isNewGoal) {
+                oldGoal = await prisma.goal.findUnique({
+                    where: { id: goal.id },
+                    include: { okrs: { include: { actions: true } } }
+                });
+            }
+
+            // --- GAMIFICATION LOGIC START ---
+            if (oldGoal) {
+                const oldActionsMap = new Map<string, any>();
+                oldGoal.okrs.forEach(o => o.actions.forEach(a => oldActionsMap.set(a.id, a)));
+
+                // Flatten new actions from payload
+                const newActions = [];
+                for (const row of rows) {
+                    if (!('type' in row) && (row as any).actions) {
+                        newActions.push(...(row as any).actions);
+                    }
+                }
+
+                for (const actionCard of newActions) {
+                    // Check if New or Existing
+                    if (!oldActionsMap.has(actionCard.id)) {
+                        // New Action -> +2 XP
+                        await awardXP(user.id, 'TASK_GENERATED');
+                    } else {
+                        // Existing Action
+                        const oldAction = oldActionsMap.get(actionCard.id);
+                        const isDone = actionCard.status === 'DONE';
+                        const wasDone = oldAction.status === 'DONE';
+
+                        if (isDone && !wasDone) {
+                            // Task Completed -> +3 XP
+                            await awardXP(user.id, 'TASK_COMPLETED');
+
+                            // Check Lateness
+                            const weekNum = parseInt(actionCard.weekId.replace('W', ''));
+                            const year = actionCard.year || 2025;
+                            const startOfYear = new Date(year, 0, 1);
+                            const weekDate = new Date(startOfYear);
+                            weekDate.setDate(startOfYear.getDate() + (weekNum - 1) * 7);
+
+                            const endOfWeek = new Date(weekDate);
+                            endOfWeek.setDate(weekDate.getDate() + 7);
+
+                            if (new Date() > endOfWeek) {
+                                await awardXP(user.id, 'TASK_LATE');
+                            }
+                        }
+                    }
+                }
+            }
+            // --- GAMIFICATION LOGIC END ---
+
             // Delete existing OKRs and their actions for this goal (only if updating)
             if (!isNewGoal) {
                 await prisma.oKR.deleteMany({ where: { goalId: goal.id } });
@@ -128,10 +185,11 @@ export async function POST(req: Request) {
                             type: row.type,
                             targetValue: row.targetValue,
                             currentValue: row.startValue,
-                            startYear: row.startYear,
-                            startMonth: row.startMonth,
-                            deadlineYear: row.deadlineYear,
-                            deadlineMonth: row.deadlineMonth,
+                            // Ensure backward compat or defaults
+                            startYear: row.startYear || 2026,
+                            startMonth: row.startMonth || 0,
+                            deadlineYear: row.deadlineYear || 2026,
+                            deadlineMonth: row.deadlineMonth || 11,
                             monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
                         }
                     });
@@ -153,11 +211,9 @@ export async function POST(req: Request) {
                             else if (actionCard.status === 'WIP') dbStatus = "NOT_DONE";
 
                             // Convert weekId (e.g., "W1") to a date
-                            // Extract week number from weekId
                             const weekNum = parseInt(actionCard.weekId.replace('W', ''));
                             const year = actionCard.year || 2025;
 
-                            // Calculate approximate date for the week
                             const startOfYear = new Date(year, 0, 1);
                             const weekDate = new Date(startOfYear);
                             weekDate.setDate(startOfYear.getDate() + (weekNum - 1) * 7);
