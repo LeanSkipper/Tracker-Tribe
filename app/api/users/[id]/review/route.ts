@@ -1,20 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth'; // Adjust path if needed
+import { getSession } from '@/lib/auth';
 import { awardXP } from '@/lib/gamification';
 
 export async function POST(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
-    const session = await getServerSession(authOptions);
-    if (!session || !session.user) {
+    const user = await getSession();
+    if (!user) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const revieweeId = params.id;
-    const reviewerId = session.user.id;
+    const { id: revieweeId } = await params;
+    const reviewerId = user.id;
 
     if (revieweeId === reviewerId) {
         return NextResponse.json({ error: 'Cannot review yourself' }, { status: 400 });
