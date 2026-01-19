@@ -73,10 +73,18 @@ export async function GET(
             // Format goals with parsed monthly data
             const goals = user.goals.map(goal => ({
                 ...goal,
-                okrs: goal.okrs.map((okr: any) => ({
-                    ...okr,
-                    monthlyData: okr.monthlyData ? JSON.parse(okr.monthlyData) : null
-                }))
+                okrs: goal.okrs.map((okr: any) => {
+                    let parsedData = null;
+                    try {
+                        parsedData = okr.monthlyData ? JSON.parse(okr.monthlyData) : null;
+                    } catch (e) {
+                        console.error(`Failed to parse monthlyData for OKR ${okr.id}`, e);
+                    }
+                    return {
+                        ...okr,
+                        monthlyData: parsedData
+                    };
+                })
             }));
 
             return {
