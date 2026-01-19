@@ -42,19 +42,60 @@ export async function POST(req: Request) {
         const trialEnd = new Date(now);
         trialEnd.setDate(trialEnd.getDate() + 60); // 60 days from now
 
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                name: name || null,
-                userProfile: 'SOFT',
-                subscriptionStatus: 'TRIAL',
-                subscriptionPlan: 'SOFT_FREE',
-                trialStartDate: now,
-                trialEndDate: trialEnd,
-                reputationScore: 0,
-                profileCompleteness: name ? 10 : 0,
+        // Check for referral cookie
+        const cookieHeader = req.headers.get('cookie');
+        let referralCode = null;
+        if (cookieHeader) {
+            const cookies = Object.fromEntries(cookieHeader.split('; ').map(c => c.split('=')));
+            referralCode = cookies['tracker_tribe_ref'];
+        }
+
+        let referrerId = null;
+        if (referralCode) {
+            const referrer = await prisma.user.findUnique({ where: { referralCode } });
+            if (referrer) {
+                referrerId = referrer.id;
             }
+        }
+
+        const user = await prisma.$transaction(async (tx) => {
+            const createdUser = await tx.user.create({
+                data: {
+                    email,
+                    password: hashedPassword,
+                    name: name || null,
+                    userProfile: 'SOFT',
+                    subscriptionStatus: 'TRIAL',
+                    subscriptionPlan: 'SOFT_FREE',
+                    trialStartDate: now,
+                    trialEndDate: trialEnd,
+                    reputationScore: 0,
+                    profileCompleteness: name ? 10 : 0,
+                },
+            });
+
+            // Process referral if exists
+            if (referrerId) {
+                await tx.referral.create({
+                    data: {
+                        referrerId: referrerId,
+                        referredUserId: createdUser.id,
+                        status: "COMPLETED", // Signup completed
+                    }
+                });
+
+                // Award 50 XP to referrer
+                await tx.user.update({
+                    where: { id: referrerId },
+                    data: {
+                        currentXP: { increment: 50 },
+                        lifetimePositiveXP: { increment: 50 },
+                        // Recalculate level if needed (simple logic provided here, ideally centralized)
+                    }
+                });
+            }
+
+            return createdUser;
         });
 
         console.log('[SIGNUP] User created successfully:', user.id);

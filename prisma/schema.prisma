@@ -178,6 +178,11 @@ model User {
   subscriptions Subscription[]
   payments     Payment[]
   
+  // Referral System
+  referralCode    String?   @unique
+  referredBy      Referral? @relation("ReferredBy")
+  referrals       Referral[] @relation("Referrer")
+  
   // Peer Matching
   sentMatches     Match[]         @relation("MatchInitiator")
   receivedMatches Match[]         @relation("MatchTarget")
@@ -561,4 +566,18 @@ model Feedback {
   userId      String?  // User email if authenticated
   
   createdAt   DateTime @default(now())
+}
+
+model Referral {
+  id            String   @id @default(cuid())
+  referrerId    String
+  referrer      User     @relation("Referrer", fields: [referrerId], references: [id])
+  referredUserId String?  @unique
+  referredUser  User?    @relation("ReferredBy", fields: [referredUserId], references: [id])
+  
+  status        String   @default("PENDING") // PENDING, COMPLETED
+  rewardClaimed Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

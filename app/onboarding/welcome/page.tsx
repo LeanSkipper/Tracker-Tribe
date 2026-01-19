@@ -1,13 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Target, Lightbulb, TrendingUp, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function WelcomePage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isCreatingGuest, setIsCreatingGuest] = useState(false);
+
+    useEffect(() => {
+        const refCode = searchParams.get('ref');
+        if (refCode) {
+            // Set cookie for 30 days
+            document.cookie = `tracker_tribe_ref=${refCode}; path=/; max-age=${30 * 24 * 60 * 60}`;
+        }
+    }, [searchParams]);
 
     const handleTryAsGuest = async () => {
         // Temporary: Direct redirect until database migration is complete

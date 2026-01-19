@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 
 export const runtime = "nodejs";
 
+import { ensureReferralCode } from "@/lib/referral";
+
 // GET /api/profile - Get current user's profile
 export async function GET() {
     try {
@@ -16,6 +18,9 @@ export async function GET() {
                 { status: 401 }
             );
         }
+
+        // Ensure user has a referral code
+        await ensureReferralCode(user.id);
 
         // Fetch full user profile
         const profile = await prisma.user.findUnique({
@@ -31,6 +36,11 @@ export async function GET() {
                 trialEndDate: true,
                 reputationScore: true,
                 profileCompleteness: true,
+                // Referral
+                referralCode: true,
+                _count: {
+                    select: { referrals: true }
+                },
                 // KPI fields
                 grit: true,
                 level: true,
