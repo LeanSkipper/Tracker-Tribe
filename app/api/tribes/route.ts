@@ -10,20 +10,41 @@ export async function GET(req: Request) {
             include: {
                 _count: {
                     select: { members: true }
+                },
+                members: {
+                    select: {
+                        user: {
+                            select: { grit: true }
+                        }
+                    }
                 }
             },
             orderBy: { createdAt: 'desc' }
         });
 
-        const formattedTribes = tribes.map(t => ({
-            id: t.id,
-            name: t.name,
-            topic: t.topic,
-            meetingTime: t.meetingTime,
-            maxMembers: t.maxMembers,
-            memberCount: t._count.members,
-            matchmakingCriteria: t.matchmakingCriteria
-        }));
+        const formattedTribes = tribes.map(t => {
+            // Calculate average grit
+            const totalGrit = t.members.reduce((acc, m) => acc + (m.user.grit || 0), 0);
+            const avgGrit = t.members.length > 0 ? Math.round(totalGrit / t.members.length) : 0;
+
+            return {
+                id: t.id,
+                name: t.name,
+                topic: t.topic,
+                meetingTime: t.meetingTime,
+                meetingFrequency: t.meetingFrequency,
+                maxMembers: t.maxMembers,
+                memberCount: t._count.members,
+                matchmakingCriteria: t.matchmakingCriteria,
+                // Required Stats
+                minGrit: t.minGrit,
+                minLevel: t.minLevel,
+                minExperience: t.minExperience,
+                minReputation: t.minReputation,
+                // Calculated Stats
+                averageGrit: avgGrit
+            };
+        });
 
         return NextResponse.json(formattedTribes);
     } catch (error) {

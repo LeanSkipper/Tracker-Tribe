@@ -15,15 +15,32 @@ type Tribe = {
     memberCount: number;
     matchmakingCriteria?: string;
     // Extended fields for schedule
+    // Extended fields
+    minGrit: number;
+    minLevel: number;
+    minExperience: number;
+    minReputation: number;
+    averageGrit: number;
     meetingFrequency?: string | null;
     meetingTimeHour?: number | null;
     meetingTimeMinute?: number | null;
+};
+
+type UserStats = {
+    grit: number;
+    level: number;
+    currentXP: number; // This maps to minExperience requirement? Or minExperience maps to 'experience' field? 
+    // Schema says "minExperience" in Tribe, and User has "experience" (deprecated) and "currentXP".
+    // I should probably check "level" mainly. But if "minExperience" is used, I'll map it to currentXP for now or level*1000 + currentXP.
+    // Let's assume minExperience refers to XP.
+    reputationScore: number;
 };
 
 export default function BrowseTribesPage() {
     const router = useRouter();
     const [allTribes, setAllTribes] = useState<Tribe[]>([]);
     const [myTribes, setMyTribes] = useState<Tribe[]>([]);
+    const [userStats, setUserStats] = useState<UserStats | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -31,20 +48,16 @@ export default function BrowseTribesPage() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [allRes, myRes] = await Promise.all([
+            const [allRes, myRes, profileRes] = await Promise.all([
                 fetch('/api/tribes'),
-                fetch('/api/tribes/my')
+                fetch('/api/tribes/my'),
+                fetch('/api/profile')
             ]);
 
-            if (allRes.ok) {
-                const data = await allRes.json();
-                setAllTribes(data);
-            }
+            if (allRes.ok) setAllTribes(await allRes.json());
+            if (myRes.ok) setMyTribes(await myRes.json());
+            if (profileRes.ok) setUserStats(await profileRes.json());
 
-            if (myRes.ok) {
-                const myData = await myRes.json();
-                setMyTribes(myData);
-            }
         } catch (err) {
             console.error('Failed to fetch data:', err);
         } finally {
@@ -60,6 +73,27 @@ export default function BrowseTribesPage() {
         t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.topic?.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    // Helper to render stat match
+    const StatMatch = ({ label, required, userValue, unit = '' }: { label: string, required: number, userValue: number, unit?: string }) => {
+        const isMatch = userValue >= required;
+        // If required is 0, arguably everyone matches, or we don't show it?
+        // User asked to "put in evidence the user stats related to required stats".
+        // If required is 0, let's show it as "Open" or gray.
+        if (required === 0) return null;
+
+        return (
+            <div className="flex flex-col">
+                <span className="text-xs text-slate-400 uppercase font-bold">{label}</span>
+                <div className="flex items-center gap-2">
+                    <span className={`text-sm font-bold ${isMatch ? 'text-emerald-600' : 'text-red-500'}`}>
+                        {userValue}{unit} / {required}{unit}
+                    </span>
+                    {isMatch ? <CheckCircle size={14} className="text-emerald-500" /> : <div className="w-2 h-2 rounded-full bg-red-400" />}
+                </div>
+            </div>
+        );
+    };
 
     if (loading) {
         return (
@@ -138,36 +172,62 @@ export default function BrowseTribesPage() {
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="flex-1 pr-2">
                                                 <h3 className={`text-xl font-black mb-1 leading-tight ${isMember ? 'text-emerald-900' : 'text-slate-900'}`}>{tribe.name}</h3>
-                                                {tribe.topic && (
-                                                    <p className={`text-sm font-bold ${isMember ? 'text-emerald-700' : 'text-indigo-600'}`}>{tribe.topic}</p>
-                                                )}
+                                                <div className="flex flex-wrap gap-2 mt-1">
+                                                    {tribe.topic && (
+                                                        <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${isMember ? 'bg-emerald-200 text-emerald-800' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                            {tribe.topic}
+                                                        </span>
+                                                    )}
+                                                    {tribe.meetingFrequency && (
+                                                        <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                            {tribe.meetingFrequency}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </div>
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isMember ? 'bg-emerald-200 text-emerald-700' : 'bg-indigo-100 text-indigo-600'}`}>
                                                 {isMember ? <CheckCircle size={20} /> : <Users size={20} />}
                                             </div>
                                         </div>
 
-                                        {tribe.meetingTime && (
-                                            <div className="text-sm text-slate-600 mb-3 flex items-center gap-2">
-                                                <span>📅</span> {tribe.meetingTime}
+                                        {/* Stats Row */}
+                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                            <div className="bg-slate-50 p-2 rounded-lg">
+                                                <span className="text-xs text-slate-400 font-bold uppercase block">Members</span>
+                                                <div className="flex items-center gap-1 text-slate-700 font-bold">
+                                                    <Users size={14} />
+                                                    {tribe.memberCount}/{tribe.maxMembers}
+                                                </div>
+                                            </div>
+                                            <div className="bg-slate-50 p-2 rounded-lg">
+                                                <span className="text-xs text-slate-400 font-bold uppercase block">Avg Grit</span>
+                                                <div className="flex items-center gap-1 text-slate-700 font-bold">
+                                                    <span>🔥</span>
+                                                    {tribe.averageGrit}%
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Requirements Match Block */}
+                                        {userStats && (
+                                            <div className="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="text-xs font-bold text-slate-500 uppercase">Entry Requirements</span>
+                                                    {isMember && <span className="text-xs text-emerald-600 font-bold">Joined</span>}
+                                                </div>
+                                                <div className="grid grid-cols-2 gap-y-2 gap-x-4">
+                                                    <StatMatch label="Level" required={tribe.minLevel} userValue={userStats.level} />
+                                                    <StatMatch label="Grit" required={tribe.minGrit} userValue={userStats.grit} unit="%" />
+                                                    <StatMatch label="Rep" required={tribe.minReputation} userValue={userStats.reputationScore} />
+                                                    {/* Using currentXP for Experience comparison roughly */}
+                                                    <StatMatch label="XP" required={tribe.minExperience} userValue={userStats.currentXP} />
+                                                </div>
                                             </div>
                                         )}
 
-                                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
-                                            <Users size={16} />
-                                            <span className="font-bold">
-                                                {tribe.memberCount}/{tribe.maxMembers} Members
-                                            </span>
-                                            {!isMember && tribe.maxMembers - tribe.memberCount > 0 && (
-                                                <span className="text-green-600 font-bold text-xs bg-green-50 px-2 py-0.5 rounded-full">
-                                                    {tribe.maxMembers - tribe.memberCount} spots left
-                                                </span>
-                                            )}
-                                        </div>
-
-                                        {tribe.matchmakingCriteria && (
-                                            <div className={`rounded-xl p-3 mb-4 ${isMember ? 'bg-white/60' : 'bg-slate-50'}`}>
-                                                <p className="text-xs text-slate-600 line-clamp-2">{tribe.matchmakingCriteria}</p>
+                                        {tribe.meetingTime && (
+                                            <div className="text-xs text-slate-500 mb-4 flex items-center gap-1 ml-1">
+                                                <span>📅</span> {tribe.meetingTime}
                                             </div>
                                         )}
                                     </div>
