@@ -18,8 +18,10 @@ type PitStopModalProps = {
 };
 
 export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopModalProps) {
-    const [step, setStep] = useState(0); // 0: Start, 1: Mood, 2: Win, 3: Plan, 4: Lesson, 5: Summary
+    // Steps: 0:Start, 1:Execution(Widget), 2:Mood, 3:Win, 4:Lesson
+    const [step, setStep] = useState(0);
     const [timer, setTimer] = useState(0);
+    const [isMinimized, setIsMinimized] = useState(false);
     const [isActive, setIsActive] = useState(false);
 
     // Form Data
@@ -28,10 +30,8 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
     const [winImage, setWinImage] = useState<string | null>(null);
     const [lesson, setLesson] = useState('');
 
-    // Actions Data
+    // Actions Data (Loaded for submission context if needed, but managing is done on board)
     const [prevActions, setPrevActions] = useState<ActionItem[]>([]);
-    const [newActions, setNewActions] = useState<string[]>(['', '', '']);
-    const [actionUpdates, setActionUpdates] = useState<Record<string, string>>({});
 
     // Timer Logic
     useEffect(() => {
@@ -51,7 +51,7 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Fetch previous actions on mount
+    // Fetch previous actions on mount (only to have data if needed)
     useEffect(() => {
         if (isOpen) {
             fetch('/api/pit-stop/previous-actions')
@@ -66,6 +66,7 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
     const handleStart = () => {
         setIsActive(true);
         setStep(1);
+        setIsMinimized(true); // Start minimized immediately
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,10 +82,8 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
 
     const handleSubmit = async () => {
         setIsActive(false);
-
         try {
-            // 1. Submit Pit Stop Entry
-            const pitStopRes = await fetch('/api/pit-stop', {
+            const res = await fetch('/api/pit-stop', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -96,24 +95,15 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                 })
             });
 
-            if (!pitStopRes.ok) throw new Error('Failed to save Pit Stop');
+            if (!res.ok) throw new Error('Failed to save Pit Stop');
 
-            // 2. Submit Action Updates
-            const updates = Object.entries(actionUpdates).map(([id, status]) => ({ id, status }));
-            const newActionItems = newActions.filter(a => a.trim().length > 0).map(desc => ({ description: desc }));
+            const data = await res.json();
+            toast.success(`Pit Stop Complete! +${data.xp} XP`, { icon: '🎉' });
 
-            await fetch('/api/pit-stop/previous-actions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    updates,
-                    newActions: newActionItems
-                })
-            });
-
-            toast.success('Pit Stop Saved! +20 XP');
-            onComplete();
+            // Force refresh 
+            window.location.reload();
             onClose();
+            onComplete();
 
         } catch (error) {
             console.error(error);
@@ -123,8 +113,49 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
 
     if (!isOpen) return null;
 
+    // Floating Minimized Widget (Step 1: Execution)
+    if (isMinimized) {
+        return (
+            <div className="fixed bottom-6 right-6 z-50 bg-white shadow-2xl rounded-2xl p-4 border border-slate-200 animate-slide-up flex flex-col gap-3 w-72 transform transition-all hover:scale-105">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">Pit Stop Active <span className="animate-pulse text-red-500">●</span></span>
+                    <button onClick={() => setIsMinimized(false)} className="text-[var(--primary)] text-xs font-bold hover:underline">
+                        EXPAND
+                    </button>
+                </div>
+
+                <div className="flex items-center gap-3">
+                    <div className="bg-slate-100 rounded-lg p-2 flex items-center justify-center w-12 h-12">
+                        <Clock className="text-slate-500" size={20} />
+                    </div>
+                    <div>
+                        <div className="text-2xl font-mono font-bold text-slate-700">
+                            {formatTime(timer)}
+                        </div>
+                        <div className="text-[10px] text-slate-400">Duration</div>
+                    </div>
+                </div>
+
+                <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg border border-blue-100 space-y-2">
+                    <p className="font-bold">🎯 Step 1: Execution & Planning</p>
+                    <ul className="list-disc pl-4 space-y-1 text-[11px]">
+                        <li>Mark last week's tasks as <strong>Done</strong> / <strong>Missed</strong>.</li>
+                        <li>Create new tasks for next week.</li>
+                    </ul>
+                </div>
+
+                <button
+                    onClick={() => { setIsMinimized(false); setStep(2); }}
+                    className="w-full bg-[var(--primary)] text-white py-2 rounded-lg font-bold text-xs shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                >
+                    TASKS DONE - NEXT STEP <CheckCircle size={14} />
+                </button>
+            </div>
+        );
+    }
+
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
                 {/* Header */}
                 <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
@@ -132,31 +163,58 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                         <Clock size={20} className="text-emerald-400" />
                         <span className="font-mono text-xl font-bold">{formatTime(timer)}</span>
                     </div>
-                    <div className="text-sm font-medium text-slate-400">
-                        {step === 0 ? 'Ready?' : `Step ${step} of 4`}
+                    <div className="flex items-center gap-4">
+                        {step === 1 && (
+                            <button onClick={() => setIsMinimized(true)} className="text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors border border-slate-700 px-2 py-1 rounded hover:bg-slate-800">
+                                Minimize
+                            </button>
+                        )}
+                        <div className="text-sm font-medium text-slate-400">
+                            {step === 0 ? 'Ready?' : `Step ${step} of 4`}
+                        </div>
+                        <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors" aria-label="Close Modal">
+                            <X size={20} />
+                        </button>
                     </div>
-                    <button onClick={onClose} className="hover:bg-white/10 p-2 rounded-full transition-colors" aria-label="Close Modal">
-                        <X size={20} />
-                    </button>
                 </div>
 
                 {/* Body */}
                 <div className="p-8 overflow-y-auto flex-1">
                     {step === 0 && (
-                        <div className="text-center py-10">
-                            <h2 className="text-3xl font-black text-slate-800 mb-4">Weekly Pit Stop</h2>
+                        <div className="text-center py-10 animate-fade-in">
+                            <h2 className="text-3xl font-black text-slate-800 mb-4">Weekly Pit Stop 🏎️</h2>
                             <p className="text-slate-500 mb-8 max-w-md mx-auto">
-                                Take a moment to reflect, celebrate wins, and calibrate for the week ahead.
+                                The timer will start and this window will minimize so you can focus on updating your goals on the board.
                                 <br />
                                 <span className="text-sm italic mt-2 block">&quot;You can&apos;t improve what you don&apos;t measure.&quot;</span>
                             </p>
-                            <button onClick={handleStart} className="btn btn-primary px-8 py-4 text-xl shadow-lg hover:scale-105 transition-transform">
+                            <button onClick={handleStart} className="px-8 py-4 bg-[var(--primary)] text-white text-xl font-bold rounded-xl shadow-lg hover:scale-105 transition-transform">
                                 START PIT STOP
                             </button>
                         </div>
                     )}
 
                     {step === 1 && (
+                        <div className="text-center py-12 space-y-6 animate-fade-in">
+                            <div className="bg-blue-50 p-6 rounded-full w-24 h-24 mx-auto flex items-center justify-center animate-pulse">
+                                <Clock size={40} className="text-[var(--primary)]" />
+                            </div>
+                            <h3 className="text-2xl font-bold text-slate-700">Execution Mode Active</h3>
+                            <p className="text-lg text-slate-500 max-w-md mx-auto">
+                                Please minimize this window to update your tasks directly on the Kanban board.
+                            </p>
+                            <button onClick={() => setIsMinimized(true)} className="px-6 py-2 border-2 border-[var(--primary)] text-[var(--primary)] font-bold rounded-lg hover:bg-blue-50 transition-colors">
+                                Minimize & Update Tasks
+                            </button>
+                            <div className="pt-4">
+                                <button onClick={() => setStep(2)} className="text-slate-400 text-sm hover:text-slate-600 underline">
+                                    Skip to Mood
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {step === 2 && (
                         <div className="space-y-6 text-center animate-fade-in">
                             <h3 className="text-2xl font-bold text-slate-800">How was your week?</h3>
                             <div className="flex justify-center gap-4 py-8">
@@ -170,14 +228,10 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                                     </button>
                                 ))}
                             </div>
-                            <div className="flex justify-between w-full max-w-xs mx-auto text-xs text-slate-400 font-bold uppercase tracking-wider">
-                                <span>Rough</span>
-                                <span>Epic</span>
-                            </div>
                         </div>
                     )}
 
-                    {step === 2 && (
+                    {step === 3 && (
                         <div className="space-y-6 animate-fade-in">
                             <h3 className="text-2xl font-bold text-slate-800 text-center">Weekly Win 🏆</h3>
                             <p className="text-center text-slate-500">What&apos;s one thing you&apos;re proud of?</p>
@@ -205,59 +259,6 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                                         <input type="file" accept="image/*" onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer" aria-label="Upload Image" />
                                     </>
                                 )}
-                            </div>
-                        </div>
-                    )}
-
-                    {step === 3 && (
-                        <div className="space-y-6 animate-fade-in">
-                            <h3 className="text-2xl font-bold text-slate-800 text-center">Plan vs Actual ⚖️</h3>
-
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Last Week&apos;s Actions</h4>
-                                {prevActions.length === 0 ? (
-                                    <p className="text-sm text-slate-400 italic text-center py-4">No actions tracked last week.</p>
-                                ) : (
-                                    prevActions.map(action => (
-                                        <div key={action.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-100">
-                                            <span className="text-sm font-medium text-slate-700 truncate flex-1 pr-4">{action.description}</span>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => setActionUpdates(prev => ({ ...prev, [action.id]: 'DONE' }))}
-                                                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${actionUpdates[action.id] === 'DONE' || (!actionUpdates[action.id] && action.status === 'DONE') ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-400 hover:bg-slate-300'}`}
-                                                >
-                                                    DONE
-                                                </button>
-                                                <button
-                                                    onClick={() => setActionUpdates(prev => ({ ...prev, [action.id]: 'MISSED' }))}
-                                                    className={`px-3 py-1 rounded text-xs font-bold transition-colors ${actionUpdates[action.id] === 'MISSED' ? 'bg-rose-100 text-rose-700' : 'bg-slate-200 text-slate-400 hover:bg-slate-300'}`}
-                                                >
-                                                    MISSED
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-
-                            <div className="border-t border-slate-100 my-4"></div>
-
-                            {/* New Actions */}
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-[var(--primary)] uppercase tracking-wider">Next Week&apos;s Focus (Max 3)</h4>
-                                {newActions.map((action, idx) => (
-                                    <input
-                                        key={idx}
-                                        value={action}
-                                        onChange={(e) => {
-                                            const updated = [...newActions];
-                                            updated[idx] = e.target.value;
-                                            setNewActions(updated);
-                                        }}
-                                        className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-[var(--primary)] outline-none text-sm"
-                                        placeholder={`Action ${idx + 1} (Start with a verb e.g. "Call", "Draft", "Ship")`}
-                                    />
-                                ))}
                             </div>
                         </div>
                     )}
