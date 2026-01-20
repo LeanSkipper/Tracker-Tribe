@@ -85,6 +85,8 @@ export async function GET(
         // Usually experience = total lifetime, currentXP = progress to next level.
         // Leaderboard used 'experience'.
         const rankingRep = user.reputationScore || 1;
+        const rankingScore = Math.round(user.level * gritPercent * rankingXP * rankingRep);
+
         // Calculate Reputation Breakdown
         const reviews = await prisma.reputationReview.findMany({
             where: { targetUserId: user.id },
