@@ -3,20 +3,16 @@ import { prisma } from '@/lib/prisma';
 
 // Mock function to getting current user ID - replace with actual auth logic later
 // For now, we'll try to get it from headers or use a hardcoded fallback for testing if no auth is set up
-const getCurrentUserId = async (req: Request) => {
-    // TODO: Implement actual session/auth retrieval
-    // For now, returning a placeholder or checking for a specific header
-    const userId = req.headers.get('x-user-id');
-    return userId;
-};
+import { getSession } from '@/lib/auth';
 
 export async function GET(req: Request) {
     try {
-        const userId = await getCurrentUserId(req);
-
-        if (!userId) {
+        const session = await getSession();
+        // If no session, return unauthorized
+        if (!session?.user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const userId = session.user.id;
 
         const search = new URL(req.url).searchParams.get('search') || '';
         const role = new URL(req.url).searchParams.get('role');
