@@ -93,6 +93,15 @@ body {
   }
 }
 
+@layer utilities {
+  .writing-vertical-rl {
+    writing-mode: vertical-rl;
+  }
+  .text-orientation-mixed {
+    text-orientation: mixed;
+  }
+}
+
 /* Status Utilities */
 .status-pill {
   @apply px-3 py-1 rounded-full text-sm font-semibold;
