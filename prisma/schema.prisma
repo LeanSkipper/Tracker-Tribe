@@ -192,6 +192,10 @@ model User {
   reviewsGiven    PeerReview[]    @relation("UserGivenReviews")
   reviewCount     Int             @default(0)
 
+  // New Reputation Scorecard
+  reputationReviewsReceived ReputationReview[] @relation("ReceivedReputationReviews")
+  reputationReviewsGiven    ReputationReview[] @relation("GivenReputationReviews")
+
   // Pit Stop System
   pitStops      PitStop[]
   currentStreak Int       @default(0) // Weekly streak count
@@ -199,6 +203,32 @@ model User {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ReputationReview {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  reviewerId String
+  reviewer   User   @relation("GivenReputationReviews", fields: [reviewerId], references: [id])
+
+  targetUserId String
+  targetUser   User   @relation("ReceivedReputationReviews", fields: [targetUserId], references: [id])
+
+  // Criteria (1-10)
+  reliability           Int
+  activePresence        Int
+  constructiveCandor    Int
+  generosity            Int
+  energyCatalyst        Int
+  responsiveness        Int
+  coachability          Int
+  knowledgeTransparency Int
+  emotionalRegulation   Int
+  preparation           Int
+
+  averageScore       Float
+  comment            String? // Optional text feedback
 }
 
 model PeerReview {
