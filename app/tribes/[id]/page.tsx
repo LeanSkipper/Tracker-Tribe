@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus } from 'lucide-react';
 
 type Badge = {
     id: string;
@@ -15,7 +15,6 @@ type Goal = {
     vision: string;
     category?: string;
     okrs?: any[];
-    // Add other fields as needed
 };
 
 type Member = {
@@ -106,10 +105,8 @@ export default function TribeDetailsPage() {
 
                 // Check for SOP signature (if member and not creator/admin)
                 // Note: We need to check the current user's membership details
-                // Check for SOP signature (if member and not creator/admin)
-                // Note: We need to check the current user's membership details
                 // API returns member with flattened user details, but userId is the key connector
-                const currentMember = data.tribe.members.find((m: any) => m.userId === data.currentUserId);
+                const currentMember = data.tribe.members.find((m: any) => m.id === data.currentUserId); // Changed to match member.id if API returns flattened member objects with User ID as ID, or check logic. Assuming member.id is User ID.
 
                 // Only show modal if:
                 // 1. Member exists
@@ -122,7 +119,6 @@ export default function TribeDetailsPage() {
 
                 // If Admin, fetch applications
                 const isCreator = data.tribe.creatorId === data.currentUserId;
-                // Fix admin check: use userId for comparison
                 const isAdmin = isCreator || (currentMember?.role === 'ADMIN');
 
 
@@ -234,41 +230,49 @@ export default function TribeDetailsPage() {
     const isMember = isCreator || tribe.members.some(m => m.id === currentUserId);
     const isAdmin = isCreator || tribe.members.some(m => m.id === currentUserId && m.role === 'ADMIN');
 
-    if (!isMember) {
-        // --- PUBLIC PREVIEW VIEW ---
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8 flex items-center justify-center">
-                <div className="max-w-2xl w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
-                    <div className="relative h-48 bg-indigo-600">
-                        {/* Cover Image Placeholder */}
-                        <div className="absolute inset-0 flex items-center justify-center text-white/20 font-black text-6xl uppercase tracking-widest select-none">
-                            {tribe.topic || 'TRIBE'}
+    // --- UNIFIED TRIBE VIEW (For Members AND Guests) ---
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 pb-32">
+            <div className="max-w-[1600px] mx-auto">
+                {/* Header */}
+                <div className="flex justify-between items-center mb-6">
+                    <button
+                        onClick={() => router.push(isMember ? '/dashboard' : '/tribes')}
+                        className="flex items-center text-slate-600 hover:text-indigo-600 font-bold transition-colors"
+                    >
+                        <ArrowLeft size={20} className="mr-2" />
+                        Back to {isMember ? 'Dashboard' : 'Browse'}
+                    </button>
+
+                    {!isMember && (
+                        <div className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2">
+                            <Info size={16} /> You are viewing this tribe as a guest.
                         </div>
-                    </div>
+                    )}
+                </div>
 
-                    <div className="px-8 py-8 -mt-12 relative">
-                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
-                            <h1 className="text-3xl font-black text-slate-900 mb-2">{tribe.name}</h1>
-                            {tribe.topic && <p className="text-indigo-600 font-bold uppercase tracking-wide text-sm">{tribe.topic}</p>}
 
-                            {/* Key Info */}
-                            <div className="flex items-center gap-4 mt-4 text-slate-600 text-sm">
-                                <span className="flex items-center gap-1"><Users size={16} /> {tribe.members.length} Members</span>
-                                {tribe.meetingTime && <span className="flex items-center gap-1"><CheckCircle2 size={16} /> {tribe.meetingTime}</span>}
-                            </div>
+                <div className="mb-8">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4">
+                        <div>
+                            <h1 className="text-4xl font-black text-slate-900 mb-2 uppercase tracking-tight">TABLE details</h1>
+                            <h2 className="text-3xl font-bold text-indigo-600">{tribe.name}</h2>
+                            {tribe.topic && <p className="text-slate-500 font-bold uppercase tracking-wide text-sm mt-1">{tribe.topic}</p>}
                         </div>
 
-                        <div className="space-y-6">
-                            {/* Description */}
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900 mb-2">About this Table</h3>
-                                <p className="text-slate-600 leading-relaxed">
-                                    {tribe.description || "Join this high-performance mastermind group to accelerate your growth."}
-                                </p>
-                            </div>
+                        {/* Primary Action Button */}
+                        <div className="flex gap-3">
+                            {isMember && (
+                                <button
+                                    onClick={() => router.push(`/tribes/${tribe.id}/session`)}
+                                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-sm flex items-center gap-2"
+                                >
+                                    <Users size={18} />
+                                    Enter Live Session
+                                </button>
+                            )}
 
-                            {/* Join Action */}
-                            <div className="bg-slate-50 rounded-xl p-6 border border-slate-100">
+                            {!isMember && (
                                 <button
                                     onClick={async () => {
                                         if (!confirm("Apply to join this tribe?")) return;
@@ -281,92 +285,63 @@ export default function TribeDetailsPage() {
                                             if (res.ok) alert('Application sent!');
                                         } catch (e) { alert('Error applying'); }
                                     }}
-                                    className="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 hover:scale-[1.02] transition-all shadow-xl shadow-indigo-200 text-lg"
+                                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-sm flex items-center gap-2"
                                 >
+                                    <UserPlus size={18} />
                                     Apply to Join
                                 </button>
-                                <p className="text-center text-xs text-slate-400 mt-3">
-                                    By applying, you agree to the community guidelines.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="mt-8 text-center">
-                            <button onClick={() => router.push('/tribes')} className="text-slate-500 font-bold hover:text-slate-800 transition-colors">
-                                Back to Browse
-                            </button>
+                            )}
                         </div>
                     </div>
-                </div>
-            </div>
-        );
-    }
 
-    const averageGrit = tribe.members.reduce((acc, m) => acc + m.grit, 0) / (tribe.members.length || 1);
 
-    // --- MEMBER VIEW (TRIBE ROOM) ---
-    return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
-            <div className="max-w-[1600px] mx-auto">
-                {/* Header */}
-                <button
-                    onClick={() => router.push('/dashboard')}
-                    className="flex items-center text-slate-600 hover:text-indigo-600 font-bold mb-6 transition-colors"
-                >
-                    <ArrowLeft size={20} className="mr-2" />
-                    Back to Dashboard
-                </button>
-
-                <div className="mb-8">
-                    <h1 className="text-4xl font-black text-slate-900 mb-2">TABLE details</h1>
-                    <h2 className="text-2xl font-bold text-indigo-600 mb-2">{tribe.name}</h2>
                     {tribe.meetingTime && (
-                        <div className="flex items-center gap-4">
-                            <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm text-sm font-bold text-slate-700">
-                                <span>📅</span> {tribe.meetingTime}
-                            </div>
-                            <button
-                                onClick={() => router.push(`/tribes/${tribe.id}/session`)}
-                                className="px-4 py-2 bg-indigo-600 text-white font-bold rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-sm flex items-center gap-2"
-                            >
-                                <Users size={16} />
-                                Enter Live Session
-                            </button>
+                        <div className="inline-flex items-center gap-2 bg-white px-4 py-2 rounded-full border border-slate-200 shadow-sm text-sm font-bold text-slate-700 mb-8">
+                            <span>📅</span> {tribe.meetingTime}
                         </div>
                     )}
 
+                    {/* Description for guests */}
+                    {!isMember && tribe.description && (
+                        <div className="mb-8 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+                            <h3 className="text-lg font-bold text-slate-900 mb-2">About this Tribe</h3>
+                            <p className="text-slate-600 leading-relaxed">{tribe.description}</p>
+                        </div>
+                    )}
+
+
                     {/* UNIFIED TRIBE MEMBERS & CAPACITY */}
-                    <div className="mb-12 bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-                        <div className="flex justify-between items-center mb-4">
+                    <div className="mb-12 bg-white rounded-2xl p-8 shadow-sm border border-slate-100">
+                        <div className="flex justify-between items-center mb-8">
                             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
                                 <Users size={16} />
                                 Tribe Members ({tribe.members.length}/{tribe.maxMembers})
                             </h3>
-                            {/* Invite Link */}
+                            {/* Share Link */}
                             <button
                                 onClick={() => {
                                     navigator.clipboard.writeText(`${window.location.origin}/tribes/${tribe.id}`);
                                     alert('Invite link copied!');
                                 }}
-                                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors text-xs shadow-md"
+                                className="flex items-center gap-2 px-4 py-2 bg-slate-50 text-slate-600 font-bold rounded-xl hover:bg-indigo-50 hover:text-indigo-600 transition-colors text-xs border border-slate-200"
                             >
                                 <Share2 size={14} />
-                                Invite
+                                Share
                             </button>
                         </div>
 
-                        <div className="flex flex-wrap gap-4">
+                        <div className="flex flex-wrap gap-6 justify-center md:justify-start">
                             {/* Filled Slots - Member Cards */}
                             {tribe.members.map(member => (
                                 <div
                                     key={member.id}
-                                    className="flex flex-col items-center gap-2 group cursor-pointer"
+                                    className="flex flex-col items-center gap-3 group cursor-pointer w-24"
                                     onClick={() => router.push(`/profile/${member.id}`)}
                                     title={`View ${member.name}'s profile`}
                                 >
                                     {/* Avatar Circle with Grit */}
                                     <div className="relative">
-                                        <div className="w-16 h-16 rounded-full bg-indigo-100 border-2 border-indigo-200 overflow-hidden group-hover:border-indigo-400 transition-all group-hover:scale-105">
+                                        <div className="w-20 h-20 rounded-full bg-indigo-100 border-4 border-white shadow-md overflow-hidden group-hover:border-indigo-400 transition-all group-hover:scale-105">
                                             {member.avatarUrl ? (
                                                 <img
                                                     src={member.avatarUrl}
@@ -374,28 +349,24 @@ export default function TribeDetailsPage() {
                                                     className="w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div className="w-full h-full flex items-center justify-center font-bold text-indigo-600 text-xl">
+                                                <div className="w-full h-full flex items-center justify-center font-bold text-indigo-600 text-2xl">
                                                     {(member.name || '?').charAt(0)}
                                                 </div>
                                             )}
                                         </div>
                                         {/* Grit Badge */}
-                                        <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                                            {member.grit}
+                                        <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border-2 border-white">
+                                            {member.grit}%
                                         </div>
                                     </div>
 
                                     {/* Name & Role */}
-                                    <div className="text-center">
-                                        <div className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors">
+                                    <div className="text-center w-full">
+                                        <div className="font-bold text-slate-900 text-sm group-hover:text-indigo-600 transition-colors truncate w-full">
                                             {member.name}
                                         </div>
-                                        <div className="text-xs text-slate-500 font-medium uppercase tracking-wide">
-                                            {member.role === 'ADMIN' && 'Admin'}
-                                            {member.role === 'MODERATOR' && 'Moderator'}
-                                            {member.role === 'TIME_KEEPER' && 'Time Keeper'}
-                                            {member.role === 'SPECIAL_GUEST' && 'Guest'}
-                                            {member.role === 'PLAYER' && 'Player'}
+                                        <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wide truncate w-full">
+                                            {member.customTitle || member.role}
                                         </div>
                                     </div>
                                 </div>
@@ -405,40 +376,42 @@ export default function TribeDetailsPage() {
                             {Array.from({ length: Math.max(0, tribe.maxMembers - tribe.members.length) }).map((_, idx) => (
                                 <div
                                     key={`empty-${idx}`}
-                                    className="flex flex-col items-center gap-2"
+                                    className="flex flex-col items-center gap-3 w-24 opacity-60"
                                     title="Open Spot"
                                 >
-                                    <div className="w-16 h-16 rounded-full bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-300">
+                                    <div className="w-20 h-20 rounded-full bg-slate-50 border-2 border-dashed border-slate-300 flex items-center justify-center text-slate-300">
                                         <Plus size={24} />
                                     </div>
-                                    <div className="text-center">
-                                        <div className="text-xs text-slate-400 font-medium">Open</div>
+                                    <div className="text-center w-full">
+                                        <div className="text-xs text-slate-400 font-bold uppercase">Open Spot</div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        {tribe.maxMembers - tribe.members.length > 0 && (
-                            <p className="mt-4 text-xs text-slate-400 font-medium">
-                                {tribe.maxMembers - tribe.members.length} spot{tribe.maxMembers - tribe.members.length !== 1 ? 's' : ''} available. Share the invite link!
-                            </p>
+                        {!isMember && (
+                            <div className="mt-8 p-4 bg-indigo-50/50 rounded-xl border border-indigo-100 text-center">
+                                <p className="text-indigo-800 text-sm font-medium">
+                                    Want to join this circle? <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="underline font-bold hover:text-indigo-600">Apply above</button>.
+                                </p>
+                            </div>
                         )}
                     </div>
 
-                    {/* SOPs Read-Only View for NON-ADMINS (Displayed if exists) */}
-                    {!isAdmin && tribe.standardProcedures && (
+                    {/* SOPs Read-Only View (Visible to ALL now) */}
+                    {tribe.standardProcedures && (
                         <div className="mb-12 bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-                            <h3 className="text-xl font-black text-slate-800 mb-4 flex items-center gap-2">
+                            <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
                                 <FileText className="text-indigo-600" /> Standard Procedures
                             </h3>
-                            <div className="prose prose-slate max-w-none">
-                                <pre className="whitespace-pre-wrap font-sans text-slate-600">{tribe.standardProcedures}</pre>
+                            <div className="prose prose-slate max-w-none bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                <pre className="whitespace-pre-wrap font-sans text-slate-600 text-sm leading-relaxed">{tribe.standardProcedures}</pre>
                             </div>
                         </div>
                     )}
 
 
-                    {/* ADMIN CONSOLE */}
+                    {/* ADMIN CONSOLE COPY - Only for Admins */}
                     {isAdmin && (
                         <div className="mb-12 bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
                             <div className="bg-slate-900 text-white p-6 flex justify-between items-center">
@@ -511,7 +484,7 @@ export default function TribeDetailsPage() {
                                     </div>
                                 )}
 
-                                {/* TAB: SOPs */}
+                                {/* TAB: SOPs (Editable in Admin) */}
                                 {adminTab === 'sops' && (
                                     <div>
                                         <div className="flex justify-between items-center mb-4">
@@ -634,9 +607,6 @@ export default function TribeDetailsPage() {
                     )}
 
                 </div>
-
-                {/* SHARED TRACKER MOVED TO SESSION PAGE */}
-
 
                 {/* SOP SIGNATURE MODAL */}
                 {showSOPModal && tribe.standardProcedures && (
