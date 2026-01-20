@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
