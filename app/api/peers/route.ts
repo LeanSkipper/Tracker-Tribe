@@ -23,7 +23,7 @@ export async function GET(req: Request) {
         const industry = new URL(req.url).searchParams.get('industry');
         const location = new URL(req.url).searchParams.get('location'); // Country or City
         const start = parseInt(new URL(req.url).searchParams.get('start') || '0');
-        const limit = parseInt(new URL(req.url).searchParams.get('limit') || '10');
+        const limit = parseInt(new URL(req.url).searchParams.get('limit') || '50');
 
         // Get IDs of users explicitly interacted with by current user
         const interactedMatches = await prisma.match.findMany({
