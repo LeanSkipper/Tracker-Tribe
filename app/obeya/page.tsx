@@ -989,7 +989,6 @@ export default function ObeyaPage() {
 
             {isInspirationOpen && (
                 <InspirationModal
-                    isOpen={isInspirationOpen}
                     onClose={() => setIsInspirationOpen(false)}
                     onSelectGoal={handleSelectTemplate}
                     onCreateFromScratch={() => {
