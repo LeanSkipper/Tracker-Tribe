@@ -59,7 +59,39 @@ export async function GET() {
             );
         }
 
-        return NextResponse.json(profile);
+
+        // Calculate Reputation Breakdown
+        const reviews = await prisma.reputationReview.findMany({
+            where: { targetUserId: user.id },
+            select: {
+                reliability: true,
+                activePresence: true,
+                constructiveCandor: true,
+                generosity: true,
+                energyCatalyst: true,
+                responsiveness: true,
+                coachability: true,
+                knowledgeTransparency: true,
+                emotionalRegulation: true,
+                preparation: true
+            }
+        });
+
+        const reputationBreakdown: Record<string, number> = {};
+        const criteriaList = [
+            'reliability', 'activePresence', 'constructiveCandor', 'generosity',
+            'energyCatalyst', 'responsiveness', 'coachability', 'knowledgeTransparency',
+            'emotionalRegulation', 'preparation'
+        ];
+
+        if (reviews.length > 0) {
+            criteriaList.forEach(key => {
+                const total = reviews.reduce((sum, r) => sum + (r[key as keyof typeof r] as number || 0), 0);
+                reputationBreakdown[key] = parseFloat((total / reviews.length).toFixed(1));
+            });
+        }
+
+        return NextResponse.json({ ...profile, reputationBreakdown });
     } catch (error) {
         console.error("GET Profile Error:", error);
         return NextResponse.json(

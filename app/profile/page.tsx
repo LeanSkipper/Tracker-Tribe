@@ -424,21 +424,40 @@ export default function ProfilePage() {
 
                             {expandedKPI === 'reputation' && (
                                 <div className="mt-4 pt-4 border-t border-yellow-200">
-                                    <h4 className="font-bold text-gray-900 mb-2">How to Build Reputation:</h4>
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-yellow-600 font-bold">•</span>
-                                            <span>Join tribes and actively participate in sessions</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-yellow-600 font-bold">•</span>
-                                            <span>Help peers achieve their goals</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-yellow-600 font-bold">•</span>
-                                            <span>Share your roadmap and inspire others</span>
-                                        </li>
-                                    </ul>
+                                    <h4 className="font-bold text-gray-900 mb-4">Reputation Scorecard:</h4>
+                                    <div className="space-y-3">
+                                        {[
+                                            { id: 'reliability', label: 'Reliability' },
+                                            { id: 'activePresence', label: 'Active Presence' },
+                                            { id: 'constructiveCandor', label: 'Constructive Candor' },
+                                            { id: 'generosity', label: 'Generosity' },
+                                            { id: 'energyCatalyst', label: 'Energy Catalyst' },
+                                            { id: 'responsiveness', label: 'Responsiveness' },
+                                            { id: 'coachability', label: 'Coachability' },
+                                            { id: 'knowledgeTransparency', label: 'Knowledge Transparency' },
+                                            { id: 'emotionalRegulation', label: 'Emotional Regulation' },
+                                            { id: 'preparation', label: 'Preparation' }
+                                        ].map(c => {
+                                            const score = profile?.reputationBreakdown?.[c.id] || 0;
+                                            return (
+                                                <div key={c.id} className="flex items-center gap-4">
+                                                    <div className="w-1/3">
+                                                        <div className="font-bold text-gray-700 text-xs">{c.label}</div>
+                                                    </div>
+                                                    <div className="flex-1 h-2 bg-yellow-100 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full"
+                                                            style={{ width: `${score * 10}%` }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="w-8 font-bold text-gray-500 text-xs text-right">
+                                                        {score.toFixed(1)}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        <p className="text-xs text-gray-400 italic mt-4 text-center">Based on reviews from your peers.</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
