@@ -144,7 +144,7 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                 <div className="bg-blue-50 text-blue-800 text-xs p-3 rounded-lg border border-blue-100 space-y-2">
                     <p className="font-bold">🎯 Step 1: Execution & Planning</p>
                     <ul className="list-disc pl-4 space-y-1 text-[11px]">
-                        <li>Mark last week's tasks as <strong>Done</strong> / <strong>Missed</strong>.</li>
+                        <li>Mark last week&apos;s tasks as <strong>Done</strong> / <strong>Missed</strong>.</li>
                         <li>Create new tasks for next week.</li>
                     </ul>
                 </div>
