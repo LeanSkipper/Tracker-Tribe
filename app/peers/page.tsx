@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { X, Heart, Star, Info, Users, Target, TrendingUp, UserPlus, Filter, Search, ArrowRight } from 'lucide-react';
+import { X, Heart, Star, Info, Users, Target, TrendingUp, UserPlus, Filter, Search, ArrowRight, Trophy } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Peer {
