@@ -18,7 +18,8 @@ type Goal = {
 };
 
 type Member = {
-    id: string;
+    id: string; // TribeMember ID
+    userId: string; // User ID
     name: string;
     avatarUrl?: string;
     role: string;
@@ -336,7 +337,7 @@ export default function TribeDetailsPage() {
                                 <div
                                     key={member.id}
                                     className="flex flex-col items-center gap-3 group cursor-pointer w-24"
-                                    onClick={() => router.push(`/profile/${member.id}`)}
+                                    onClick={() => router.push(`/profile/${member.userId}`)}
                                     title={`View ${member.name}'s profile`}
                                 >
                                     {/* Avatar Circle with Grit */}
