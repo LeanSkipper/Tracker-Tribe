@@ -140,7 +140,7 @@ export default function PeerMatchingPage() {
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                                 {topRanked.map((params, index) => (
-                                    <div key={params.id} className="bg-white p-4 rounded-xl shadow-md border border-slate-100 flex flex-col items-center relative overflow-hidden group hover:shadow-lg transition-all">
+                                    <div key={params.id} onClick={() => router.push(`/profile/${params.id}`)} className="bg-white p-4 rounded-xl shadow-md border border-slate-100 flex flex-col items-center relative overflow-hidden group hover:shadow-lg transition-all cursor-pointer">
                                         <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-bl-lg z-10">
                                             #{index + 1}
                                         </div>
@@ -157,12 +157,7 @@ export default function PeerMatchingPage() {
                                         <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mb-2">
                                             {params.rankingScore?.toLocaleString()} pts
                                         </div>
-                                        <div className="grid grid-cols-2 w-full text-[10px] text-slate-500 gap-y-1 bg-slate-50 p-2 rounded-lg">
-                                            <div>Lvl: <span className="font-bold text-slate-700">{params.level}</span></div>
-                                            <div>XP: <span className="font-bold text-slate-700">{params.experience}</span></div>
-                                            <div>Grit: <span className="font-bold text-slate-700">{params.grit}%</span></div>
-                                            <div>Rep: <span className="font-bold text-slate-700">{params.reputationScore}</span></div>
-                                        </div>
+                                        {/* Stats hidden in circle, shown in profile */}
                                     </div>
                                 ))}
                             </div>

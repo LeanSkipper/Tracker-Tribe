@@ -93,7 +93,7 @@ export default function DashboardPage() {
 
                         {/* Browse Peers */}
                         <button
-                            onClick={() => router.push('/peers/coming-soon')}
+                            onClick={() => router.push('/peers')}
                             className="flex flex-col items-center gap-2 group"
                         >
                             <div className="w-16 h-16 rounded-2xl bg-white border-2 border-slate-200 flex items-center justify-center group-hover:border-indigo-500 group-hover:bg-indigo-50 transition-all shadow-sm">
