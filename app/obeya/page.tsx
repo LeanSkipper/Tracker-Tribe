@@ -533,9 +533,11 @@ const CommentModal = ({ goalId, rowId, monthData, onClose, onSave }: {
     );
 };
 
+type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'chart';
+
 export default function ObeyaPage() {
     const [currentYear, setCurrentYear] = useState(2026);
-    const [viewMode, setViewMode] = useState<'operational' | 'tactical' | 'strategic' | 'task' | 'chart'>('operational');
+    const [viewMode, setViewMode] = useState<ViewMode>('operational');
     const [isLoaded, setIsLoaded] = useState(false);
     const [goals, setGoals] = useState<GoalCategory[]>([]);
     const [draggedTask, setDraggedTask] = useState<{ goalId: string; actionId: string; sourceWeek: string } | null>(null);
