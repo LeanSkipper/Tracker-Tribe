@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
         if (filter === 'wins') {
             whereClause.winImageUrl = { not: null };
         } else if (filter === 'lessons') {
-            whereClause.lesson = { not: null, not: '' };
+            whereClause.lesson = { gt: '' };
         }
 
         const pitStops = await prisma.pitStop.findMany({
