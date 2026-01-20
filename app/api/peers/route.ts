@@ -38,6 +38,45 @@ export async function GET(req: Request) {
 
         const excludedIds = [userId, ...interactedMatches.map(m => m.targetId)];
 
+        const allPeers = await prisma.user.findMany({
+            where: {
+                id: { not: userId }, // Simply exclude self for ranking
+            },
+            select: {
+                id: true,
+                name: true,
+                bio: true,
+                avatarUrl: true,
+                level: true,
+                grit: true,
+                experience: true,
+                reputationScore: true,
+                skills: true,
+            },
+            // We can't sort by calculated field in Prisma easily, so we fetch more and sort in JS
+            // In a real large app, you'd have a computed column or scheduled job
+            take: 100,
+        });
+
+        // Calculate Score: Level * (Grit/100) * XP * Reputation
+        // Fallback defaults to avoid 0 multiplication if strictly needed, but user formula implies metrics matter.
+        // If reputation is 0, score becomes 0. Let's assume min reputation 1 for calculation or pure formula?
+        // User said: "level 1 x grit 90% x 200 XP x 5 reputation = 900" -> 1 * 0.9 * 200 * 5 = 900. Correct.
+
+        const rankedPeers = allPeers.map(peer => {
+            const gritPercent = peer.grit / 100;
+            const score = Math.round(peer.level * (gritPercent || 0.1) * (peer.experience || 1) * (peer.reputationScore || 1));
+            return {
+                ...peer,
+                rankingScore: score
+            };
+        }).sort((a, b) => b.rankingScore - a.rankingScore);
+
+        const topRanked = rankedPeers.slice(0, 5);
+
+        // Standard Browse Peers (Pagination logic remains similar but we might want to exclude Top 5 from general browse? 
+        // Or just keep them. For now, we will perform the standard query for pagination as before).
+
         const peers = await prisma.user.findMany({
             where: {
                 id: {
@@ -51,16 +90,16 @@ export async function GET(req: Request) {
                 avatarUrl: true,
                 level: true,
                 skills: true,
-                // Don't leak sensitive data
+                totalReliability: true,
             },
             skip: start,
             take: limit,
             orderBy: {
-                level: 'desc', // Show higher level peers first? or random?
+                level: 'desc',
             },
         });
 
-        return NextResponse.json({ peers });
+        return NextResponse.json({ peers, topRanked });
     } catch (error) {
         console.error('Error fetching peers:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

@@ -23,6 +23,15 @@ export default function PeerMatchingPage() {
     const router = useRouter();
     const [peers, setPeers] = useState<Peer[]>([]);
     const [friends, setFriends] = useState<Peer[]>([]);
+
+    interface RankedPeer extends Peer {
+        rankingScore: number;
+        grit: number;
+        experience: number;
+        reputationScore: number;
+    }
+
+    const [topRanked, setTopRanked] = useState<RankedPeer[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPeerIndex, setCurrentPeerIndex] = useState(0);
     const [viewMode, setViewMode] = useState<'match' | 'browse'>('browse');
@@ -40,6 +49,9 @@ export default function PeerMatchingPage() {
             }
             if (data.friends) {
                 setFriends(data.friends);
+            }
+            if (data.topRanked) {
+                setTopRanked(data.topRanked);
             }
         } catch (error) {
             console.error('Failed to fetch peers', error);
@@ -115,6 +127,47 @@ export default function PeerMatchingPage() {
                             Discover New Peers
                         </button>
                     </div>
+
+                    {/* Leaderboard Section */}
+                    {topRanked.length > 0 && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-12"
+                        >
+                            <h2 className="text-2xl font-black text-slate-800 mb-6 flex items-center gap-2">
+                                <TrendingUp className="text-yellow-500" /> Top 5 Leaderboard
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                                {topRanked.map((params, index) => (
+                                    <div key={params.id} className="bg-white p-4 rounded-xl shadow-md border border-slate-100 flex flex-col items-center relative overflow-hidden group hover:shadow-lg transition-all">
+                                        <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-bl-lg z-10">
+                                            #{index + 1}
+                                        </div>
+                                        <div className="w-16 h-16 rounded-full border-2 border-indigo-100 overflow-hidden mb-3 relative z-10">
+                                            {params.avatarUrl ? (
+                                                <img src={params.avatarUrl} alt={params.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl">
+                                                    {params.name.charAt(0)}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <h3 className="font-bold text-slate-900 text-sm text-center truncate w-full mb-1">{params.name}</h3>
+                                        <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mb-2">
+                                            {params.rankingScore?.toLocaleString()} pts
+                                        </div>
+                                        <div className="grid grid-cols-2 w-full text-[10px] text-slate-500 gap-y-1 bg-slate-50 p-2 rounded-lg">
+                                            <div>Lvl: <span className="font-bold text-slate-700">{params.level}</span></div>
+                                            <div>XP: <span className="font-bold text-slate-700">{params.experience}</span></div>
+                                            <div>Grit: <span className="font-bold text-slate-700">{params.grit}%</span></div>
+                                            <div>Rep: <span className="font-bold text-slate-700">{params.reputationScore}</span></div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
 
                     {/* Friends Grid */}
                     {friends.length === 0 ? (
