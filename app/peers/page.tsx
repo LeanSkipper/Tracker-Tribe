@@ -36,13 +36,28 @@ export default function PeerMatchingPage() {
     const [currentPeerIndex, setCurrentPeerIndex] = useState(0);
     const [viewMode, setViewMode] = useState<'match' | 'browse'>('browse');
 
+    // Filters
+    const [search, setSearch] = useState('');
+    const [role, setRole] = useState('');
+    const [industry, setIndustry] = useState('');
+    const [location, setLocation] = useState('');
+
+    // Connect state (mock)
+    const [connectedPeers, setConnectedPeers] = useState<Set<string>>(new Set());
+
     useEffect(() => {
         fetchPeers();
-    }, []);
+    }, [search, role, industry, location]); // Re-fetch on filter change
 
     const fetchPeers = async () => {
         try {
-            const res = await fetch('/api/peers');
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (role) params.append('role', role);
+            if (industry) params.append('industry', industry);
+            if (location) params.append('location', location);
+
+            const res = await fetch(`/api/peers?${params.toString()}`);
             const data = await res.json();
             if (data.peers) {
                 setPeers(data.peers);

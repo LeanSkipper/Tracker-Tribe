@@ -18,13 +18,12 @@ export async function GET(req: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const search = new URL(req.url).searchParams.get('search') || '';
+        const role = new URL(req.url).searchParams.get('role');
+        const industry = new URL(req.url).searchParams.get('industry');
+        const location = new URL(req.url).searchParams.get('location'); // Country or City
         const start = parseInt(new URL(req.url).searchParams.get('start') || '0');
         const limit = parseInt(new URL(req.url).searchParams.get('limit') || '10');
-
-        // Fetch users excluding:
-        // 1. The current user
-        // 2. Users already matched (initiated by current user)
-        // 3. (Optional) Users who rejected/blocked the current user?
 
         // Get IDs of users explicitly interacted with by current user
         const interactedMatches = await prisma.match.findMany({
@@ -38,68 +37,82 @@ export async function GET(req: Request) {
 
         const excludedIds = [userId, ...interactedMatches.map(m => m.targetId)];
 
-        const allPeers = await prisma.user.findMany({
-            where: {
-                id: { not: userId }, // Simply exclude self for ranking
-            },
+        // Helper to build filter
+        const whereClause: any = {
+            id: { notIn: excludedIds },
+        };
+
+        if (search) {
+            whereClause.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { bio: { contains: search, mode: 'insensitive' } },
+            ];
+        }
+        if (role) {
+            whereClause.professionalRole = { contains: role, mode: 'insensitive' };
+        }
+        if (industry) {
+            whereClause.industry = { contains: industry, mode: 'insensitive' };
+        }
+        if (location) {
+            whereClause.OR = [
+                { country: { contains: location, mode: 'insensitive' } },
+                { city: { contains: location, mode: 'insensitive' } },
+            ];
+        }
+
+        // Leaderboard Query (Keep strict for Top 5)
+        // ... (We might want Top 5 to also respect filters? Or always be global? Usually Leaderboard is global. Let's keep it global for now or minimally filtered)
+        // For now, let's keep Top 5 global as "Top Ranked" implies best of all.
+        // We actually fetch allPeers for ranking. If we filter allPeers, Leaderboard filters too.
+        // Let's Separate: Leaderboard is Global. Filtered List is below.
+
+        // 1. Fetch Global Top 5 (Cached or separate query if needed, but for now we essentially duplicate effort if we don't reuse. 
+        // Let's keep the original "All Peers" query for ranking, OR just use a separate small query for ranking if filters are applied.
+        // To save performance, we can just fetch top 100 global for ranking.
+
+        const rankingPeers = await prisma.user.findMany({
+            where: { id: { not: userId } },
             select: {
-                id: true,
-                name: true,
-                bio: true,
-                avatarUrl: true,
-                level: true,
-                grit: true,
-                experience: true,
-                reputationScore: true,
-                skills: true,
+                id: true, name: true, avatarUrl: true, level: true, grit: true, experience: true, reputationScore: true
             },
-            // We can't sort by calculated field in Prisma easily, so we fetch more and sort in JS
-            // In a real large app, you'd have a computed column or scheduled job
-            take: 100,
+            take: 50, // Limit for ranking calculation
         });
 
-        // Calculate Score: Level * (Grit/100) * XP * Reputation
-        // Fallback defaults to avoid 0 multiplication if strictly needed, but user formula implies metrics matter.
-        // If reputation is 0, score becomes 0. Let's assume min reputation 1 for calculation or pure formula?
-        // User said: "level 1 x grit 90% x 200 XP x 5 reputation = 900" -> 1 * 0.9 * 200 * 5 = 900. Correct.
-
-        const rankedPeers = allPeers.map(peer => {
+        const ranked = rankingPeers.map(peer => {
             const gritPercent = peer.grit / 100;
             const score = Math.round(peer.level * (gritPercent || 0.1) * (peer.experience || 1) * (peer.reputationScore || 1));
             return {
                 ...peer,
                 rankingScore: score
             };
-        }).sort((a, b) => b.rankingScore - a.rankingScore);
+        }).sort((a, b) => b.rankingScore - a.rankingScore).slice(0, 5);
 
-        const topRanked = rankedPeers.slice(0, 5);
 
-        // Standard Browse Peers (Pagination logic remains similar but we might want to exclude Top 5 from general browse? 
-        // Or just keep them. For now, we will perform the standard query for pagination as before).
-
+        // 2. Fetch Filtered List for "Discover"
         const peers = await prisma.user.findMany({
-            where: {
-                id: {
-                    notIn: excludedIds,
-                },
-            },
+            where: whereClause,
             select: {
                 id: true,
                 name: true,
                 bio: true,
                 avatarUrl: true,
                 level: true,
+                // Matchmaking fields
+                professionalRole: true,
+                industry: true,
+                country: true,
+                city: true,
                 skills: true,
-                totalReliability: true,
             },
             skip: start,
             take: limit,
             orderBy: {
-                level: 'desc',
+                level: 'desc', // Default sort
             },
         });
 
-        return NextResponse.json({ peers, topRanked });
+        return NextResponse.json({ peers, topRanked: ranked });
     } catch (error) {
         console.error('Error fetching peers:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
