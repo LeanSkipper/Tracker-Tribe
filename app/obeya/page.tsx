@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { Target, Plus, Edit2, X, Layout, BarChart2, Trash2, CheckCircle2, Users, ChevronLeft, ChevronRight, TrendingUp, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
+import PitStopModal from '@/components/PitStop/PitStopModal';
+import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
 import { GoalTemplate } from '@/lib/goalTemplates';
 import KanbanBoard from '@/components/KanbanBoard';
 
@@ -283,7 +285,7 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
 };
 
 // Enhanced Kanban with Drag & Drop + Inline Editing
-const KanbanModal = ({ actions, week, onClose, onAdd, onUpdateStatus, onUpdateTitle }: {
+const WeekSummaryModal = ({ actions, week, onClose, onAdd, onUpdateStatus, onUpdateTitle }: {
     actions: ActionCard[],
     week: string,
     onClose: () => void,
@@ -627,6 +629,26 @@ export default function ObeyaPage() {
     const [activeTaskDetailModal, setActiveTaskDetailModal] = useState<{ goalId: string, action: ActionCard } | null>(null);
     const [isInspirationOpen, setIsInspirationOpen] = useState(false);
 
+    // Pit Stop State
+    const [isPitStopOpen, setIsPitStopOpen] = useState(false);
+    const [viewingPitStop, setViewingPitStop] = useState<any>(null);
+    const [pitStops, setPitStops] = useState<any[]>([]);
+
+    useEffect(() => {
+        const fetchPitStops = async () => {
+            try {
+                const res = await fetch('/api/pit-stop');
+                if (res.ok) {
+                    const data = await res.json();
+                    setPitStops(data.pitStops || []);
+                }
+            } catch (err) {
+                console.error("Failed to fetch pit stops", err);
+            }
+        };
+        fetchPitStops();
+    }, [isPitStopOpen]);
+
     const handleSaveGoal = async (updatedGoal: GoalCategory) => {
         try {
             const res = await fetch('/api/goals', {
@@ -967,8 +989,9 @@ export default function ObeyaPage() {
 
             {isInspirationOpen && (
                 <InspirationModal
+                    isOpen={isInspirationOpen}
                     onClose={() => setIsInspirationOpen(false)}
-                    onSelectTemplate={handleSelectTemplate}
+                    onSelectGoal={handleSelectTemplate}
                     onCreateFromScratch={() => {
                         setIsInspirationOpen(false);
                         setEditingGoal({ id: 'NEW' } as any);
@@ -977,14 +1000,30 @@ export default function ObeyaPage() {
             )}
             {editingGoal && <GoalModal goal={editingGoal} onClose={() => setEditingGoal(null)} onSave={handleSaveGoal} onDelete={handleDeleteGoal} />}
             {activeGraphModal && <GraphModal metric={activeGraphModal} onClose={() => setActiveGraphModal(null)} />}
-            {activeWeekModal && <KanbanModal
-                week={activeWeekModal.week}
-                actions={((goals.find(g => g.id === activeWeekModal.goalId)?.rows.find(r => !('type' in r)) as ActionRow)?.actions || []).filter(a => a.weekId === activeWeekModal.week && a.year === currentYear)}
-                onClose={() => setActiveWeekModal(null)}
-                onAdd={(t) => handleAddAction(activeWeekModal.week, activeWeekModal.goalId, t)}
-                onUpdateStatus={(cardId, newStatus) => handleUpdateActionStatus(activeWeekModal.goalId, cardId, newStatus)}
-                onUpdateTitle={(cardId, newTitle) => handleUpdateActionTitle(activeWeekModal.goalId, cardId, newTitle)}
-            />}
+            {activeWeekModal && (
+                <WeekSummaryModal
+                    week={activeWeekModal.week}
+                    actions={(goals.find(g => g.id === activeWeekModal.goalId)?.rows.find(r => !('type' in r)) as ActionRow)?.actions.filter(a => a.weekId === activeWeekModal.week && a.year === currentYear) || []}
+                    onClose={() => setActiveWeekModal(null)}
+                    onAdd={(t) => handleAddAction(activeWeekModal.week, activeWeekModal.goalId, t)}
+                    onUpdateStatus={(cardId, newStatus) => handleUpdateActionStatus(activeWeekModal.goalId, cardId, newStatus)}
+                    onUpdateTitle={(cardId, newTitle) => handleUpdateActionTitle(activeWeekModal.goalId, cardId, newTitle)}
+                />
+            )}
+
+            <PitStopModal
+                isOpen={isPitStopOpen}
+                onClose={() => setIsPitStopOpen(false)}
+                onComplete={() => {
+                    // Refetch handled by dependency
+                }}
+            />
+            <PitStopViewModal
+                isOpen={!!viewingPitStop}
+                onClose={() => setViewingPitStop(null)}
+                entry={viewingPitStop}
+            />
+
             {activeCommentModal && <CommentModal
                 goalId={activeCommentModal.goalId}
                 rowId={activeCommentModal.rowId}
@@ -1010,6 +1049,12 @@ export default function ObeyaPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setIsPitStopOpen(true)}
+                        className="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-blue-700 transition-all hover:scale-105"
+                    >
+                        <Clock size={20} /> START PIT STOP
+                    </button>
                     <button
                         onClick={() => setIsInspirationOpen(true)}
                         className="bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-blue-800 transition-all hover:scale-105"
@@ -1220,7 +1265,23 @@ export default function ObeyaPage() {
                                         <span>{m}</span>
                                         {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
                                     </div>
-                                    {viewMode === 'operational' && <div className="flex">{MONTH_WEEKS[m].map(w => <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50">{w}</div>)}</div>}
+                                    {viewMode === 'operational' && <div className="flex">{MONTH_WEEKS[m].map(w => {
+                                        const ps = pitStops.find(p => p.week === w && p.year === currentYear);
+                                        return (
+                                            <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50 flex flex-col items-center gap-1">
+                                                <span>{w}</span>
+                                                {ps && (
+                                                    <button
+                                                        onClick={() => setViewingPitStop(ps)}
+                                                        className="text-amber-500 hover:text-amber-600 transition-colors hover:scale-110"
+                                                        title="View Pit Stop"
+                                                    >
+                                                        <Archive size={12} />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}</div>}
                                 </div>
                             ))}
                         </div>
