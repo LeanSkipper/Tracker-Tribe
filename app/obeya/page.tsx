@@ -990,7 +990,7 @@ export default function ObeyaPage() {
             {isInspirationOpen && (
                 <InspirationModal
                     onClose={() => setIsInspirationOpen(false)}
-                    onSelectGoal={handleSelectTemplate}
+                    onSelectTemplate={handleSelectTemplate}
                     onCreateFromScratch={() => {
                         setIsInspirationOpen(false);
                         setEditingGoal({ id: 'NEW' } as any);
