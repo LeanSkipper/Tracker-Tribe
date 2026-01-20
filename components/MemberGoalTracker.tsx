@@ -317,15 +317,21 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                                                         const tbd = weekActions.filter(a => a.status === 'TBD').length;
                                                                         const done = weekActions.filter(a => a.status === 'DONE').length;
 
-                                                                        if (viewMode === 'team-work') {
-                                                                            // Team Work: Card view with drag handles
+                                                                        if (viewMode === 'team-work' || viewMode === 'task') {
+                                                                            // Team Work & Pit Stop: Card view with drag handles
+                                                                            // Group tasks: WIP (Not Done) vs Done
+                                                                            const wipTasks = weekActions.filter(a => a.status !== 'DONE');
+                                                                            const doneTasks = weekActions.filter(a => a.status === 'DONE');
+
                                                                             return (
                                                                                 <div key={w} className="flex-1 border-r border-slate-100 last:border-0 p-2 flex flex-col gap-2 bg-slate-50/30 min-h-[80px]">
-                                                                                    {weekActions.map(a => (
-                                                                                        <div key={a.id} draggable className={`p-2 rounded-lg border shadow-sm text-xs font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                                                                                            a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
-                                                                                                a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
-                                                                                                    'bg-white border-slate-200 text-slate-700'
+                                                                                    {/* WIP Label for Pit Stop */}
+                                                                                    {viewMode === 'task' && weekActions.length > 0 && <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">WIP</div>}
+
+                                                                                    {wipTasks.map(a => (
+                                                                                        <div key={a.id} draggable className={`p-2 rounded-lg border shadow-sm text-xs font-medium cursor-move hover:shadow-md transition-all ${a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+                                                                                            a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                                                                                'bg-white border-slate-200 text-slate-700'
                                                                                             }`}>
                                                                                             <div className="flex items-start gap-1">
                                                                                                 <GripVertical size={12} className="text-slate-400 mt-0.5 flex-shrink-0" />
@@ -333,6 +339,25 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                                                                             </div>
                                                                                         </div>
                                                                                     ))}
+
+                                                                                    {/* Collapsed Done Tasks */}
+                                                                                    {doneTasks.length > 0 && (
+                                                                                        <div className="mt-2">
+                                                                                            <details className="group">
+                                                                                                <summary className="text-[10px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none flex items-center gap-1 hover:text-slate-600">
+                                                                                                    <span className="w-4 h-4 rounded bg-emerald-100 text-emerald-600 flex items-center justify-center text-[10px]">{doneTasks.length}</span>
+                                                                                                    <span>Done</span>
+                                                                                                </summary>
+                                                                                                <div className="flex flex-col gap-1 mt-1 pl-2 border-l-2 border-emerald-100/50">
+                                                                                                    {doneTasks.map(a => (
+                                                                                                        <div key={a.id} className="text-[10px] text-slate-400 line-through truncate px-1">
+                                                                                                            {a.title}
+                                                                                                        </div>
+                                                                                                    ))}
+                                                                                                </div>
+                                                                                            </details>
+                                                                                        </div>
+                                                                                    )}
                                                                                 </div>
                                                                             );
                                                                         }
