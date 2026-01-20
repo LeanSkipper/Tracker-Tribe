@@ -7,12 +7,12 @@ import { getSession } from '@/lib/auth';
 
 export async function GET(req: Request) {
     try {
-        const session = await getSession();
-        // If no session, return unauthorized
-        if (!session?.user?.id) {
+        const user = await getSession();
+        // If no user, return unauthorized
+        if (!user?.id) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
-        const userId = session.user.id;
+        const userId = user.id;
 
         const search = new URL(req.url).searchParams.get('search') || '';
         const role = new URL(req.url).searchParams.get('role');
