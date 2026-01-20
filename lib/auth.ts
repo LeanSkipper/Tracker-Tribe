@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+export { authOptions };
 import { prisma } from './prisma';
 import { canAccessGPS, canJoinTribes, canCreateTribes, canViewPeerGPS, canMonetizeTribe } from './permissions';
 

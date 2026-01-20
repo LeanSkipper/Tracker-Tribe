@@ -35,6 +35,10 @@ export default function Navbar() {
                             <User size={20} />
                             <span>Profile</span>
                         </Link>
+                        <Link href="/rituals" className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2">
+                            <Feather size={20} />
+                            <span>Vault</span>
+                        </Link>
                         <button
                             onClick={() => setIsFeedbackOpen(true)}
                             className="flex flex-col md:flex-row items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs md:text-sm p-2"

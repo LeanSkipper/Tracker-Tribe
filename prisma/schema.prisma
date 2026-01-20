@@ -192,6 +192,11 @@ model User {
   reviewsGiven    PeerReview[]    @relation("UserGivenReviews")
   reviewCount     Int             @default(0)
 
+  // Pit Stop System
+  pitStops      PitStop[]
+  currentStreak Int       @default(0) // Weekly streak count
+  lastPitStopAt DateTime? // To calculate streak
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -209,6 +214,28 @@ model PeerReview {
   comment     String?
   
   createdAt   DateTime @default(now())
+}
+
+model PitStop {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  
+  date        DateTime @default(now())
+  duration    Int      // Duration in seconds
+  
+  // The 5 Steps
+  mood        Int      // 1-5
+  win         String   // Text content
+  winImageUrl String?  // Base64 or URL (limited length in some DBs, prefer URL for scaling)
+  
+  lesson      String?  // The Vault entry
+  
+  // Gamification
+  xpEarned    Int      @default(20)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model BadgeCatalog {
