@@ -213,7 +213,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                             const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
                                             // Determine exact height
-                                            const heightClass = isKPI ? 'h-[24px]' : viewMode === 'team-work' ? 'h-[32px]' : 'h-[60px]';
+                                            const heightClass = isKPI ? 'h-[48px]' : viewMode === 'team-work' ? 'h-[48px]' : 'h-[96px]';
 
                                             if (viewMode === 'tactical' && !isOKR) return null;
                                             if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
@@ -222,7 +222,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                             return (
                                                 <div key={row.id} className={`${heightClass} w-full flex items-center border-b border-slate-50 last:border-0 group relative ${viewMode === 'team-work' && isOKR ? 'opacity-70' : ''}`}>
                                                     <div className="flex-1 p-3 flex flex-col justify-center border-r border-slate-100 overflow-hidden h-full">
-                                                        <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : viewMode === 'team-work' ? 'text-xs text-slate-600 font-semibold' : 'text-sm text-slate-700 font-bold'} ${isOKR ? 'font-bold' : ''}`}>
+                                                        <div className={`flex items-center gap-2 whitespace-normal break-words leading-tight ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : viewMode === 'team-work' ? 'text-xs text-slate-600 font-semibold' : 'text-sm text-slate-700 font-bold'} ${isOKR ? 'font-bold' : ''}`}>
                                                             {isKPI && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />}
                                                             {row.label}
                                                         </div>
@@ -245,7 +245,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
                                         // Sync Height
-                                        const heightClass = isKPI ? 'h-[24px]' : viewMode === 'team-work' ? 'h-[32px]' : 'h-[60px]';
+                                        const heightClass = isKPI ? 'h-[48px]' : viewMode === 'team-work' ? 'h-[48px]' : 'h-[96px]';
 
                                         if (viewMode === 'tactical' && !isOKR) return null;
                                         if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
