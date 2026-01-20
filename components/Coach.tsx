@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { X, Send, Sparkles, BrainCircuit } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 type GoalCategory = { id: string; category: string; title: string; rows: any[]; };
 
@@ -90,20 +91,28 @@ export default function Coach({ goals, className = '' }: CoachProps) {
 
     if (!isOpen) {
         return (
-            <button
+            <motion.button
+                drag
+                dragMomentum={false}
+                whileDrag={{ scale: 1.1 }}
                 onClick={() => setIsOpen(true)}
-                className={`fixed bottom-6 right-6 z-50 bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-4 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center gap-2 font-bold ${className}`}
+                className={`fixed bottom-6 right-6 z-50 bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-3 rounded-full shadow-2xl hover:scale-105 transition-transform flex items-center gap-2 font-bold ${className}`}
+                style={{ cursor: 'grab' }}
             >
-                <Sparkles size={20} className="animate-pulse" />
-                <span className="pr-1">Lapis Coach</span>
-            </button>
+                <Sparkles size={16} className="animate-pulse" />
+                <span className="pr-1 text-sm">Lapis Coach</span>
+            </motion.button>
         );
     }
 
     return (
-        <div className={`fixed bottom-6 right-6 z-50 w-[380px] h-[600px] bg-white/95 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl flex flex-col overflow-hidden font-sans ${className}`}>
+        <motion.div
+            drag
+            dragMomentum={false}
+            className={`fixed bottom-6 right-6 z-50 w-[380px] h-[600px] bg-white/95 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl flex flex-col overflow-hidden font-sans ${className}`}
+        >
             {/* Header */}
-            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-4 flex items-center justify-between text-white shrink-0">
+            <div className="bg-gradient-to-r from-indigo-600 to-purple-700 p-4 flex items-center justify-between text-white shrink-0 cursor-grab active:cursor-grabbing">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-white/20 rounded-full backdrop-blur-sm">
                         <BrainCircuit size={20} className="text-white" />
@@ -117,7 +126,7 @@ export default function Coach({ goals, className = '' }: CoachProps) {
             </div>
 
             {/* Chat Area */}
-            <div className="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-4">
+            <div className="flex-1 bg-gray-50 p-4 overflow-y-auto space-y-4" onPointerDown={(e) => e.stopPropagation()}>
                 {messages.map((msg) => (
                     <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`
@@ -152,7 +161,7 @@ export default function Coach({ goals, className = '' }: CoachProps) {
             </div>
 
             {/* Input Area */}
-            <div className="p-4 bg-white border-t border-gray-100 shrink-0">
+            <div className="p-4 bg-white border-t border-gray-100 shrink-0" onPointerDown={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-2 bg-gray-50 p-1.5 rounded-full border border-gray-200 focus-within:ring-2 ring-indigo-100 transition-all">
                     <input
                         className="flex-1 bg-transparent px-3 text-sm outline-none text-gray-700 placeholder:text-gray-400"
@@ -167,6 +176,6 @@ export default function Coach({ goals, className = '' }: CoachProps) {
                 </div>
                 <p className="text-[10px] text-center text-gray-300 mt-2">Powered by holistic system methodology</p>
             </div>
-        </div>
+        </motion.div>
     );
 }

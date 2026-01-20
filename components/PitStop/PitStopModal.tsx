@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Clock, Upload, CheckCircle } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { motion } from 'framer-motion';
 
 type ActionItem = {
     id: string;
@@ -116,10 +117,14 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
     // Floating Minimized Widget (Step 1: Execution)
     if (isMinimized) {
         return (
-            <div className="fixed bottom-6 right-6 z-50 bg-white shadow-2xl rounded-2xl p-4 border border-slate-200 animate-slide-up flex flex-col gap-3 w-72 transform transition-all hover:scale-105">
+            <motion.div
+                drag
+                dragMomentum={false}
+                className="fixed bottom-6 right-6 z-50 bg-white shadow-2xl rounded-2xl p-4 border border-slate-200 animate-slide-up flex flex-col gap-3 w-72 cursor-grab active:cursor-grabbing"
+            >
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2">
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">Pit Stop Active <span className="animate-pulse text-red-500">●</span></span>
-                    <button onClick={() => setIsMinimized(false)} className="text-[var(--primary)] text-xs font-bold hover:underline">
+                    <button onClick={() => setIsMinimized(false)} className="text-[var(--primary)] text-xs font-bold hover:underline" onPointerDown={(e) => e.stopPropagation()}>
                         EXPAND
                     </button>
                 </div>
@@ -145,25 +150,30 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                 </div>
 
                 <button
+                    onPointerDown={(e) => e.stopPropagation()}
                     onClick={() => { setIsMinimized(false); setStep(2); }}
                     className="w-full bg-[var(--primary)] text-white py-2 rounded-lg font-bold text-xs shadow-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
                 >
                     TASKS DONE - NEXT STEP <CheckCircle size={14} />
                 </button>
-            </div>
+            </motion.div>
         );
     }
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <motion.div
+                drag
+                dragMomentum={false}
+                className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
                 {/* Header */}
-                <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
+                <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0 cursor-grab active:cursor-grabbing">
                     <div className="flex items-center gap-2">
                         <Clock size={20} className="text-emerald-400" />
                         <span className="font-mono text-xl font-bold">{formatTime(timer)}</span>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4" onPointerDown={(e) => e.stopPropagation()}>
                         {step === 1 && (
                             <button onClick={() => setIsMinimized(true)} className="text-slate-400 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors border border-slate-700 px-2 py-1 rounded hover:bg-slate-800">
                                 Minimize
@@ -179,7 +189,7 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                 </div>
 
                 {/* Body */}
-                <div className="p-8 overflow-y-auto flex-1">
+                <div className="p-8 overflow-y-auto flex-1" onPointerDown={(e) => e.stopPropagation()}>
                     {step === 0 && (
                         <div className="text-center py-10 animate-fade-in">
                             <h2 className="text-3xl font-black text-slate-800 mb-4">Weekly Pit Stop 🏎️</h2>
@@ -284,7 +294,7 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
 
                 {/* Footer Controls */}
                 {step > 0 && (
-                    <div className="p-4 border-t border-slate-100 shrink-0 bg-slate-50 flex justify-between">
+                    <div className="p-4 border-t border-slate-100 shrink-0 bg-slate-50 flex justify-between" onPointerDown={(e) => e.stopPropagation()}>
                         <button
                             onClick={() => setStep(s => Math.max(1, s - 1))}
                             className="px-6 py-2 rounded-lg text-slate-500 font-medium hover:bg-slate-200 transition-colors"
@@ -300,7 +310,7 @@ export default function PitStopModal({ isOpen, onClose, onComplete }: PitStopMod
                         </button>
                     </div>
                 )}
-            </div>
+            </motion.div>
         </div>
     );
 }

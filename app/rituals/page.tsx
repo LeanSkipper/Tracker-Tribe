@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import VaultFeed from '@/components/PitStop/VaultFeed';
 
 export default function RitualsPage() {
-    const [seed, setSeed] = useState(0); // To force refresh feed
-
     return (
         <div className="min-h-screen bg-slate-50 p-4 pb-24 md:pb-8">
             <div className="max-w-2xl mx-auto">
@@ -17,7 +15,7 @@ export default function RitualsPage() {
                 </header>
 
                 {/* Vault Feed */}
-                <VaultFeed key={seed} />
+                <VaultFeed />
             </div>
         </div>
     );
