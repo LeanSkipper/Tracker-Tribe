@@ -1260,7 +1260,17 @@ export default function ObeyaPage() {
                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
                                                         // Determine exact height
-                                                        const heightClass = 'h-[45px]';
+                                                        let heightClass = 'h-[45px]';
+                                                        if (!isOKR && !isKPI) {
+                                                            const actionRow = row as ActionRow;
+                                                            // Calculate max tasks in any visible week for this year
+                                                            const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
+                                                                actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
+                                                            ));
+                                                            const maxTasks = Math.max(0, ...actionCounts);
+                                                            const dynamicHeight = Math.max(96, maxTasks * 50 + 20);
+                                                            heightClass = `h-[${dynamicHeight}px]`;
+                                                        }
 
                                                         if (viewMode === 'tactical' && !isOKR) return null;
                                                         if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
@@ -1300,7 +1310,16 @@ export default function ObeyaPage() {
                                                     const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
                                                     // Sync Height
-                                                    const heightClass = 'h-[45px]';
+                                                    let heightClass = 'h-[45px]';
+                                                    if (!isOKR && !isKPI) {
+                                                        const actionRow = row as ActionRow;
+                                                        const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
+                                                            actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
+                                                        ));
+                                                        const maxTasks = Math.max(0, ...actionCounts);
+                                                        const dynamicHeight = Math.max(96, maxTasks * 50 + 20);
+                                                        heightClass = `h-[${dynamicHeight}px]`;
+                                                    }
 
                                                     if (viewMode === 'tactical' && !isOKR) return null;
                                                     if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
