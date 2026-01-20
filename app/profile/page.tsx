@@ -166,6 +166,12 @@ export default function ProfilePage() {
     const xpProgress = Math.min((xp / 1000) * 100, 100);
     const reputationProgress = Math.min((reputation / 10) * 100, 100);
 
+    // Calculate Ranking Score (Consistent with API)
+    const gritPercent = (grit / 100) || 0.1;
+    const rankingXP = xp || 1;
+    const rankingRep = reputation || 1;
+    const rankingScore = Math.round(level * gritPercent * rankingXP * rankingRep);
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4 md:p-8">
             <div className="max-w-4xl mx-auto space-y-6">
@@ -223,10 +229,16 @@ export default function ProfilePage() {
 
                 {/* 1. YOUR STATS - Now at the top */}
                 <div className="bg-white rounded-3xl shadow-xl p-8">
-                    <h2 className="text-2xl font-black text-gray-900 mb-6 flex items-center gap-2">
-                        <TrendingUp className="text-blue-600" size={28} />
-                        Your Stats
-                    </h2>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+                            <TrendingUp className="text-blue-600" size={28} />
+                            Your Stats
+                        </h2>
+                        <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Score</div>
+                            <div className="text-2xl font-black text-indigo-600">{rankingScore.toLocaleString()}</div>
+                        </div>
+                    </div>
 
                     <div className="space-y-4">
                         {/* Level KPI */}
