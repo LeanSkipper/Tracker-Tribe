@@ -547,13 +547,6 @@ export default function ObeyaPage() {
     const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
 
     useEffect(() => {
-        // ... lines elided ...
-        // Determine exact height
-        const heightClass = isKPI ? 'h-[32px]' : 'h-[60px]';
-
-        if (viewMode === 'tactical' && !isOKR) return null;
-        if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
-        if ((viewMode as string) === 'task' && isOKR) return null;
         const fetchGoals = async () => {
             try {
                 const res = await fetch('/api/goals');
@@ -1271,7 +1264,7 @@ export default function ObeyaPage() {
 
                                                         if (viewMode === 'tactical' && !isOKR) return null;
                                                         if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
-                                                        if (viewMode === 'task' && isOKR) return null;
+                                                        if ((viewMode as string) === 'task' && isOKR) return null;
 
                                                         // Count OKR rows to decide logic if needed (e.g. strict ordering)
                                                         const okrRowsCount = goal.rows.filter(r => 'type' in r).length;
