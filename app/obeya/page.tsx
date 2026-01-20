@@ -1242,18 +1242,25 @@ export default function ObeyaPage() {
                                                 return (
                                                     <div key={row.id} className={`flex ${isKPI ? 'min-h-[32px]' : 'min-h-[60px]'}`}>
                                                         <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex shadow-sm text-sm group">
-                                                            <div className={`w-24 p-3 flex items-center justify-center font-bold text-white text-xs text-center leading-tight
+                                                            <div className={`w-[2rem] p-1 flex flex-col items-center justify-start font-bold text-white text-[10px] text-center leading-tight relative overflow-hidden
                                                             ${goal.category === 'Health' ? 'bg-teal-600' :
                                                                     goal.category === 'Wealth' ? 'bg-emerald-600' :
                                                                         goal.category === 'Family' ? 'bg-indigo-500' :
                                                                             goal.category === 'Leisure' ? 'bg-pink-500' :
                                                                                 goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'}
-                                                         `}>{rIdx === 0 ? goal.category : ''}</div>
+                                                         `}>
+                                                                <div className="writing-vertical-rl transform rotate-180 uppercase tracking-widest whitespace-nowrap mt-2" style={{ writingMode: 'vertical-rl' }}>
+                                                                    {rIdx === 0 ? goal.title : ''}
+                                                                </div>
+                                                                {rIdx === 0 && <div className="absolute top-0 left-0 w-full h-1 bg-white/20"></div>}
+                                                                {/* Category Icon/Tag could go here */}
+                                                                {rIdx === 0 && <div className="absolute top-1 left-1/2 -translate-x-1/2 px-1 rounded bg-black/10 text-[8px] whitespace-normal w-full break-words">{goal.category.substring(0, 3)}</div>}
+                                                            </div>
 
                                                             <div className="w-56 p-3 flex items-center gap-2 border-r border-gray-100 relative">
                                                                 {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1"><Edit2 size={12} /></button>}
-                                                                {rIdx === 0 && <span className="font-bold text-gray-900 truncate flex-1">{goal.title}</span>}
-                                                                <span className={`text-xs font-medium truncate flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px]' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1' : (okrRowsCount > 1 ? 'text-gray-600 pl-1' : 'hidden'))}`}>
+                                                                {/* Title moved to first column */}
+                                                                <span className={`text-xs truncate flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                     {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
                                                                     {row.label}
                                                                 </span>
@@ -1263,7 +1270,10 @@ export default function ObeyaPage() {
                                                                     </button>
                                                                 )}
                                                             </div>
-                                                            <div className="w-20 p-2 flex items-center justify-center bg-gray-50 text-xs font-bold text-gray-400">{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</div>
+                                                            <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100">
+                                                                <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
+                                                                {isOKR && (row as MetricRow).unit && <span className="text-[9px] text-gray-300">({(row as MetricRow).unit})</span>}
+                                                            </div>
                                                         </div>
 
                                                         {(viewMode === 'strategic' ?

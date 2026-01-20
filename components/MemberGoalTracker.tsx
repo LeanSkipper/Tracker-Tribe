@@ -6,7 +6,7 @@ import { Target, GripVertical } from 'lucide-react';
 // Types (mirrored from Obeya logic)
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
 type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; };
-type MetricRow = { id: string; type: 'OKR' | 'KPI'; label: string; monthlyData: MonthlyData[]; targetValue: number; startValue: number; };
+type MetricRow = { id: string; type: 'OKR' | 'KPI'; label: string; monthlyData: MonthlyData[]; targetValue: number; startValue: number; unit?: string; };
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
 type GoalCategory = { id: string; category: string; title: string; rows: (MetricRow | ActionRow)[]; };
 
@@ -85,6 +85,7 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                 label: o.metricName,
                 targetValue: o.targetValue,
                 startValue: o.currentValue,
+                unit: o.unit,
                 monthlyData: parsedMonthlyData
             };
         });
@@ -182,23 +183,31 @@ export default function MemberGoalTracker({ member, viewMode, startYear = 2026 }
                                     <div key={row.id} className={`flex ${isKPI ? 'min-h-[24px]' : viewMode === 'team-work' ? 'min-h-[32px]' : 'min-h-[60px]'} ${viewMode === 'team-work' && isOKR ? 'opacity-70' : ''}`}>
                                         {/* Sidebar Label */}
                                         <div className="sticky left-0 w-[300px] shrink-0 bg-white border-r border-slate-200 z-10 flex text-sm group">
-                                            <div className={`w-6 flex-shrink-0 flex items-center justify-center
+                                            <div className={`w-[2rem] flex-shrink-0 flex flex-col items-center justify-start font-bold text-white text-[10px] text-center leading-tight relative overflow-hidden py-1
                                             ${goal.category === 'Health' ? 'bg-teal-500' :
                                                     goal.category === 'Wealth' ? 'bg-emerald-500' :
                                                         goal.category === 'Family' ? 'bg-indigo-500' :
                                                             goal.category === 'Business' ? 'bg-blue-600' : 'bg-slate-400'}
-                                         `} />
+                                         `}>
+                                                <div className="writing-vertical-rl transform rotate-180 uppercase tracking-widest whitespace-nowrap mt-2" style={{ writingMode: 'vertical-rl' }}>
+                                                    {rIdx === 0 ? goal.title : ''}
+                                                </div>
+                                                {rIdx === 0 && <div className="absolute top-0 left-0 w-full h-1 bg-white/20"></div>}
+                                                {/* Tag */}
+                                                {rIdx === 0 && <div className="absolute top-1 left-1/2 -translate-x-1/2 px-1 rounded bg-black/10 text-[8px] whitespace-normal w-full break-words">{goal.category.substring(0, 3)}</div>}
+                                            </div>
 
                                             <div className="flex-1 p-3 flex flex-col justify-center border-r border-slate-100 overflow-hidden">
-                                                {rIdx === 0 && <div className="font-bold text-slate-900 truncate mb-0.5">{goal.title}</div>}
-                                                <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : viewMode === 'team-work' ? 'text-xs text-slate-600 font-semibold' : 'text-sm text-slate-700 font-bold'}`}>
+                                                {/* Title moved to first column */}
+                                                <div className={`flex items-center gap-2 truncate ${rIdx === 0 ? 'text-xs text-slate-500 font-medium' : viewMode === 'team-work' ? 'text-xs text-slate-600 font-semibold' : 'text-sm text-slate-700 font-bold'} ${isOKR ? 'font-bold' : ''}`}>
                                                     {isKPI && <span className="w-1.5 h-1.5 rounded-full bg-slate-300 shrink-0" />}
                                                     {row.label}
                                                 </div>
                                             </div>
 
-                                            <div className="w-16 flex items-center justify-center bg-slate-50 text-[10px] font-bold text-slate-400 border-l border-slate-100">
-                                                {isOKR ? (isKPI ? 'KPI' : 'OKR') : 'ACT'}
+                                            <div className="w-16 flex flex-col items-center justify-center bg-slate-50 text-[10px] font-bold text-slate-400 border-l border-slate-100">
+                                                <span>{isOKR ? (isKPI ? 'KPI' : 'OKR') : 'ACT'}</span>
+                                                {isOKR && (row as MetricRow).unit && <span className="text-[9px] text-slate-300">({(row as MetricRow).unit})</span>}
                                             </div>
                                         </div>
 
