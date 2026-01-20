@@ -533,11 +533,11 @@ const CommentModal = ({ goalId, rowId, monthData, onClose, onSave }: {
     );
 };
 
-type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'chart';
+type ObeyaViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'chart';
 
 export default function ObeyaPage() {
     const [currentYear, setCurrentYear] = useState(2026);
-    const [viewMode, setViewMode] = useState<ViewMode>('operational');
+    const [viewMode, setViewMode] = useState<ObeyaViewMode>('operational');
     const [isLoaded, setIsLoaded] = useState(false);
     const [goals, setGoals] = useState<GoalCategory[]>([]);
     const [draggedTask, setDraggedTask] = useState<{ goalId: string; actionId: string; sourceWeek: string } | null>(null);
@@ -547,6 +547,13 @@ export default function ObeyaPage() {
     const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
 
     useEffect(() => {
+        // ... lines elided ...
+        // Determine exact height
+        const heightClass = isKPI ? 'h-[32px]' : 'h-[60px]';
+
+        if (viewMode === 'tactical' && !isOKR) return null;
+        if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
+        if ((viewMode as string) === 'task' && isOKR) return null;
         const fetchGoals = async () => {
             try {
                 const res = await fetch('/api/goals');
@@ -1304,7 +1311,7 @@ export default function ObeyaPage() {
 
                                                     if (viewMode === 'tactical' && !isOKR) return null;
                                                     if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
-                                                    if (viewMode === 'task' && isOKR) return null;
+                                                    if ((viewMode as string) === 'task' && isOKR) return null;
 
                                                     return (
                                                         <div key={row.id} className={`flex ${heightClass}`}>
