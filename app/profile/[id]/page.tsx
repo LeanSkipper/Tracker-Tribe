@@ -205,182 +205,185 @@ export default function PublicProfilePage() {
                                 <Shield className="text-yellow-600" /> Reputation Scorecard
                             </h2>
                             <div className="space-y-4">
-                                {REPUTATION_CRITERIA.map(c => (
-                                    <div key={c.id} className="flex items-center gap-4">
-                                        <div className="w-1/3">
-                                            <div className="font-bold text-slate-700 text-sm">{c.label}</div>
-                                        </div>
-                                        <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
-                                            {/* Placeholder Visual: Randomize or use real data if available in future */}
-                                            <div
-                                                className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full"
-                                                style={{ width: `${(profile.reputationScore || 5) * 10}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="w-8 font-bold text-slate-500 text-sm text-right">
-                                            {(profile.reputationScore || 0).toFixed(1)}
+                                <div className="space-y-4">
+                                    {REPUTATION_CRITERIA.map(c => {
+                                        const score = profile.reputationBreakdown?.[c.id] || 0;
+                                        return (
+                                            <div key={c.id} className="flex items-center gap-4">
+                                                <div className="w-1/3">
+                                                    <div className="font-bold text-slate-700 text-sm">{c.label}</div>
+                                                </div>
+                                                <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden">
+                                                    <div
+                                                        className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 rounded-full"
+                                                        style={{ width: `${score * 10}%` }}
+                                                    ></div>
+                                                </div>
+                                                <div className="w-8 font-bold text-slate-500 text-sm text-right">
+                                                    {score.toFixed(1)}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    <p className="text-xs text-slate-400 italic mt-4 text-center">Based on community reviews.</p>
+                                </div>
+                            </div>
+
+                            {/* Identity & Professional */}
+                            <div className="bg-white rounded-3xl shadow-lg p-6">
+                                <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                                    <User className="text-indigo-600" /> Identity
+                                </h2>
+
+                                <div className="space-y-6">
+                                    {/* Bio/Context */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                        {profile.country && (
+                                            <div className="flex items-center gap-3 text-slate-600">
+                                                <Globe size={18} className="text-slate-400" />
+                                                <span>{profile.city ? `${profile.city}, ` : ''}{profile.country}</span>
+                                            </div>
+                                        )}
+                                        {profile.professionalRole && (
+                                            <div className="flex items-center gap-3 text-slate-600">
+                                                <Briefcase size={18} className="text-slate-400" />
+                                                <span className="capitalize">{profile.professionalRole} {profile.industry ? `in ${profile.industry}` : ''}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Styles */}
+                                    <div className="border-t border-slate-100 pt-4">
+                                        <h3 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wider">Execution Style</h3>
+                                        <div className="flex flex-wrap gap-2">
+                                            {profile.actionSpeed && <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold capitalize">{profile.actionSpeed} Paced</span>}
+                                            {profile.planningStyle && <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold capitalize">{profile.planningStyle} Planner</span>}
+                                            {profile.followThroughLevel && <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold capitalize">{profile.followThroughLevel} Follow-through</span>}
                                         </div>
                                     </div>
-                                ))}
-                                <p className="text-xs text-slate-400 italic mt-4 text-center">Score details are currently aggregated.</p>
+
+                                    {/* Skills */}
+                                    {Object.keys(skills).length > 0 && (
+                                        <div className="border-t border-slate-100 pt-4">
+                                            <h3 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wider">Top Skills</h3>
+                                            <div className="flex flex-wrap gap-2">
+                                                {Object.entries(skills).map(([skill, val]) => (
+                                                    <span key={skill} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">
+                                                        {skill}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
-                        {/* Identity & Professional */}
-                        <div className="bg-white rounded-3xl shadow-lg p-6">
-                            <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                                <User className="text-indigo-600" /> Identity
-                            </h2>
-
-                            <div className="space-y-6">
-                                {/* Bio/Context */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                                    {profile.country && (
-                                        <div className="flex items-center gap-3 text-slate-600">
-                                            <Globe size={18} className="text-slate-400" />
-                                            <span>{profile.city ? `${profile.city}, ` : ''}{profile.country}</span>
-                                        </div>
-                                    )}
-                                    {profile.professionalRole && (
-                                        <div className="flex items-center gap-3 text-slate-600">
-                                            <Briefcase size={18} className="text-slate-400" />
-                                            <span className="capitalize">{profile.professionalRole} {profile.industry ? `in ${profile.industry}` : ''}</span>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Styles */}
-                                <div className="border-t border-slate-100 pt-4">
-                                    <h3 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wider">Execution Style</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {profile.actionSpeed && <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold capitalize">{profile.actionSpeed} Paced</span>}
-                                        {profile.planningStyle && <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold capitalize">{profile.planningStyle} Planner</span>}
-                                        {profile.followThroughLevel && <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-xs font-bold capitalize">{profile.followThroughLevel} Follow-through</span>}
+                        {/* Right Column: Tribes */}
+                        <div className="space-y-6">
+                            <div className="bg-white rounded-3xl shadow-lg p-6">
+                                <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
+                                    <Users className="text-indigo-600" /> Tribes
+                                </h2>
+                                {profile.memberships && profile.memberships.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {profile.memberships.map((m: any) => (
+                                            <div key={m.tribe.id} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-200 transition-colors">
+                                                <h3 className="font-bold text-slate-800 mb-1">{m.tribe.name}</h3>
+                                                {m.tribe.description && (
+                                                    <p className="text-xs text-slate-500 line-clamp-2 mb-3">{m.tribe.description}</p>
+                                                )}
+                                                <div className="flex items-center justify-between">
+                                                    <div className="flex -space-x-2">
+                                                        {m.tribe.members.map((tm: any, i: number) => (
+                                                            <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
+                                                                {tm.user.avatarUrl && <img src={tm.user.avatarUrl} className="w-full h-full object-cover" />}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
+                                                        {Math.round(m.tribe.reliabilityRate)}% Rel
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
-
-                                {/* Skills */}
-                                {Object.keys(skills).length > 0 && (
-                                    <div className="border-t border-slate-100 pt-4">
-                                        <h3 className="font-bold text-slate-800 mb-3 text-sm uppercase tracking-wider">Top Skills</h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {Object.entries(skills).map(([skill, val]) => (
-                                                <span key={skill} className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">
-                                                    {skill}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
+                                ) : (
+                                    <p className="text-slate-500 text-sm">Not in any tribes yet.</p>
                                 )}
                             </div>
                         </div>
                     </div>
 
-                    {/* Right Column: Tribes */}
-                    <div className="space-y-6">
-                        <div className="bg-white rounded-3xl shadow-lg p-6">
-                            <h2 className="text-xl font-black text-slate-900 mb-6 flex items-center gap-2">
-                                <Users className="text-indigo-600" /> Tribes
-                            </h2>
-                            {profile.memberships && profile.memberships.length > 0 ? (
-                                <div className="space-y-4">
-                                    {profile.memberships.map((m: any) => (
-                                        <div key={m.tribe.id} className="border border-slate-100 rounded-xl p-4 hover:border-indigo-200 transition-colors">
-                                            <h3 className="font-bold text-slate-800 mb-1">{m.tribe.name}</h3>
-                                            {m.tribe.description && (
-                                                <p className="text-xs text-slate-500 line-clamp-2 mb-3">{m.tribe.description}</p>
-                                            )}
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex -space-x-2">
-                                                    {m.tribe.members.map((tm: any, i: number) => (
-                                                        <div key={i} className="w-6 h-6 rounded-full border-2 border-white bg-slate-200 overflow-hidden">
-                                                            {tm.user.avatarUrl && <img src={tm.user.avatarUrl} className="w-full h-full object-cover" />}
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg">
-                                                    {Math.round(m.tribe.reliabilityRate)}% Rel
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <p className="text-slate-500 text-sm">Not in any tribes yet.</p>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* REVIEW MODAL */}
-                {showReviewModal && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
-                            <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                                <div>
-                                    <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
-                                        <Shield className="text-indigo-600" /> Reputation Feedback
-                                    </h3>
-                                    <p className="text-slate-500 text-sm mt-1">Rate {profile.name} to help them grow. Earn 10 XP!</p>
-                                </div>
-                                <button onClick={() => setShowReviewModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">Close</button>
-                            </div>
-
-                            <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
-                                <div className="space-y-6">
-                                    {REPUTATION_CRITERIA.map(c => (
-                                        <div key={c.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <label className="font-bold text-slate-800">{c.label}</label>
-                                                    <p className="text-xs text-slate-500 text-pretty max-w-md">{c.desc}</p>
-                                                </div>
-                                                <div className="text-xl font-black text-indigo-600 w-8 text-right">
-                                                    {reviewScores[c.id] || '-'}
-                                                </div>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="1"
-                                                max="10"
-                                                step="1"
-                                                className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
-                                                value={reviewScores[c.id] || 0}
-                                                onChange={(e) => handleScoreChange(c.id, parseInt(e.target.value))}
-                                            />
-                                            <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase mt-1 px-1">
-                                                <span>Poor</span>
-                                                <span>Excellent</span>
-                                            </div>
-                                        </div>
-                                    ))}
-
+                    {/* REVIEW MODAL */}
+                    {showReviewModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                            <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl">
+                                <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                                     <div>
-                                        <label className="font-bold text-slate-800 mb-2 block">Optional Comment</label>
-                                        <textarea
-                                            className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700"
-                                            placeholder="Share your experience working with them..."
-                                            rows={2}
-                                            value={reviewComment}
-                                            onChange={e => setReviewComment(e.target.value)}
-                                        />
+                                        <h3 className="text-2xl font-black text-slate-900 flex items-center gap-2">
+                                            <Shield className="text-indigo-600" /> Reputation Feedback
+                                        </h3>
+                                        <p className="text-slate-500 text-sm mt-1">Rate {profile.name} to help them grow. Earn 10 XP!</p>
+                                    </div>
+                                    <button onClick={() => setShowReviewModal(false)} className="text-slate-400 hover:text-slate-600 font-bold">Close</button>
+                                </div>
+
+                                <div className="p-6 overflow-y-auto flex-1 bg-slate-50">
+                                    <div className="space-y-6">
+                                        {REPUTATION_CRITERIA.map(c => (
+                                            <div key={c.id} className="bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <label className="font-bold text-slate-800">{c.label}</label>
+                                                        <p className="text-xs text-slate-500 text-pretty max-w-md">{c.desc}</p>
+                                                    </div>
+                                                    <div className="text-xl font-black text-indigo-600 w-8 text-right">
+                                                        {reviewScores[c.id] || '-'}
+                                                    </div>
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min="1"
+                                                    max="10"
+                                                    step="1"
+                                                    className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                                                    value={reviewScores[c.id] || 0}
+                                                    onChange={(e) => handleScoreChange(c.id, parseInt(e.target.value))}
+                                                />
+                                                <div className="flex justify-between text-[10px] text-slate-400 font-bold uppercase mt-1 px-1">
+                                                    <span>Poor</span>
+                                                    <span>Excellent</span>
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        <div>
+                                            <label className="font-bold text-slate-800 mb-2 block">Optional Comment</label>
+                                            <textarea
+                                                className="w-full p-4 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-slate-700"
+                                                placeholder="Share your experience working with them..."
+                                                rows={2}
+                                                value={reviewComment}
+                                                onChange={e => setReviewComment(e.target.value)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <div className="p-6 border-t border-slate-100 bg-white rounded-b-3xl flex justify-end">
-                                <button
-                                    onClick={submitReview}
-                                    disabled={submittingReview}
-                                    className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center gap-2"
-                                >
-                                    {submittingReview ? 'Submitting...' : <><Check size={18} /> Submit Review</>}
-                                </button>
+                                <div className="p-6 border-t border-slate-100 bg-white rounded-b-3xl flex justify-end">
+                                    <button
+                                        onClick={submitReview}
+                                        disabled={submittingReview}
+                                        className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200 disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {submittingReview ? 'Submitting...' : <><Check size={18} /> Submit Review</>}
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
-        </div>
-    );
+            );
 }
