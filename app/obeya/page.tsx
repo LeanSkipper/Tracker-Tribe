@@ -1260,7 +1260,7 @@ export default function ObeyaPage() {
                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
                                                         // Determine exact height
-                                                        const heightClass = isKPI ? 'h-[48px]' : 'h-[96px]';
+                                                        const heightClass = 'h-[45px]';
 
                                                         if (viewMode === 'tactical' && !isOKR) return null;
                                                         if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
@@ -1300,7 +1300,7 @@ export default function ObeyaPage() {
                                                     const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
                                                     // Sync Height
-                                                    const heightClass = isKPI ? 'h-[48px]' : 'h-[96px]';
+                                                    const heightClass = 'h-[45px]';
 
                                                     if (viewMode === 'tactical' && !isOKR) return null;
                                                     if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
