@@ -106,7 +106,7 @@ export default function TribeDetailsPage() {
                 // Check for SOP signature (if member and not creator/admin)
                 // Note: We need to check the current user's membership details
                 // API returns member with flattened user details, but userId is the key connector
-                const currentMember = data.tribe.members.find((m: any) => m.id === data.currentUserId); // Changed to match member.id if API returns flattened member objects with User ID as ID, or check logic. Assuming member.id is User ID.
+                const currentMember = data.tribe.members.find((m: any) => m.id === data.currentUserId);
 
                 // Only show modal if:
                 // 1. Member exists
@@ -301,8 +301,8 @@ export default function TribeDetailsPage() {
                         </div>
                     )}
 
-                    {/* Description for guests */}
-                    {!isMember && tribe.description && (
+                    {/* Description - Visible to ALL */}
+                    {tribe.description && (
                         <div className="mb-8 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
                             <h3 className="text-lg font-bold text-slate-900 mb-2">About this Tribe</h3>
                             <p className="text-slate-600 leading-relaxed">{tribe.description}</p>
@@ -398,17 +398,7 @@ export default function TribeDetailsPage() {
                         )}
                     </div>
 
-                    {/* SOPs Read-Only View (Visible to ALL now) */}
-                    {tribe.standardProcedures && (
-                        <div className="mb-12 bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
-                            <h3 className="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">
-                                <FileText className="text-indigo-600" /> Standard Procedures
-                            </h3>
-                            <div className="prose prose-slate max-w-none bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                                <pre className="whitespace-pre-wrap font-sans text-slate-600 text-sm leading-relaxed">{tribe.standardProcedures}</pre>
-                            </div>
-                        </div>
-                    )}
+                    {/* SOPs Section REMOVED for Main View */}
 
 
                     {/* ADMIN CONSOLE COPY - Only for Admins */}
