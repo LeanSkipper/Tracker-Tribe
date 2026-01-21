@@ -22,17 +22,8 @@ export async function sendWelcomeEmail(email: string, name: string) {
         console.log('[EMAIL] Welcome email sent:', data);
         return data;
     } catch (error) {
-        from: 'Lapis Team <onboarding@resend.dev>', // Update this with your verified domain later
-            to: [email],
-                subject: 'Welcome to Lapis Platform! 🚀',
-                    html: WelcomeEmailTemplate(name)
-    });
-
-    console.log('[EMAIL] Welcome email sent:', data);
-    return data;
-} catch (error) {
-    console.error('[EMAIL] Failed to send welcome email:', error);
-    // We don't throw here to avoid failing the signup process
-    return null;
-}
+        console.error('[EMAIL] Failed to send welcome email:', error);
+        // We don't throw here to avoid failing the signup process
+        return null;
+    }
 }
