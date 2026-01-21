@@ -311,7 +311,7 @@ export default function BrowseTribesPage() {
                             onClick={() => { setIsMobileFabOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
                             className="bg-white text-slate-700 p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs border border-slate-100"
                         >
-                            <Search size={16} /> Browse Tribes
+                            <Search size={16} /> Find Tribes
                         </button>
                         <button
                             onClick={() => { setShowCreateModal(true); setIsMobileFabOpen(false); }}
