@@ -372,9 +372,9 @@ export default function TribeDetailsPage() {
                                                 </div>
                                             )}
                                         </div>
-                                        {/* Grit Badge */}
-                                        <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border-2 border-white">
-                                            {member.grit}%
+                                        {/* Global Score Badge */}
+                                        <div className="absolute -bottom-1 -right-1 bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm border-2 border-white flex items-center gap-0.5">
+                                            <span className="text-yellow-300">★</span> {(member as any).rankingScore?.toLocaleString()}
                                         </div>
                                     </div>
 

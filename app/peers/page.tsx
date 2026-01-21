@@ -222,8 +222,9 @@ export default function PeerMatchingPage() {
                                         )}
 
                                         <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-50">
-                                            <div className="text-xs font-bold text-slate-400 bg-slate-50 px-2 py-1 rounded-lg">
-                                                Lvl {peer.level}
+                                            <div className="text-xs font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-lg flex items-center gap-1">
+                                                <Trophy size={12} className="text-yellow-600" />
+                                                {(peer as any).rankingScore?.toLocaleString() || 0} pts
                                             </div>
                                             <button
                                                 onClick={() => handleConnect(peer.id)}

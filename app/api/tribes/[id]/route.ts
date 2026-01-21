@@ -32,6 +32,8 @@ export async function GET(
                                 avatarUrl: true,
                                 level: true,
                                 grit: true,
+                                experience: true,      // Added
+                                reputationScore: true, // Added
                                 goals: {
                                     where: { visibility: 'TRIBE' },
                                     include: {
@@ -55,11 +57,20 @@ export async function GET(
 
         // Transform members to flatten user details for frontend convenience
         // Frontend expects member.name, member.grit, etc.
-        const transformedMembers = tribe.members.map(member => ({
-            ...member.user, // Spread user details (name, avatar, grit, etc.)
-            ...member,      // Spread member details (role, joinedAt, signedSOPAt). This overwrites user.id with member.id
-            userId: member.userId // Ensure userId is explicit
-        }));
+        const transformedMembers = tribe.members.map(member => {
+            // Calculate Global Score
+            const gritPercent = (member.user.grit / 100) || 0.1;
+            const rankingXP = member.user.experience || 1;
+            const rankingRep = member.user.reputationScore || 1;
+            const rankingScore = Math.round(member.user.level * gritPercent * rankingXP * rankingRep);
+
+            return {
+                ...member.user, // Spread user details (name, avatar, grit, etc.)
+                ...member,      // Spread member details (role, joinedAt, signedSOPAt). This overwrites user.id with member.id
+                userId: member.userId, // Ensure userId is explicit
+                rankingScore // Added
+            };
+        });
 
         return NextResponse.json({
             tribe: {

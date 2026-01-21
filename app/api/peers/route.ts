@@ -94,6 +94,9 @@ export async function GET(req: Request) {
                 bio: true,
                 avatarUrl: true,
                 level: true,
+                grit: true,            // Added
+                experience: true,      // Added
+                reputationScore: true, // Added
                 // Matchmaking fields
                 professionalRole: true,
                 industry: true,
@@ -108,7 +111,16 @@ export async function GET(req: Request) {
             },
         });
 
-        return NextResponse.json({ peers, topRanked: ranked });
+        const peersWithScore = peers.map(peer => {
+            const gritPercent = peer.grit / 100;
+            const score = Math.round(peer.level * (gritPercent || 0.1) * (peer.experience || 1) * (peer.reputationScore || 1));
+            return {
+                ...peer,
+                rankingScore: score
+            };
+        });
+
+        return NextResponse.json({ peers: peersWithScore, topRanked: ranked });
     } catch (error) {
         console.error('Error fetching peers:', error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

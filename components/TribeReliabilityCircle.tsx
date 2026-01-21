@@ -35,6 +35,7 @@ type Member = {
     role: string;
     customTitle?: string;
     grit: number;
+    rankingScore?: number; // Added
     badges: any[];
 };
 
@@ -46,17 +47,7 @@ type TribeReliabilityCircleProps = {
 export default function TribeReliabilityCircle({ members, averageGrit }: TribeReliabilityCircleProps) {
 
     const getHat = (role: string, customTitle?: string) => {
-        // If it's a specific role (custom title set and role is likely PLAYER or CUSTOM), show Grey hat
-        // Or if the user explicitly selected a role that maps to a specific hat
-
-        // Logic: 
-        // Admin -> Green
-        // Moderator -> Orange
-        // Time Keeper -> Black
-        // Special Guest -> Purple
-        // Player (default) -> No hat usually, unless customTitle is set, then Grey?
-        // Let's assume if customTitle is present and role is PLAYER, use CustomHat (Grey).
-
+        // ... (keep existing hat logic)
         if (role === 'ADMIN') return <AdminHat className="w-20 h-20" />;
         if (role === 'MODERATOR') return <ModeratorHat className="w-18 h-18" />;
         if (role === 'TIME_KEEPER') return <TimeKeeperHat className="w-18 h-18" />;
@@ -137,13 +128,11 @@ export default function TribeReliabilityCircle({ members, averageGrit }: TribeRe
                                         {/* Optional stats or avatar background? For now keeping it clean as per "Bubble" model text based */}
                                     </div>
 
-                                    {/* Grit % */}
+                                    {/* Global Score (Replaces Grit) */}
                                     <div className="mt-4 flex flex-col items-center z-20">
-                                        <div className="text-[9px] font-bold text-slate-500 uppercase">Grit</div>
-                                        <div className={`text-2xl font-black ${member.grit >= 80 ? 'text-purple-600' :
-                                            member.grit >= 50 ? 'text-blue-600' : 'text-slate-400'
-                                            }`}>
-                                            {member.grit}
+                                        <div className="text-[9px] font-bold text-slate-500 uppercase">Score</div>
+                                        <div className="text-lg font-black text-indigo-600">
+                                            {member.rankingScore?.toLocaleString() || '-'}
                                         </div>
                                     </div>
 

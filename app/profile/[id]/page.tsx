@@ -125,7 +125,7 @@ export default function PublicProfilePage() {
                 <div className="bg-white rounded-3xl shadow-xl p-8 mb-6 relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-indigo-600 to-purple-600"></div>
                     <div className="relative pt-16 flex flex-col md:flex-row items-end md:items-center gap-6">
-                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-200">
+                        <div className="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-slate-200 relative">
                             {profile.avatarUrl ? (
                                 <img src={profile.avatarUrl} alt={profile.name} className="w-full h-full object-cover" />
                             ) : (
@@ -133,6 +133,9 @@ export default function PublicProfilePage() {
                                     {profile.name?.charAt(0)}
                                 </div>
                             )}
+                            <div className="absolute bottom-1 right-1 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md border-2 border-white flex items-center gap-1">
+                                <span className="text-yellow-300">★</span> {profile.rankingScore?.toLocaleString()}
+                            </div>
                         </div>
                         <div className="flex-1 mb-2">
                             <h1 className="text-3xl font-black text-slate-900">{profile.name}</h1>
