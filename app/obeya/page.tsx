@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, Trend
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
+import PitStopReminder from '@/components/PitStopReminder';
 import { GoalTemplate } from '@/lib/goalTemplates';
 import KanbanBoard from '@/components/KanbanBoard';
 
@@ -1462,6 +1463,7 @@ export default function ObeyaPage() {
                     />
                 ) : (<>
                     <div className="md:hidden p-4 space-y-4">
+                        <PitStopReminder onOpenPitStop={() => setIsPitStopOpen(true)} />
                         {goals.map(goal => (
                             <ObeyaMobileGoalCard
                                 key={goal.id}

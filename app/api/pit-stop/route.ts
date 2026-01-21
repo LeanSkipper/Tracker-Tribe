@@ -66,7 +66,31 @@ export async function POST(req: NextRequest) {
 
         // Transaction: Create PitStop, Update User XP and Streak
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Create PitStop
+            // 2. Calculate Streak & XP
+            // Logic: If lastPitStopAt was < 8 days ago, increment streak. Else, reset/penalty.
+            const now = new Date();
+            let newStreak = user.currentStreak;
+            let xpEarned = 20;
+
+            if (user.lastPitStopAt) {
+                const dayDiff = (now.getTime() - user.lastPitStopAt.getTime()) / (1000 * 60 * 60 * 24);
+
+                // Streak Logic
+                if (dayDiff <= 8) { // Strict weekly cadence (with 1 day buffer)
+                    newStreak += 1;
+                } else {
+                    newStreak = 1; // Reset streak
+                }
+
+                // Late Penalty Logic
+                if (dayDiff > 7) {
+                    xpEarned = 15; // -5 XP Penalty for being late
+                }
+            } else {
+                newStreak = 1; // First one
+            }
+
+            // 1. Create PitStop (using calculated XP)
             const pitStop = await tx.pitStop.create({
                 data: {
                     userId: user.id,
@@ -75,38 +99,22 @@ export async function POST(req: NextRequest) {
                     winImageUrl,
                     lesson,
                     duration: duration || 0,
-                    xpEarned: 20
+                    xpEarned
                 }
             });
-
-            // 2. Calculate Streak
-            // Logic: If lastPitStopAt was < 8 days ago, increment. Else, reset to 1.
-            const now = new Date();
-            let newStreak = user.currentStreak;
-
-            if (user.lastPitStopAt) {
-                const dayDiff = (now.getTime() - user.lastPitStopAt.getTime()) / (1000 * 60 * 60 * 24);
-                if (dayDiff <= 8) { // Allow a bit of buffer around 7 days
-                    newStreak += 1;
-                } else {
-                    newStreak = 1; // Reset
-                }
-            } else {
-                newStreak = 1; // First one
-            }
 
             // 3. Update User
             const updatedUser = await tx.user.update({
                 where: { id: user.id },
                 data: {
-                    experience: { increment: 20 },
-                    currentXP: { increment: 20 }, // Check if level up logic needed elsewhere
+                    experience: { increment: xpEarned },
+                    currentXP: { increment: xpEarned }, // Check if level up logic needed elsewhere
                     currentStreak: newStreak,
                     lastPitStopAt: now
                 }
             });
 
-            return { pitStop, xp: updatedUser.currentXP, streak: updatedUser.currentStreak };
+            return { pitStop, xp: updatedUser.currentXP, streak: updatedUser.currentStreak, xpEarned };
         });
 
         return NextResponse.json(result);
