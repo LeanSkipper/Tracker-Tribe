@@ -13,6 +13,7 @@ type Tribe = {
     memberCount?: number;
     members?: any[];
     averageGrit: number;
+    averageRankingScore?: number;
     matchmakingCriteria?: string | null;
     minGrit: number;
     minLevel: number;
@@ -101,10 +102,10 @@ export default function EnhancedTribeCard({ tribe, isMember, userStats, index }:
                         </div>
                     </div>
                     <div className="bg-slate-50 p-2 rounded-lg">
-                        <span className="text-xs text-slate-400 font-bold uppercase block">Avg Grit</span>
+                        <span className="text-xs text-slate-400 font-bold uppercase block">Avg Score</span>
                         <div className="flex items-center gap-1 text-slate-700 font-bold">
-                            <span>🔥</span>
-                            {tribe.averageGrit}%
+                            <span className="text-yellow-500">★</span>
+                            {tribe.averageRankingScore ? tribe.averageRankingScore.toLocaleString() : '—'}
                         </div>
                     </div>
                 </div>

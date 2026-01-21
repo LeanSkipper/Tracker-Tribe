@@ -27,7 +27,10 @@ export async function GET(req: Request) {
                                         id: true,
                                         name: true,
                                         avatarUrl: true,
-                                        grit: true
+                                        grit: true,
+                                        level: true,
+                                        experience: true,
+                                        reputationScore: true
                                     }
                                 }
                             }
@@ -44,6 +47,15 @@ export async function GET(req: Request) {
             const totalGrit = t.members.reduce((acc, m) => acc + (m.user.grit || 0), 0);
             const avgGrit = t.members.length > 0 ? Math.round(totalGrit / t.members.length) : 0;
 
+            // Calculate average Global Score
+            const totalScore = t.members.reduce((acc, m) => {
+                const u = m.user;
+                const gp = (u.grit ? u.grit / 100 : 0.1);
+                const score = (u.level || 1) * gp * (u.experience || 1) * (u.reputationScore || 1);
+                return acc + score;
+            }, 0);
+            const avgScore = t.members.length > 0 ? Math.round(totalScore / t.members.length) : 0;
+
             return {
                 id: t.id,
                 name: t.name,
@@ -58,6 +70,7 @@ export async function GET(req: Request) {
                     avatarUrl: m.user.avatarUrl
                 })),
                 averageGrit: avgGrit,
+                averageRankingScore: avgScore,
                 minGrit: t.minGrit,
                 minLevel: t.minLevel,
                 minExperience: t.minExperience,
