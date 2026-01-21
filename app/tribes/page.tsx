@@ -21,6 +21,7 @@ type Tribe = {
     minExperience: number;
     minReputation: number;
     averageGrit: number;
+    averageRankingScore?: number;
     meetingFrequency?: string | null;
     meetingTimeHour?: number | null;
     meetingTimeMinute?: number | null;
@@ -246,10 +247,10 @@ export default function BrowseTribesPage() {
                                                 </div>
                                             </div>
                                             <div className="bg-slate-50 p-2 rounded-lg">
-                                                <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Grit</span>
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Score</span>
                                                 <div className="flex items-center gap-1 text-slate-700 font-bold text-sm">
-                                                    <span>🔥</span>
-                                                    {tribe.averageGrit}%
+                                                    <span className="text-yellow-500">★</span>
+                                                    {tribe.averageRankingScore ? tribe.averageRankingScore.toLocaleString() : '—'}
                                                 </div>
                                             </div>
                                         </div>

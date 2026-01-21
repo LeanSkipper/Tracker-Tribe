@@ -14,7 +14,12 @@ export async function GET(req: Request) {
                 members: {
                     select: {
                         user: {
-                            select: { grit: true }
+                            select: {
+                                grit: true,
+                                level: true,
+                                experience: true,
+                                reputationScore: true
+                            }
                         }
                     }
                 }
@@ -26,6 +31,19 @@ export async function GET(req: Request) {
             // Calculate average grit
             const totalGrit = t.members.reduce((acc, m) => acc + (m.user.grit || 0), 0);
             const avgGrit = t.members.length > 0 ? Math.round(totalGrit / t.members.length) : 0;
+
+            // Calculate average Global Score (Ranking Score)
+            const totalScore = t.members.reduce((acc, m) => {
+                const u = m.user;
+                const gritPercent = (u.grit / 100) || 0; // Use 0 fallback here for average? Or 0.1? Peers used 0.1, Tribe[id] used 0.1. Let's use 0.1 for consistency or 0 if grit is missing?
+                // Tribe[id] route: const gritPercent = (member.user.grit / 100) || 0.1;
+                // Peers route: const gritPercent = peer.grit / 100; (with fallback in usage: (gritPercent || 0.1))
+                // Let's stick to 0.1 fallback for consistency
+                const gp = (u.grit ? u.grit / 100 : 0.1);
+                const score = (u.level || 1) * gp * (u.experience || 1) * (u.reputationScore || 1);
+                return acc + score;
+            }, 0);
+            const avgScore = t.members.length > 0 ? Math.round(totalScore / t.members.length) : 0;
 
             return {
                 id: t.id,
@@ -42,7 +60,8 @@ export async function GET(req: Request) {
                 minExperience: t.minExperience,
                 minReputation: t.minReputation,
                 // Calculated Stats
-                averageGrit: avgGrit
+                averageGrit: avgGrit,
+                averageRankingScore: avgScore
             };
         });
 
