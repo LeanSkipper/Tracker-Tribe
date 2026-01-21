@@ -49,9 +49,9 @@ export const WelcomeEmailTemplate = (name: string) => `
             <p>Ready to get started? Access the platform wherever you are.</p>
             
             <div class="links">
-                <a href="https://lapis-platform.vercel.app/obeya" class="button">Open Desktop App</a>
+                <a href="https://tracker-tribe.vercel.app/obeya" class="button">Open Desktop App</a>
                 <br/><br/>
-                <a href="https://lapis-platform.vercel.app/obeya" class="button secondary">Download Mobile App (PWA)</a>
+                <a href="https://tracker-tribe.vercel.app/obeya" class="button secondary">Download Mobile App (PWA)</a>
             </div>
             
             <p style="font-size: 14px; color: #6b7280; text-align: center;">
