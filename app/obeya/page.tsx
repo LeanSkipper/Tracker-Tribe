@@ -65,10 +65,11 @@ const generateMonthlyTargets = (start: number, end: number, startYear: number, s
     return data;
 };
 
-const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus }: {
+const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }: {
     goal: GoalCategory,
     currentYear: number,
-    onUpdateStatus: (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => void
+    onUpdateStatus: (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => void;
+    onAddAction: (goalId: string, weekId: string) => void;
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const metrics = goal.rows.filter(r => 'type' in r) as MetricRow[];
@@ -88,10 +89,14 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus }: {
     const now = new Date();
     const startOfYear = new Date(now.getFullYear(), 0, 1);
     const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-    const currentWeekNum = Math.floor(daysSinceStart / 7) + 1;
-    const currentWeekId = `W${currentWeekNum}`;
+    const globalWeekNum = Math.floor(daysSinceStart / 7) + 1;
 
-    const currentActions = actionRow?.actions.filter(a => a.weekId === currentWeekId && a.year === currentYear) || [];
+    // Time Window State
+    const [weekOffset, setWeekOffset] = useState(0);
+    const displayedWeekNum = globalWeekNum + weekOffset;
+    const currentWeekId = `W${displayedWeekNum}`;
+
+    const displayedActions = actionRow?.actions.filter(a => a.weekId === currentWeekId && a.year === currentYear) || [];
 
     const categoryColors: Record<string, string> = {
         'Health': 'bg-teal-600',
@@ -132,20 +137,24 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus }: {
                 </div>
                 <div className="flex items-center gap-1">
                     <div className="w-3 h-3 bg-purple-500 rounded-full" />
-                    <span className="font-bold text-slate-700">{currentActions.filter(a => a.status === 'DONE').length}/{currentActions.length}</span>
+                    <span className="font-bold text-slate-700">{displayedActions.filter(a => a.status === 'DONE').length}/{displayedActions.length}</span>
                     <span>actions done</span>
                 </div>
             </div>
 
             {/* Current Week Actions (Zero Friction) - Always Visible or Prominent */}
-            {currentActions.length > 0 && (
-                <div className="px-4 pb-4 border-t border-slate-50 pt-3">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">This Week's Focus</span>
-                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{currentWeekId}</span>
+            <div className="px-4 pb-4 border-t border-slate-50 pt-3">
+                <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Focus</span>
+                    <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-0.5">
+                        <button onClick={() => setWeekOffset(prev => prev - 1)} className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-indigo-600 transition-all"><ChevronLeft size={12} /></button>
+                        <span className="text-[10px] text-slate-600 font-bold min-w-[2rem] text-center">{currentWeekId}</span>
+                        <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-indigo-600 transition-all"><ChevronRight size={12} /></button>
                     </div>
+                </div>
+                {displayedActions.length > 0 ? (
                     <div className="space-y-2">
-                        {currentActions.map(action => (
+                        {displayedActions.map(action => (
                             <div key={action.id} className="flex items-start gap-3 p-2 rounded-lg border border-slate-100 bg-slate-50/50">
                                 <input
                                     type="checkbox"
@@ -159,8 +168,12 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus }: {
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
+                ) : (
+                    <div className="text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
+                        <p className="text-[10px] text-slate-400 italic">No actions planned for {currentWeekId}</p>
+                    </div>
+                )}
+            </div>
 
             {/* Expanded Content: KPIs and Details */}
             {isExpanded && (
@@ -199,14 +212,18 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus }: {
                             </div>
                         );
                     })}
-
-                    <div className="pt-2 text-center">
-                        <button className="text-xs font-bold text-indigo-600 flex items-center justify-center gap-1 w-full py-2 bg-indigo-50 rounded-lg">
-                            <Plus size={14} /> Add Action / Update
-                        </button>
-                    </div>
                 </div>
             )}
+
+            {/* Always visible Add Action button for easy access */}
+            <div className="px-4 pb-4">
+                <button
+                    onClick={() => onAddAction(goal.id, currentWeekId)}
+                    className="text-xs font-bold text-indigo-600 flex items-center justify-center gap-1 w-full py-2 bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg"
+                >
+                    <Plus size={14} /> Add Action / Update
+                </button>
+            </div>
         </div>
     );
 };
@@ -1403,6 +1420,7 @@ export default function ObeyaPage() {
                                 goal={goal}
                                 currentYear={currentYear}
                                 onUpdateStatus={(gid, cid, status) => handleUpdateActionStatus(gid, cid, status)}
+                                onAddAction={(gid, weekId) => setActiveWeekModal({ week: weekId, goalId: gid })}
                             />
                         ))}
                     </div>
