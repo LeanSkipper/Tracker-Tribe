@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
 import PitStopReminder from '@/components/PitStopReminder';
+import { usePitStopStatus } from '@/hooks/usePitStopStatus';
 import { GoalTemplate } from '@/lib/goalTemplates';
 import KanbanBoard from '@/components/KanbanBoard';
 
@@ -1197,6 +1198,10 @@ export default function ObeyaPage() {
     const { data: session } = useSession() ?? { data: null };
     const isGuest = !session;
 
+    // Pit Stop Logic
+    const { status: pitStopStatus, daysSince: pitStopDaysSince, loading: pitStopLoading } = usePitStopStatus();
+    const pitStopDaysLeft = Math.max(0, 7 - pitStopDaysSince);
+
     return (
         <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
             {/* Demo Data Banner for Guest Users */}
@@ -1265,9 +1270,25 @@ export default function ObeyaPage() {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setIsPitStopOpen(true)}
-                        className="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-blue-700 transition-all hover:scale-105"
+                        className={`
+                            px-4 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all hover:scale-105
+                            ${pitStopStatus === 'overdue'
+                                ? 'bg-red-600 text-white shadow-red-200 hover:bg-red-700 animate-pulse'
+                                : pitStopStatus === 'warning'
+                                    ? 'bg-amber-500 text-white shadow-amber-200 hover:bg-amber-600'
+                                    : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'
+                            }
+                        `}
                     >
-                        <Clock size={20} /> START PIT STOP
+                        {pitStopLoading ? (
+                            <Clock size={20} className="animate-spin" />
+                        ) : pitStopStatus === 'overdue' ? (
+                            <><AlertTriangle size={20} /> OVERDUE (-5 XP)</>
+                        ) : pitStopStatus === 'warning' ? (
+                            <><Clock size={20} /> DUE TOMORROW</>
+                        ) : (
+                            <><Clock size={20} /> PIT STOP ({pitStopDaysLeft} DAYS)</>
+                        )}
                     </button>
                     <button
                         onClick={() => setIsInspirationOpen(true)}
