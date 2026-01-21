@@ -160,9 +160,7 @@ export async function POST(req: Request) {
                             const endOfWeek = new Date(weekDate);
                             endOfWeek.setDate(weekDate.getDate() + 7);
 
-                            if (new Date() > endOfWeek) {
-                                await awardXP(user.id, 'TASK_LATE');
-                            }
+
                         }
                     }
                 }

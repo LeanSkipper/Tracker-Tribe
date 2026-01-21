@@ -51,7 +51,7 @@ export async function POST(req: Request) {
         });
 
         // Award XP for Weekly Check-in
-        const xpResult = await awardXP(user.id, 'WEEKLY_CHECKIN');
+        const xpResult = await awardXP(user.id, 'PIT_STOP_COMPLETED');
 
         // Optional: Trigger Achievement Check (if not handled by awardXP)
         const awarded = await checkAndAwardAchievements(user.id);

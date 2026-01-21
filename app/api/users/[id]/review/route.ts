@@ -40,7 +40,7 @@ export async function POST(
         });
 
         // Award XP to Reviewer (+5 XP)
-        await awardXP(reviewerId, 'PEER_EVALUATION_GIVEN');
+        await awardXP(reviewerId, 'FEEDBACK_GIVEN');
 
         // Update Reviewee's Reputation Score
         // (Average of all reviews)

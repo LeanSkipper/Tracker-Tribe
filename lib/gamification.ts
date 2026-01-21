@@ -2,20 +2,23 @@ import { prisma } from '@/lib/prisma'; // Assuming global prisma client exists h
 
 // XP Values
 export const XP_TABLE = {
+    REFERRAL_OPENED: 50,
     FEEDBACK_GIVEN: 1,
     TASK_GENERATED: 2,
     TASK_COMPLETED: 3,
     KPI_RED: 5,
     KPI_GREEN: 10,
-    OKR_GREEN: 30,
-    SESSION_ATTENDED: 5,
-    PEER_EVALUATION_GIVEN: 5,
-    WEEKLY_CHECKIN: 10,
+    OKR_RED: 20,
+    OKR_GREEN: 50,
+    SESSION_ATTENDED: 10,
+    OKR_QUARTER_ACHIEVED: 200,
+    KPI_QUARTER_ACHIEVED: 40,
+    PIT_STOP_COMPLETED: 20,
 
     // Negatives
-    SESSION_MISSED: -5,
-    TASK_LATE: -2,
-    NO_WEEKLY_CHECKIN: -10
+    SESSION_MISSED: -10,
+    PIT_STOP_MISS_WEEK: -10,
+    PIT_STOP_LATE_WEEK: -5,
 } as const;
 
 export type XPAction = keyof typeof XP_TABLE;

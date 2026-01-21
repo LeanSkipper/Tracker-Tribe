@@ -57,7 +57,7 @@ export async function GET(req: Request) {
                 });
 
                 // 2. Award Negative XP
-                const xpResult = await awardXP(user.id, 'NO_WEEKLY_CHECKIN');
+                const xpResult = await awardXP(user.id, 'PIT_STOP_MISS_WEEK');
 
                 results.push({ userId: user.id, status: 'penalized', xp: xpResult.amount });
             } else {

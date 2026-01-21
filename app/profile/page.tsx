@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { User as UserIcon, Mail, Lock, Save, X, CheckCircle, AlertCircle, Shield, TrendingUp, Target, Zap, Award, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import Link from 'next/link';
+import { User as UserIcon, Mail, Lock, Save, X, CheckCircle, AlertCircle, Shield, TrendingUp, Target, Zap, Award, Star, HelpCircle } from 'lucide-react';
 import MatchmakingProfile from '@/components/MatchmakingProfile';
 import ProfileCompletionBadge from '@/components/ProfileCompletionBadge';
 
@@ -12,7 +13,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-    const [expandedKPI, setExpandedKPI] = useState<string | null>(null);
+
 
     // Form state
     const [isEditing, setIsEditing] = useState(false);
@@ -128,9 +129,7 @@ export default function ProfilePage() {
         setMessage(null);
     };
 
-    const toggleKPI = (kpiName: string) => {
-        setExpandedKPI(expandedKPI === kpiName ? null : kpiName);
-    };
+
 
     if (status === 'loading' || loading) {
         return (
@@ -234,18 +233,21 @@ export default function ProfilePage() {
                             <TrendingUp className="text-blue-600" size={28} />
                             Your Stats
                         </h2>
-                        <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
-                            <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Score</div>
-                            <div className="text-2xl font-black text-indigo-600">{rankingScore.toLocaleString()}</div>
+                        <div className="flex items-center gap-3">
+                            <Link href="/gamification" className="text-sm font-bold text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-1">
+                                <HelpCircle size={16} />
+                                See Details
+                            </Link>
+                            <div className="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
+                                <div className="text-xs font-bold text-slate-400 uppercase tracking-widest">Global Score</div>
+                                <div className="text-2xl font-black text-indigo-600">{rankingScore.toLocaleString()}</div>
+                            </div>
                         </div>
                     </div>
 
                     <div className="space-y-4">
                         {/* Level KPI */}
-                        <div
-                            onClick={() => toggleKPI('level')}
-                            className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-blue-300"
-                        >
+                        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-5 border-2 border-transparent">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 bg-blue-600 rounded-xl flex items-center justify-center">
@@ -266,36 +268,12 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="text-xs text-gray-600 mt-1">Tier {Math.floor(level / 10) + 1}</div>
                                     </div>
-                                    {expandedKPI === 'level' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </div>
                             </div>
-
-                            {expandedKPI === 'level' && (
-                                <div className="mt-4 pt-4 border-t border-blue-200">
-                                    <h4 className="font-bold text-gray-900 mb-2">How to Level Up:</h4>
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-blue-600 font-bold">•</span>
-                                            <span>Complete goals and action plans to earn XP</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-blue-600 font-bold">•</span>
-                                            <span>Maintain consistent progress (builds Grit)</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-blue-600 font-bold">•</span>
-                                            <span>Participate in tribes and help peers</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            )}
                         </div>
 
                         {/* Grit KPI */}
-                        <div
-                            onClick={() => toggleKPI('grit')}
-                            className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-purple-300"
-                        >
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-5 border-2 border-transparent">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 bg-purple-600 rounded-xl flex items-center justify-center">
@@ -316,36 +294,12 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="text-xs text-gray-600 mt-1">{gritProgress.toFixed(0)}% to max</div>
                                     </div>
-                                    {expandedKPI === 'grit' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </div>
                             </div>
-
-                            {expandedKPI === 'grit' && (
-                                <div className="mt-4 pt-4 border-t border-purple-200">
-                                    <h4 className="font-bold text-gray-900 mb-2">How to Build Grit:</h4>
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-purple-600 font-bold">•</span>
-                                            <span>Log in daily and update your progress</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-purple-600 font-bold">•</span>
-                                            <span>Complete tasks even when they're difficult</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-purple-600 font-bold">•</span>
-                                            <span>Maintain streaks and consistency over time</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            )}
                         </div>
 
                         {/* XP KPI */}
-                        <div
-                            onClick={() => toggleKPI('xp')}
-                            className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-green-300"
-                        >
+                        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-5 border-2 border-transparent">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 bg-green-600 rounded-xl flex items-center justify-center">
@@ -366,38 +320,12 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="text-xs text-gray-600 mt-1">{xp}/1000 XP</div>
                                     </div>
-                                    {expandedKPI === 'xp' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </div>
                             </div>
-
-                            {expandedKPI === 'xp' && (
-                                <div className="mt-4 pt-4 border-t border-green-200">
-                                    <h4 className="font-bold text-gray-900 mb-2">How to Earn XP:</h4>
-                                    <ul className="space-y-2 text-sm text-gray-700">
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-green-600 font-bold">•</span>
-                                            <span>Complete action plan tasks (+10 XP each)</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-green-600 font-bold">•</span>
-                                            <span>Achieve OKR milestones (+50 XP)</span>
-                                        </li>
-                                        <li className="flex items-start gap-2">
-                                            <span className="text-green-600 font-bold">•</span>
-                                            <span>Finish entire goals (+100 XP)</span>
-                                        </li>
-                                    </ul>
-                                </div>
-                            )}
                         </div>
 
-                        {/* Completion KPI Removed */}
-
                         {/* Reputation KPI */}
-                        <div
-                            onClick={() => toggleKPI('reputation')}
-                            className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-5 cursor-pointer hover:shadow-lg transition-all border-2 border-transparent hover:border-yellow-300"
-                        >
+                        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-5 border-2 border-transparent">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-4">
                                     <div className="w-14 h-14 bg-yellow-600 rounded-xl flex items-center justify-center">
@@ -418,48 +346,8 @@ export default function ProfilePage() {
                                         </div>
                                         <div className="text-xs text-gray-600 mt-1">{reputation.toFixed(1)}/10.0</div>
                                     </div>
-                                    {expandedKPI === 'reputation' ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                                 </div>
                             </div>
-
-                            {expandedKPI === 'reputation' && (
-                                <div className="mt-4 pt-4 border-t border-yellow-200">
-                                    <h4 className="font-bold text-gray-900 mb-4">Reputation Scorecard:</h4>
-                                    <div className="space-y-3">
-                                        {[
-                                            { id: 'reliability', label: 'Reliability' },
-                                            { id: 'activePresence', label: 'Active Presence' },
-                                            { id: 'constructiveCandor', label: 'Constructive Candor' },
-                                            { id: 'generosity', label: 'Generosity' },
-                                            { id: 'energyCatalyst', label: 'Energy Catalyst' },
-                                            { id: 'responsiveness', label: 'Responsiveness' },
-                                            { id: 'coachability', label: 'Coachability' },
-                                            { id: 'knowledgeTransparency', label: 'Knowledge Transparency' },
-                                            { id: 'emotionalRegulation', label: 'Emotional Regulation' },
-                                            { id: 'preparation', label: 'Preparation' }
-                                        ].map(c => {
-                                            const score = profile?.reputationBreakdown?.[c.id] || 0;
-                                            return (
-                                                <div key={c.id} className="flex items-center gap-4">
-                                                    <div className="w-1/3">
-                                                        <div className="font-bold text-gray-700 text-xs">{c.label}</div>
-                                                    </div>
-                                                    <div className="flex-1 h-2 bg-yellow-100 rounded-full overflow-hidden">
-                                                        <div
-                                                            className="h-full bg-gradient-to-r from-yellow-500 to-amber-600 rounded-full"
-                                                            style={{ width: `${score * 10}%` }}
-                                                        ></div>
-                                                    </div>
-                                                    <div className="w-8 font-bold text-gray-500 text-xs text-right">
-                                                        {score.toFixed(1)}
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
-                                        <p className="text-xs text-gray-400 italic mt-4 text-center">Based on reviews from your peers.</p>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>
