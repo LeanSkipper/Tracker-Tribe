@@ -22,6 +22,7 @@ type Tribe = {
     minReputation: number;
     averageGrit: number;
     averageRankingScore?: number;
+    totalRankingScore?: number;
     meetingFrequency?: string | null;
     meetingTimeHour?: number | null;
     meetingTimeMinute?: number | null;
@@ -97,6 +98,12 @@ export default function BrowseTribesPage() {
 
         return matchesSearch && matchesQualified && matchesOpenSpots;
     });
+
+    // Get top 5 tribes by total ranking score
+    const topTribes = [...allTribes]
+        .filter(t => t.totalRankingScore && t.totalRankingScore > 0)
+        .sort((a, b) => (b.totalRankingScore || 0) - (a.totalRankingScore || 0))
+        .slice(0, 5);
 
     // Helper to render stat match
     const StatMatch = ({ label, required, userValue, unit = '' }: { label: string, required: number, userValue: number, unit?: string }) => {
@@ -180,6 +187,62 @@ export default function BrowseTribesPage() {
                         </button>
                     </div>
                 </div>
+
+                {/* Top Tribes Leaderboard */}
+                {topTribes.length > 0 && (
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl p-8 shadow-lg border-2 border-yellow-200 mb-8">
+                        <div className="flex items-center gap-3 mb-6">
+                            <span className="text-4xl">🏆</span>
+                            <h2 className="text-3xl font-black text-slate-900">Top Tribes</h2>
+                        </div>
+                        <div className="space-y-3">
+                            {topTribes.map((tribe, index) => (
+                                <motion.div
+                                    key={tribe.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    onClick={() => router.push(`/tribes/${tribe.id}`)}
+                                    className="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-yellow-400"
+                                >
+                                    <div className="flex items-center gap-4">
+                                        {/* Rank Badge */}
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg flex-shrink-0 ${index === 0 ? 'bg-yellow-400 text-yellow-900' :
+                                                index === 1 ? 'bg-slate-300 text-slate-700' :
+                                                    index === 2 ? 'bg-orange-300 text-orange-900' :
+                                                        'bg-slate-100 text-slate-600'
+                                            }`}>
+                                            #{index + 1}
+                                        </div>
+
+                                        {/* Tribe Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <h3 className="text-lg font-black text-slate-900 truncate">{tribe.name}</h3>
+                                            <div className="flex items-center gap-4 mt-1">
+                                                <span className="text-sm text-slate-600 flex items-center gap-1">
+                                                    <Users size={14} />
+                                                    {tribe.memberCount} members
+                                                </span>
+                                                <span className="text-sm text-slate-600 flex items-center gap-1">
+                                                    <span className="text-yellow-500">★</span>
+                                                    Avg: {tribe.averageRankingScore?.toLocaleString() || '—'}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Total Score */}
+                                        <div className="text-right">
+                                            <div className="text-xs text-slate-400 font-bold uppercase">Total Score</div>
+                                            <div className="text-2xl font-black text-yellow-600">
+                                                {tribe.totalRankingScore?.toLocaleString()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {/* Tribes Grid */}
                 {filteredTribes.length === 0 ? (

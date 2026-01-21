@@ -45,6 +45,9 @@ export async function GET(req: Request) {
             }, 0);
             const avgScore = t.members.length > 0 ? Math.round(totalScore / t.members.length) : 0;
 
+            // Calculate total Global Score (sum of all member scores)
+            const totalRankingScore = Math.round(totalScore);
+
             return {
                 id: t.id,
                 name: t.name,
@@ -61,7 +64,8 @@ export async function GET(req: Request) {
                 minReputation: t.minReputation,
                 // Calculated Stats
                 averageGrit: avgGrit,
-                averageRankingScore: avgScore
+                averageRankingScore: avgScore,
+                totalRankingScore: totalRankingScore
             };
         });
 
