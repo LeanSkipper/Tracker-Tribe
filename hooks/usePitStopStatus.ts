@@ -33,9 +33,9 @@ export function usePitStopStatus() {
                         setStatus('safe');
                     }
                 } else {
-                    // No pit stops ever
-                    setStatus('overdue');
-                    setDaysSince(999); // Force overdue
+                    // No pit stops ever - First time user
+                    setStatus('safe');
+                    setDaysSince(0);
                 }
                 setLoading(false);
             })
