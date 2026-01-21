@@ -71,6 +71,7 @@ export default function BrowseTribesPage() {
 
     const [filterQualified, setFilterQualified] = useState(false);
     const [filterOpenSpots, setFilterOpenSpots] = useState(false);
+    const [isMobileFabOpen, setIsMobileFabOpen] = useState(false);
 
     // Helpers for filtering
     const isQualified = (tribe: Tribe) => {
@@ -126,42 +127,41 @@ export default function BrowseTribesPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 pb-32 md:pb-8">
             <div className="max-w-7xl mx-auto">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center justify-between mb-6 md:mb-8">
                     <div>
-                        <h1 className="text-4xl font-black text-slate-900 mb-2">Browse Tribes</h1>
-                        <p className="text-slate-600">Find and join mastermind tables that match your goals</p>
+                        <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">Browse Tribes</h1>
+                        <p className="text-slate-600 text-sm md:text-base">Find and join mastermind tables that match your goals</p>
                     </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
+                        className="hidden md:flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
                     >
                         <Plus size={20} />
                         Create Table
                     </button>
                 </div>
 
-                {/* Search */}
                 {/* Search & Filter Bar */}
-                <div className="mb-8 flex flex-col md:flex-row gap-4">
+                <div className="mb-6 md:mb-8 flex flex-col md:flex-row gap-4">
                     <div className="relative flex-1">
                         <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                         <input
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Search tribes by name or topic..."
-                            className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none bg-white shadow-sm"
+                            placeholder="Search..."
+                            className="w-full pl-12 pr-4 py-3 md:py-4 rounded-2xl border-2 border-slate-200 focus:border-indigo-500 focus:outline-none bg-white shadow-sm"
                         />
                     </div>
-                    {/* Filters */}
-                    <div className="flex items-center gap-2">
+                    {/* Filters - Scrollable on mobile if needed or just stacked */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 no-scrollbar">
                         <button
                             onClick={() => setFilterQualified(!filterQualified)}
-                            className={`px-4 py-4 rounded-xl font-bold text-sm transition-all border-2 flex items-center gap-2 ${filterQualified
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                            className={`px-4 py-3 md:py-4 rounded-xl font-bold text-sm transition-all border-2 flex-shrink-0 flex items-center gap-2 ${filterQualified
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                                 }`}
                         >
                             <CheckCircle size={16} />
@@ -169,9 +169,9 @@ export default function BrowseTribesPage() {
                         </button>
                         <button
                             onClick={() => setFilterOpenSpots(!filterOpenSpots)}
-                            className={`px-4 py-4 rounded-xl font-bold text-sm transition-all border-2 flex items-center gap-2 ${filterOpenSpots
-                                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                                    : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                            className={`px-4 py-3 md:py-4 rounded-xl font-bold text-sm transition-all border-2 flex-shrink-0 flex items-center gap-2 ${filterOpenSpots
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                                 }`}
                         >
                             <Users size={16} />
@@ -182,7 +182,7 @@ export default function BrowseTribesPage() {
 
                 {/* Tribes Grid */}
                 {filteredTribes.length === 0 ? (
-                    <div className="bg-white rounded-3xl p-12 shadow-lg border border-slate-100 text-center">
+                    <div className="bg-white rounded-3xl p-8 md:p-12 shadow-lg border border-slate-100 text-center">
                         <Users size={64} className="mx-auto mb-4 text-slate-300" />
                         <h3 className="text-xl font-black text-slate-900 mb-2">No Tribes Found</h3>
                         <p className="text-slate-600 mb-6">
@@ -196,7 +196,7 @@ export default function BrowseTribesPage() {
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
                         {filteredTribes.map((tribe, index) => {
                             const isMember = myTribes.some(mt => mt.id === tribe.id);
 
@@ -207,25 +207,25 @@ export default function BrowseTribesPage() {
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: index * 0.1 }}
                                     className={`
-                                        rounded-3xl p-6 shadow-lg border transition-all flex flex-col h-full
+                                        rounded-3xl p-5 md:p-6 shadow-lg border transition-all flex flex-col h-full
                                         ${isMember
-                                            ? 'bg-emerald-50 border-emerald-200 shadow-emerald-100 hover:shadow-emerald-200 hover:border-emerald-300'
-                                            : 'bg-white border-slate-100 hover:shadow-xl hover:border-indigo-200'
+                                            ? 'bg-emerald-50 border-emerald-200 shadow-emerald-100'
+                                            : 'bg-white border-slate-100'
                                         }
                                     `}
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-start justify-between mb-4">
                                             <div className="flex-1 pr-2">
-                                                <h3 className={`text-xl font-black mb-1 leading-tight ${isMember ? 'text-emerald-900' : 'text-slate-900'}`}>{tribe.name}</h3>
+                                                <h3 className={`text-lg md:text-xl font-black mb-1 leading-tight ${isMember ? 'text-emerald-900' : 'text-slate-900'}`}>{tribe.name}</h3>
                                                 <div className="flex flex-wrap gap-2 mt-1">
                                                     {tribe.topic && (
-                                                        <span className={`text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${isMember ? 'bg-emerald-200 text-emerald-800' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                        <span className={`text-[10px] md:text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full ${isMember ? 'bg-emerald-200 text-emerald-800' : 'bg-indigo-100 text-indigo-700'}`}>
                                                             {tribe.topic}
                                                         </span>
                                                     )}
                                                     {tribe.meetingFrequency && (
-                                                        <span className="text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                                                        <span className="text-[10px] md:text-xs font-bold uppercase tracking-wide px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                                                             {tribe.meetingFrequency}
                                                         </span>
                                                     )}
@@ -237,17 +237,17 @@ export default function BrowseTribesPage() {
                                         </div>
 
                                         {/* Stats Row */}
-                                        <div className="grid grid-cols-2 gap-4 mb-4">
+                                        <div className="grid grid-cols-2 gap-3 md:gap-4 mb-4">
                                             <div className="bg-slate-50 p-2 rounded-lg">
-                                                <span className="text-xs text-slate-400 font-bold uppercase block">Members</span>
-                                                <div className="flex items-center gap-1 text-slate-700 font-bold">
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase block">Members</span>
+                                                <div className="flex items-center gap-1 text-slate-700 font-bold text-sm">
                                                     <Users size={14} />
                                                     {tribe.memberCount}/{tribe.maxMembers}
                                                 </div>
                                             </div>
                                             <div className="bg-slate-50 p-2 rounded-lg">
-                                                <span className="text-xs text-slate-400 font-bold uppercase block">Avg Grit</span>
-                                                <div className="flex items-center gap-1 text-slate-700 font-bold">
+                                                <span className="text-[10px] text-slate-400 font-bold uppercase block">Avg Grit</span>
+                                                <div className="flex items-center gap-1 text-slate-700 font-bold text-sm">
                                                     <span>🔥</span>
                                                     {tribe.averageGrit}%
                                                 </div>
@@ -258,8 +258,8 @@ export default function BrowseTribesPage() {
                                         {userStats && (
                                             <div className="bg-slate-50 rounded-xl p-3 mb-4 border border-slate-100">
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-xs font-bold text-slate-500 uppercase">Entry Requirements</span>
-                                                    {isMember && <span className="text-xs text-emerald-600 font-bold">Joined</span>}
+                                                    <span className="text-[10px] font-bold text-slate-500 uppercase">Entry Requirements</span>
+                                                    {isMember && <span className="text-[10px] text-emerald-600 font-bold">Joined</span>}
                                                 </div>
                                                 <div className="grid grid-cols-2 gap-y-2 gap-x-4">
                                                     <StatMatch label="Level" required={tribe.minLevel} userValue={userStats.level} />
@@ -297,6 +297,39 @@ export default function BrowseTribesPage() {
                 )}
             </div>
 
+            {/* Mobile Action FAB */}
+            <div className="md:hidden fixed bottom-24 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+                {isMobileFabOpen && (
+                    <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
+                        <button
+                            onClick={() => { router.push('/peers'); setIsMobileFabOpen(false); }}
+                            className="bg-white text-slate-700 p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs border border-slate-100"
+                        >
+                            <Users size={16} /> Browse Peers
+                        </button>
+                        <button
+                            onClick={() => { setIsMobileFabOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+                            className="bg-white text-slate-700 p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs border border-slate-100"
+                        >
+                            <Search size={16} /> Browse Tribes
+                        </button>
+                        <button
+                            onClick={() => { setShowCreateModal(true); setIsMobileFabOpen(false); }}
+                            className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                        >
+                            <Plus size={16} /> New Tribe
+                        </button>
+                    </div>
+                )}
+                <button
+                    onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
+                    className={`p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-slate-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
+                    aria-label="Toggle menu"
+                >
+                    <Plus size={24} />
+                </button>
+            </div>
+
             {/* Create Tribe Modal */}
             {showCreateModal && (
                 <TribeCreationForm
@@ -306,6 +339,9 @@ export default function BrowseTribesPage() {
                     }}
                 />
             )}
+
+            {/* Safe Area Spacer for Bottom Nav if present */}
+            <div className="h-12 md:hidden"></div>
         </div>
     );
 }
