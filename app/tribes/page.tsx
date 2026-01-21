@@ -129,10 +129,6 @@ export default function BrowseTribesPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-4 md:p-8 pb-32 md:pb-8">
             <div className="max-w-7xl mx-auto">
-                {/* DEBUG BANNER */}
-                <div className="bg-red-500 text-white p-2 text-center font-bold mb-4 rounded">
-                    DEBUG: UPDATE VERIFIED V1.0 - IF YOU SEE THIS, TRASH YOUR CACHE
-                </div>
                 <div className="flex items-center justify-between mb-6 md:mb-8">
                     <div>
                         <h1 className="text-3xl md:text-4xl font-black text-slate-900 mb-2">Browse Tribes</h1>
