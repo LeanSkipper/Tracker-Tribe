@@ -91,12 +91,8 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
     const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
     const globalWeekNum = Math.floor(daysSinceStart / 7) + 1;
 
-    // Time Window State
+    // Time Window State (Center of the 3-week view)
     const [weekOffset, setWeekOffset] = useState(0);
-    const displayedWeekNum = globalWeekNum + weekOffset;
-    const currentWeekId = `W${displayedWeekNum}`;
-
-    const displayedActions = actionRow?.actions.filter(a => a.weekId === currentWeekId && a.year === currentYear) || [];
 
     const categoryColors: Record<string, string> = {
         'Health': 'bg-teal-600',
@@ -107,6 +103,18 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
         'Social/Environment': 'bg-gray-500' // Added fallback/default
     };
     const categoryColor = categoryColors[goal.category] || 'bg-slate-500';
+
+    // Weeks to display: [Previous, Current (Focused), Next]
+    const visibleWeeks = [-1, 0, 1].map(offset => {
+        const weekNum = globalWeekNum + weekOffset + offset;
+        return {
+            offset,
+            weekNum,
+            weekId: `W${weekNum}`,
+            label: offset === 0 ? 'Current Week' : offset === -1 ? 'Last Week' : 'Next Week',
+            isCurrent: offset === 0
+        };
+    });
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4">
@@ -137,42 +145,92 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
                 </div>
                 <div className="flex items-center gap-1">
                     <div className="w-3 h-3 bg-purple-500 rounded-full" />
-                    <span className="font-bold text-slate-700">{displayedActions.filter(a => a.status === 'DONE').length}/{displayedActions.length}</span>
-                    <span>actions done</span>
+                    <span className="font-bold text-slate-700">
+                        {actionRow?.actions.filter(a => a.status === 'DONE' && a.year === currentYear).length || 0}
+                    </span>
+                    <span>total actions done</span>
                 </div>
             </div>
 
-            {/* Current Week Actions (Zero Friction) - Always Visible or Prominent */}
-            <div className="px-4 pb-4 border-t border-slate-50 pt-3">
-                <div className="flex justify-between items-center mb-2">
-                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Focus</span>
-                    <div className="flex items-center gap-2 bg-slate-100 rounded-lg p-0.5">
-                        <button onClick={() => setWeekOffset(prev => prev - 1)} className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-indigo-600 transition-all"><ChevronLeft size={12} /></button>
-                        <span className="text-[10px] text-slate-600 font-bold min-w-[2rem] text-center">{currentWeekId}</span>
-                        <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1 hover:bg-white rounded-md text-slate-400 hover:text-indigo-600 transition-all"><ChevronRight size={12} /></button>
-                    </div>
+            {/* 3-Column Mobile Kanban (Scrollable) */}
+            <div className="border-t border-slate-50 relative bg-slate-50/50 pb-4">
+                {/* Navigation Controls Overlay */}
+                <div className="absolute top-2 right-2 z-10 flex gap-1">
+                    <button onClick={() => setWeekOffset(prev => prev - 1)} className="p-1.5 bg-white/80 shadow-sm rounded-full text-slate-400 hover:text-indigo-600 border border-slate-200 backdrop-blur-sm">
+                        <ChevronLeft size={14} />
+                    </button>
+                    <button onClick={() => setWeekOffset(prev => prev + 1)} className="p-1.5 bg-white/80 shadow-sm rounded-full text-slate-400 hover:text-indigo-600 border border-slate-200 backdrop-blur-sm">
+                        <ChevronRight size={14} />
+                    </button>
                 </div>
-                {displayedActions.length > 0 ? (
-                    <div className="space-y-2">
-                        {displayedActions.map(action => (
-                            <div key={action.id} className="flex items-start gap-3 p-2 rounded-lg border border-slate-100 bg-slate-50/50">
-                                <input
-                                    type="checkbox"
-                                    checked={action.status === 'DONE'}
-                                    onChange={() => onUpdateStatus(goal.id, action.id, action.status === 'DONE' ? 'TBD' : 'DONE')}
-                                    className="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
-                                />
-                                <span className={`text-sm ${action.status === 'DONE' ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
-                                    {action.title}
-                                </span>
+
+                <div className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-4 py-4 no-scrollbar">
+                    {visibleWeeks.map(({ weekId, label, isCurrent, weekNum }) => {
+                        const weekActions = actionRow?.actions.filter(a => a.weekId === weekId && a.year === currentYear) || [];
+                        const isPast = weekNum < globalWeekNum;
+
+                        return (
+                            <div
+                                key={weekId}
+                                className={`snap-center min-w-[85%] rounded-xl border p-3 flex flex-col gap-3 transition-colors
+                                    ${isCurrent
+                                        ? 'bg-white border-indigo-200 shadow-md ring-1 ring-indigo-50'
+                                        : 'bg-slate-100/50 border-slate-200'
+                                    }`}
+                            >
+                                {/* Column Header */}
+                                <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2">
+                                    <div className="flex items-baseline gap-2">
+                                        <span className={`text-xs font-black uppercase ${isCurrent ? 'text-indigo-600' : 'text-slate-500'}`}>
+                                            {label}
+                                        </span>
+                                        <span className="text-[10px] text-slate-400 font-mono">Week {weekNum}</span>
+                                    </div>
+                                    <div className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full">
+                                        {weekActions.length}
+                                    </div>
+                                </div>
+
+                                {/* Task List */}
+                                <div className="space-y-2 min-h-[60px]">
+                                    {weekActions.length > 0 ? (
+                                        weekActions.map(action => (
+                                            <div key={action.id} className="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-100 shadow-sm">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={action.status === 'DONE'}
+                                                    onChange={() => onUpdateStatus(goal.id, action.id, action.status === 'DONE' ? 'TBD' : 'DONE')}
+                                                    className={`mt-0.5 w-4 h-4 rounded border-slate-300 cursor-pointer ${isCurrent ? 'text-indigo-600 focus:ring-indigo-500' : 'text-slate-400 focus:ring-slate-400'
+                                                        }`}
+                                                />
+                                                <span className={`text-xs leading-snug ${action.status === 'DONE' ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
+                                                    {action.title}
+                                                </span>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="h-full flex flex-col items-center justify-center text-slate-300 py-2">
+                                            <div className="w-8 h-0.5 bg-slate-200 rounded-full mb-1" />
+                                            <span className="text-[9px] italic">Empty</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer Action */}
+                                <button
+                                    onClick={() => onAddAction(goal.id, weekId)}
+                                    className={`w-full py-2 rounded-lg text-[10px] font-bold flex items-center justify-center gap-1 transition-colors
+                                        ${isCurrent
+                                            ? 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
+                                            : 'bg-white text-slate-400 border border-transparent hover:border-slate-300'
+                                        }`}
+                                >
+                                    <Plus size={12} /> Add Task
+                                </button>
                             </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-4 bg-slate-50 rounded-lg border border-dashed border-slate-200">
-                        <p className="text-[10px] text-slate-400 italic">No actions planned for {currentWeekId}</p>
-                    </div>
-                )}
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Expanded Content: KPIs and Details */}
@@ -214,16 +272,6 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
                     })}
                 </div>
             )}
-
-            {/* Always visible Add Action button for easy access */}
-            <div className="px-4 pb-4">
-                <button
-                    onClick={() => onAddAction(goal.id, currentWeekId)}
-                    className="text-xs font-bold text-indigo-600 flex items-center justify-center gap-1 w-full py-2 bg-indigo-50 hover:bg-indigo-100 transition-colors rounded-lg"
-                >
-                    <Plus size={14} /> Add Action / Update
-                </button>
-            </div>
         </div>
     );
 };
