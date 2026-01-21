@@ -30,6 +30,7 @@ type Member = {
     actionPlansCount: number;
     attendanceRate: number;
     signedSOPAt?: string;
+    isBanned?: boolean;
 };
 
 type Tribe = {
@@ -41,6 +42,13 @@ type Tribe = {
     creatorId?: string;
     maxMembers: number;
     standardProcedures?: string;
+    minLevel?: number;
+    minGrit?: number;
+    matchmakingCriteria?: string;
+    matchmakingSkills?: boolean;
+    matchmakingValues?: boolean;
+    matchmakingSocial?: boolean;
+    matchmakingIntent?: boolean;
     members: Member[];
 };
 
@@ -101,7 +109,14 @@ export default function TribeDetailsPage() {
                     description: data.tribe.description,
                     meetingTime: data.tribe.meetingTime,
                     topic: data.tribe.topic,
-                    standardProcedures: data.tribe.standardProcedures || DEFAULT_SOP
+                    standardProcedures: data.tribe.standardProcedures || DEFAULT_SOP,
+                    minLevel: data.tribe.minLevel,
+                    minGrit: data.tribe.minGrit,
+                    matchmakingCriteria: data.tribe.matchmakingCriteria,
+                    matchmakingSkills: data.tribe.matchmakingSkills,
+                    matchmakingValues: data.tribe.matchmakingValues,
+                    matchmakingSocial: data.tribe.matchmakingSocial,
+                    matchmakingIntent: data.tribe.matchmakingIntent
                 });
 
                 // Check for SOP signature (if member and not creator/admin)
@@ -471,6 +486,61 @@ export default function TribeDetailsPage() {
                                                     onChange={e => setEditForm({ ...editForm, meetingTime: e.target.value })}
                                                 />
                                             </div>
+
+                                            {/* EXTENDED SETTINGS */}
+                                            <div className="md:col-span-2 pt-4 border-t border-slate-100 mt-4">
+                                                <h5 className="font-bold text-indigo-900 mb-4">Requirements & Matchmaking</h5>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Level</label>
+                                                        <input
+                                                            type="number"
+                                                            disabled={!isEditing}
+                                                            className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none disabled:bg-transparent"
+                                                            value={editForm.minLevel || 0}
+                                                            onChange={e => setEditForm({ ...editForm, minLevel: parseInt(e.target.value) })}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Grit (%)</label>
+                                                        <input
+                                                            type="number"
+                                                            disabled={!isEditing}
+                                                            className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none disabled:bg-transparent"
+                                                            value={editForm.minGrit || 0}
+                                                            onChange={e => setEditForm({ ...editForm, minGrit: parseInt(e.target.value) })}
+                                                        />
+                                                    </div>
+                                                    <div className="md:col-span-2">
+                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Matchmaking Criteria</label>
+                                                        <input
+                                                            disabled={!isEditing}
+                                                            placeholder="e.g. SaaS Founders > $5k MRR"
+                                                            className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none disabled:bg-transparent"
+                                                            value={editForm.matchmakingCriteria || ''}
+                                                            onChange={e => setEditForm({ ...editForm, matchmakingCriteria: e.target.value })}
+                                                        />
+                                                    </div>
+                                                    <div className="md:col-span-2 flex flex-wrap gap-4">
+                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
+                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingSkills || false} onChange={e => setEditForm({ ...editForm, matchmakingSkills: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
+                                                            Match Skills
+                                                        </label>
+                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
+                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingValues || false} onChange={e => setEditForm({ ...editForm, matchmakingValues: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
+                                                            Match Values
+                                                        </label>
+                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
+                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingSocial || false} onChange={e => setEditForm({ ...editForm, matchmakingSocial: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
+                                                            Social Fit
+                                                        </label>
+                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
+                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingIntent || false} onChange={e => setEditForm({ ...editForm, matchmakingIntent: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
+                                                            Intent Match
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -503,13 +573,14 @@ export default function TribeDetailsPage() {
                                 {adminTab === 'members' && (
                                     <div className="grid grid-cols-1 gap-3">
                                         {tribe.members.map(member => (
-                                            <div key={member.id} className="bg-slate-50 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border border-slate-100">
+                                            <div key={member.id} className={`bg-slate-50 p-4 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 border ${member.isBanned ? 'border-red-300 bg-red-50' : 'border-slate-100'}`}>
                                                 <div className="flex items-center gap-3">
-                                                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden relative">
                                                         {member.avatarUrl ? <img src={member.avatarUrl} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center font-bold text-slate-500">{(member.name || '?')[0]}</div>}
+                                                        {member.isBanned && <div className="absolute inset-0 bg-red-500/50 flex items-center justify-center text-white font-bold text-xs">BAN</div>}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-slate-900">{member.name}</div>
+                                                        <div className={`font-bold ${member.isBanned ? 'text-red-600 line-through' : 'text-slate-900'}`}>{member.name}</div>
                                                         <div className="text-xs text-slate-500">Grit: {member.grit}%</div>
                                                     </div>
                                                 </div>
@@ -517,6 +588,7 @@ export default function TribeDetailsPage() {
                                                 <div className="flex flex-col md:flex-row gap-3">
                                                     <select
                                                         value={member.role}
+                                                        disabled={member.isBanned}
                                                         onChange={async (e) => {
                                                             const newRole = e.target.value;
                                                             await fetch(`/api/tribes/${tribe.id}/roles`, {
@@ -526,7 +598,7 @@ export default function TribeDetailsPage() {
                                                             });
                                                             fetchTribeDetails();
                                                         }}
-                                                        className="bg-white text-slate-700 text-sm p-2 rounded-lg border border-slate-300 focus:border-indigo-500 outline-none"
+                                                        className="bg-white text-slate-700 text-sm p-2 rounded-lg border border-slate-300 focus:border-indigo-500 outline-none disabled:opacity-50"
                                                     >
                                                         <option value="ADMIN">Admin (Leader)</option>
                                                         <option value="MODERATOR">Moderator</option>
@@ -537,7 +609,8 @@ export default function TribeDetailsPage() {
                                                     <input
                                                         type="text"
                                                         placeholder="Specific Role (e.g. Scribe)"
-                                                        className="bg-white text-slate-700 text-sm p-2 rounded-lg border border-slate-300 focus:border-indigo-500 outline-none"
+                                                        disabled={member.isBanned}
+                                                        className="bg-white text-slate-700 text-sm p-2 rounded-lg border border-slate-300 focus:border-indigo-500 outline-none disabled:opacity-50"
                                                         defaultValue={member.customTitle || ''}
                                                         onBlur={async (e) => {
                                                             const val = e.target.value;
@@ -550,6 +623,27 @@ export default function TribeDetailsPage() {
                                                             fetchTribeDetails();
                                                         }}
                                                     />
+
+                                                    {/* BAN BUTTON */}
+                                                    {member.userId !== currentUserId && member.userId !== tribe.creatorId && (
+                                                        <button
+                                                            onClick={async () => {
+                                                                if (!confirm(member.isBanned ? `Unban ${member.name}?` : `Are you sure you want to BAN ${member.name}?`)) return;
+
+                                                                await fetch(`/api/tribes/${tribe.id}/ban`, {
+                                                                    method: 'POST',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ memberId: member.id, action: member.isBanned ? 'unban' : 'ban' })
+                                                                });
+                                                                fetchTribeDetails();
+                                                            }}
+                                                            className={`px-3 py-1.5 rounded-lg font-bold text-xs uppercase transition-colors ${member.isBanned
+                                                                ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                                                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'}`}
+                                                        >
+                                                            {member.isBanned ? 'Unban' : 'Ban'}
+                                                        </button>
+                                                    )}
                                                 </div>
                                             </div>
                                         ))}
@@ -627,6 +721,6 @@ export default function TribeDetailsPage() {
                 )}
 
             </div>
-        </div>
+        </div >
     );
 }

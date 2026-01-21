@@ -411,6 +411,10 @@ model TribeMember {
   signedSOPAt DateTime? // When the member signed the SOPs
   joinedAt  DateTime  @default(now())
 
+  // Banning System
+  isBanned  Boolean   @default(false)
+  bannedAt  DateTime?
+
   @@unique([userId, tribeId])
 }
 

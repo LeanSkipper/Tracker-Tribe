@@ -88,7 +88,11 @@ export async function PUT(
         const tribeId = (await params).id;
         const body = await req.json();
         console.log("PUT Tribe Body:", body); // DEBUG
-        const { name, description, topic, meetingTime, standardProcedures } = body;
+        const {
+            name, description, topic, meetingTime, standardProcedures,
+            minLevel, minGrit, matchmakingCriteria,
+            matchmakingSkills, matchmakingValues, matchmakingSocial, matchmakingIntent
+        } = body;
 
         const tribe = await prisma.tribe.findUnique({
             where: { id: tribeId },
@@ -113,7 +117,14 @@ export async function PUT(
                 description,
                 topic,
                 meetingTime,
-                standardProcedures
+                standardProcedures,
+                minLevel: minLevel ? parseInt(minLevel) : undefined,
+                minGrit: minGrit ? parseInt(minGrit) : undefined,
+                matchmakingCriteria,
+                matchmakingSkills,
+                matchmakingValues,
+                matchmakingSocial,
+                matchmakingIntent
             }
         });
 
