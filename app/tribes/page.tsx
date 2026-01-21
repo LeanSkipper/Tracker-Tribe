@@ -136,7 +136,7 @@ export default function BrowseTribesPage() {
                     </div>
                     <button
                         onClick={() => setShowCreateModal(true)}
-                        className="hidden md:flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
+                        className="!hidden lg:!flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
                     >
                         <Plus size={20} />
                         Create Table
