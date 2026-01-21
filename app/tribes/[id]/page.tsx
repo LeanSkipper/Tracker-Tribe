@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus } from 'lucide-react';
+import TribeCreationForm from '@/components/TribeCreationForm';
 
 type Badge = {
     id: string;
@@ -449,65 +450,15 @@ export default function TribeDetailsPage() {
                                             </button>
                                         </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Tribe Name</label>
-                                                <div className="w-full text-lg font-bold text-slate-900 bg-slate-50 border border-transparent rounded-xl p-3">
-                                                    {tribe.name}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Topic</label>
-                                                <div className="w-full font-bold text-slate-900 bg-slate-50 border border-transparent rounded-xl p-3">
-                                                    {tribe.topic || '-'}
-                                                </div>
-                                            </div>
-                                            <div className="md:col-span-2">
-                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
-                                                <div className="w-full text-slate-600 bg-slate-50 border border-transparent rounded-xl p-3">
-                                                    {tribe.description || 'No description provided.'}
-                                                </div>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Meeting Time</label>
-                                                <div className="w-full font-bold text-slate-900 bg-slate-50 border border-transparent rounded-xl p-3">
-                                                    {tribe.meetingTime || '-'}
-                                                </div>
-                                            </div>
-
-                                            {/* EXTENDED SETTINGS DISPLAY ONLY */}
-                                            <div className="md:col-span-2 pt-4 border-t border-slate-100 mt-4">
-                                                <h5 className="font-bold text-indigo-900 mb-4">Current Requirements</h5>
-                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                                    <div>
-                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Level</label>
-                                                        <div className="font-bold text-slate-900">{tribe.minLevel || 0}</div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Grit</label>
-                                                        <div className="font-bold text-slate-900">{tribe.minGrit || 0}%</div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Max Members</label>
-                                                        <div className="font-bold text-slate-900">{tribe.maxMembers}</div>
-                                                    </div>
-                                                </div>
-
-                                                <div className="mt-4">
-                                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Active Matchmaking Criteria</label>
-                                                    <div className="flex flex-wrap gap-2 mt-2">
-                                                        {tribe.matchmakingCriteria && <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full">Custom Criteria</span>}
-                                                        {tribe.matchmakingSkills && <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">Skills</span>}
-                                                        {tribe.matchmakingValues && <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full">Values</span>}
-                                                        {tribe.matchmakingSocial && <span className="px-3 py-1 bg-pink-50 text-pink-700 text-xs font-bold rounded-full">Social</span>}
-                                                        {tribe.matchmakingIntent && <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full">Intent</span>}
-                                                        {!tribe.matchmakingSkills && !tribe.matchmakingValues && !tribe.matchmakingSocial && !tribe.matchmakingIntent && !tribe.matchmakingCriteria && (
-                                                            <span className="text-slate-400 text-sm italic">None configured</span>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        <TribeCreationForm
+                                            initialData={{
+                                                ...tribe,
+                                                meetingTimeHour: tribe.meetingTime ? parseInt(tribe.meetingTime.split(':')[0]) : 10,
+                                                meetingTimeMinute: tribe.meetingTime ? parseInt(tribe.meetingTime.split(':')[1]) : 0,
+                                            }}
+                                            isModal={false}
+                                            readOnly={true}
+                                        />
                                     </div>
                                 )}
 
@@ -687,6 +638,24 @@ export default function TribeDetailsPage() {
                 )}
 
             </div>
+
+            {/* EDIT TRIBE MODAL */}
+            {showEditModal && (
+                <TribeCreationForm
+                    initialData={{
+                        ...tribe,
+                        meetingTimeHour: tribe.meetingTime ? parseInt(tribe.meetingTime.split(':')[0]) : 10,
+                        meetingTimeMinute: tribe.meetingTime ? parseInt(tribe.meetingTime.split(':')[1]) : 0,
+                    }}
+                    isModal={true}
+                    onClose={() => setShowEditModal(false)}
+                    onSuccess={() => {
+                        setShowEditModal(false);
+                        fetchTribeDetails();
+                    }}
+                />
+            )}
+
         </div >
     );
 }
