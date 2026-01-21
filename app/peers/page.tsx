@@ -8,9 +8,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Peer {
     id: string;
-    name: string;
+    name: string | null;
     bio: string | null;
-    email?: string;
+    email?: string | null;
     avatarUrl: string | null;
     level: number;
     skills: string | null;
@@ -124,14 +124,14 @@ export default function PeerMatchingPage() {
                                         </div>
                                         <div className="w-16 h-16 rounded-full border-2 border-indigo-100 overflow-hidden mb-3 relative z-10">
                                             {params.avatarUrl ? (
-                                                <img src={params.avatarUrl} alt={params.name} className="w-full h-full object-cover" />
+                                                <img src={params.avatarUrl} alt={params.name || 'User'} className="w-full h-full object-cover" />
                                             ) : (
                                                 <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 font-bold text-xl">
-                                                    {params.name.charAt(0)}
+                                                    {(params.name || 'U').charAt(0)}
                                                 </div>
                                             )}
                                         </div>
-                                        <h3 className="font-bold text-slate-900 text-sm text-center truncate w-full mb-1">{params.name}</h3>
+                                        <h3 className="font-bold text-slate-900 text-sm text-center truncate w-full mb-1">{params.name || 'Unknown User'}</h3>
                                         <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full mb-2">
                                             {params.rankingScore?.toLocaleString()} pts
                                         </div>
@@ -188,15 +188,15 @@ export default function PeerMatchingPage() {
                                         <div className="flex items-start gap-4 mb-4">
                                             <div onClick={() => router.push(`/profile/${peer.id}`)} className="w-14 h-14 rounded-full bg-slate-200 flex-shrink-0 overflow-hidden cursor-pointer hover:opacity-80 transition-opacity border-2 border-transparent group-hover:border-indigo-100">
                                                 {peer.avatarUrl ? (
-                                                    <img src={peer.avatarUrl} alt={peer.name} className="w-full h-full object-cover" />
+                                                    <img src={peer.avatarUrl} alt={peer.name || 'User'} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold text-lg">
-                                                        {peer.name.charAt(0)}
+                                                        {(peer.name || 'U').charAt(0)}
                                                     </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <h3 onClick={() => router.push(`/profile/${peer.id}`)} className="font-bold text-slate-900 truncate hover:text-indigo-600 cursor-pointer">{peer.name}</h3>
+                                                <h3 onClick={() => router.push(`/profile/${peer.id}`)} className="font-bold text-slate-900 truncate hover:text-indigo-600 cursor-pointer">{peer.name || 'Unknown User'}</h3>
                                                 {peer.professionalRole && (
                                                     <p className="text-xs text-indigo-600 font-bold uppercase tracking-wide truncate mt-0.5">
                                                         {peer.professionalRole}
@@ -260,8 +260,9 @@ export default function PeerMatchingPage() {
                             Find Peers
                         </button>
                     </div>
-                )}
-            </div>
-        </div>
+                )
+                }
+            </div >
+        </div >
     );
 }
