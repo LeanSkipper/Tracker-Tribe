@@ -9,6 +9,8 @@ type GoalCategory = { id: string; category: string; title: string; rows: any[]; 
 interface CoachProps {
     goals: GoalCategory[];
     className?: string;
+    isOpen?: boolean;
+    onOpenChange?: (isOpen: boolean) => void;
 }
 
 type Message = {
@@ -19,8 +21,18 @@ type Message = {
     options?: string[];
 };
 
-export default function Coach({ goals, className = '' }: CoachProps) {
-    const [isOpen, setIsOpen] = useState(false);
+export default function Coach({ goals, className = '', isOpen: controlledIsOpen, onOpenChange }: CoachProps) {
+    const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+    const isControlled = controlledIsOpen !== undefined;
+    const isOpen = isControlled ? controlledIsOpen : internalIsOpen;
+
+    const setIsOpen = (value: boolean) => {
+        if (!isControlled) {
+            setInternalIsOpen(value);
+        }
+        onOpenChange?.(value);
+    };
     const [messages, setMessages] = useState<Message[]>([
         { id: '1', sender: 'coach', text: "Hello! I'm Lapis, your Personal Growth Architect.", type: 'text' },
         { id: '2', sender: 'coach', text: "I can help you structure new goals or analyze your current progress using Lean methodologies. What would you like to do?", type: 'text', options: ["New Goal", "Analyze Progress", "Problem Solving"] }

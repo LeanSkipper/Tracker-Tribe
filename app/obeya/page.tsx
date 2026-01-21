@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
@@ -1123,6 +1123,9 @@ export default function ObeyaPage() {
         setEditingGoal(newGoal);
     };
 
+    const [isMobileFabOpen, setIsMobileFabOpen] = useState(false);
+    const [isCoachOpen, setIsCoachOpen] = useState(false);
+
     // Check if user is a guest (no session)
     // Use optional chaining to handle SSR where useSession might be undefined
     const { data: session } = useSession() ?? { data: null };
@@ -1177,7 +1180,7 @@ export default function ObeyaPage() {
                 onSave={(comment) => handleSaveComment(activeCommentModal.goalId, activeCommentModal.rowId, activeCommentModal.monthData.monthId, activeCommentModal.monthData.year, comment)}
             />}
 
-            <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 shadow-sm flex items-center justify-between shrink-0">
+            <header className="hidden md:flex bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 shadow-sm items-center justify-between shrink-0">
                 <div className="flex items-center gap-6">
                     <h1 className="text-2xl font-bold text-[var(--primary)] flex items-center gap-2"><Target /> Goals GPS</h1>
                     <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-200">
@@ -1765,7 +1768,40 @@ export default function ObeyaPage() {
                     </div>
                 </>)}
             </main>
-            <Coach goals={goals} />
+
+            {/* Mobile Action FAB */}
+            <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+                {isMobileFabOpen && (
+                    <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
+                        <button
+                            onClick={() => { setIsInspirationOpen(true); setIsMobileFabOpen(false); }}
+                            className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                        >
+                            <Plus size={16} /> New Goal
+                        </button>
+                        <button
+                            onClick={() => { setIsPitStopOpen(true); setIsMobileFabOpen(false); }}
+                            className="bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                        >
+                            <Clock size={16} /> Pit Stop
+                        </button>
+                        <button
+                            onClick={() => { setIsCoachOpen(true); setIsMobileFabOpen(false); }}
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                        >
+                            <Sparkles size={16} /> Coach
+                        </button>
+                    </div>
+                )}
+                <button
+                    onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
+                    className={`p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
+                >
+                    <Plus size={24} />
+                </button>
+            </div>
+
+            <Coach goals={goals} className="hidden md:flex" isOpen={isCoachOpen} onOpenChange={setIsCoachOpen} />
         </div>
     );
 }
