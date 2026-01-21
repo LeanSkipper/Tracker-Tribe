@@ -6,13 +6,13 @@ export const WelcomeEmailTemplate = (name: string) => `
     <title>Welcome to Lapis Platform</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #2563eb; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
-        .content { background-color: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e5e7eb; border-top: none; }
-        .button { display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 10px 0; }
-        .button.secondary { background-color: #4b5563; }
-        .kpi-box { background-color: white; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #6b7280; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Inter', sans-serif; }
+        .header { background-color: #2E5AAC; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e4e4e7; border-top: none; }
+        .button { display: inline-block; background-color: #2E5AAC; color: #ffffff !important; padding: 14px 28px; text-decoration: none !important; border-radius: 12px; font-weight: bold; margin: 10px 0; box-shadow: 0 4px 6px -1px rgba(0, 51, 102, 0.2); }
+        .button.secondary { background-color: #2c2c2c; }
+        .kpi-box { background-color: #f4f4f5; border-left: 4px solid #C85A3C; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #71717a; }
         .links { margin: 25px 0; text-align: center; }
     </style>
 </head>
