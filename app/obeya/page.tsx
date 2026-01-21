@@ -65,6 +65,152 @@ const generateMonthlyTargets = (start: number, end: number, startYear: number, s
     return data;
 };
 
+const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus }: {
+    goal: GoalCategory,
+    currentYear: number,
+    onUpdateStatus: (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => void
+}) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    const metrics = goal.rows.filter(r => 'type' in r) as MetricRow[];
+    const actionRow = goal.rows.find(r => !('type' in r)) as ActionRow;
+
+    // Calculate progress
+    const trackableOKRs = metrics.filter(m => m.type === 'OKR');
+    const onTrackCount = trackableOKRs.filter(m => {
+        const lastData = m.monthlyData.filter(d => d.actual !== null).pop();
+        if (!lastData) return false;
+        return m.targetValue >= m.startValue
+            ? (lastData.actual! >= lastData.target!)
+            : (lastData.actual! <= lastData.target!);
+    }).length;
+
+    // Get current week actions
+    const now = new Date();
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+    const currentWeekNum = Math.floor(daysSinceStart / 7) + 1;
+    const currentWeekId = `W${currentWeekNum}`;
+
+    const currentActions = actionRow?.actions.filter(a => a.weekId === currentWeekId && a.year === currentYear) || [];
+
+    const categoryColors: Record<string, string> = {
+        'Health': 'bg-teal-600',
+        'Wealth': 'bg-emerald-600',
+        'Family': 'bg-indigo-500',
+        'Leisure': 'bg-pink-500',
+        'Business/Career': 'bg-blue-700',
+        'Social/Environment': 'bg-gray-500' // Added fallback/default
+    };
+    const categoryColor = categoryColors[goal.category] || 'bg-slate-500';
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-4">
+            {/* Header */}
+            <div className="p-4 flex items-start justify-between gap-3" onClick={() => setIsExpanded(!isExpanded)}>
+                <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded-full uppercase ${categoryColor}`}>
+                            {goal.category}
+                        </span>
+                        {goal.isShared && <Users size={12} className="text-slate-400" />}
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-lg leading-tight">{goal.title}</h3>
+                </div>
+                <div className="flex flex-col items-end">
+                    <button className="p-2 text-slate-400">
+                        <ChevronRight className={`transform transition-transform ${isExpanded ? 'rotate-90' : ''}`} size={20} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Quick Stats (Always Visible) */}
+            <div className="px-4 pb-4 flex gap-4 text-xs text-slate-500">
+                <div className="flex items-center gap-1">
+                    <Target size={14} className={onTrackCount > 0 ? "text-green-500" : "text-slate-400"} />
+                    <span className="font-bold text-slate-700">{onTrackCount}/{trackableOKRs.length}</span>
+                    <span>on track</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <div className="w-3 h-3 bg-purple-500 rounded-full" />
+                    <span className="font-bold text-slate-700">{currentActions.filter(a => a.status === 'DONE').length}/{currentActions.length}</span>
+                    <span>actions done</span>
+                </div>
+            </div>
+
+            {/* Current Week Actions (Zero Friction) - Always Visible or Prominent */}
+            {currentActions.length > 0 && (
+                <div className="px-4 pb-4 border-t border-slate-50 pt-3">
+                    <div className="flex justify-between items-center mb-2">
+                        <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">This Week's Focus</span>
+                        <span className="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">{currentWeekId}</span>
+                    </div>
+                    <div className="space-y-2">
+                        {currentActions.map(action => (
+                            <div key={action.id} className="flex items-start gap-3 p-2 rounded-lg border border-slate-100 bg-slate-50/50">
+                                <input
+                                    type="checkbox"
+                                    checked={action.status === 'DONE'}
+                                    onChange={() => onUpdateStatus(goal.id, action.id, action.status === 'DONE' ? 'TBD' : 'DONE')}
+                                    className="mt-1 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                                />
+                                <span className={`text-sm ${action.status === 'DONE' ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
+                                    {action.title}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Expanded Content: KPIs and Details */}
+            {isExpanded && (
+                <div className="px-4 pb-4 border-t border-slate-100 bg-slate-50/30 pt-4 space-y-4">
+                    {/* OKRs List */}
+                    {metrics.map(metric => {
+                        const lastData = metric.monthlyData.filter(d => d.actual !== null).pop();
+                        const target = lastData?.target ?? metric.targetValue;
+                        const actual = lastData?.actual ?? 0;
+                        const isHigherBetter = metric.targetValue >= metric.startValue;
+                        const isSuccess = lastData ? (isHigherBetter ? actual >= target : actual <= target) : false;
+
+                        return (
+                            <div key={metric.id} className="flex items-center justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-xs font-bold ${metric.type === 'KPI' ? 'text-slate-500' : 'text-slate-800'}`}>
+                                            {metric.label}
+                                        </span>
+                                        {metric.type === 'KPI' && <span className="text-[8px] bg-slate-200 text-slate-500 px-1 rounded">KPI</span>}
+                                    </div>
+                                    <div className="h-1.5 w-full bg-slate-200 rounded-full mt-1 overflow-hidden relative">
+                                        {/* Simple progress bar approximation */}
+                                        <div
+                                            className={`h-full ${isSuccess ? 'bg-green-500' : 'bg-slate-400'}`}
+                                            style={{ width: `${Math.min(100, Math.max(0, (actual / (target || 1)) * 100))}%` }}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="text-right pl-4">
+                                    <div className={`text-sm font-black ${isSuccess ? 'text-green-600' : 'text-slate-400'}`}>
+                                        {actual}
+                                    </div>
+                                    <div className="text-[10px] text-slate-400">/ {target}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
+                    <div className="pt-2 text-center">
+                        <button className="text-xs font-bold text-indigo-600 flex items-center justify-center gap-1 w-full py-2 bg-indigo-50 rounded-lg">
+                            <Plus size={14} /> Add Action / Update
+                        </button>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
 // --- COMPONENTS ---
 
 type Tribe = { id: string; name: string };
@@ -1246,8 +1392,19 @@ export default function ObeyaPage() {
                         onUpdateTitle={handleUpdateActionTitle}
                         onAddTask={handleAddKanbanTask}
                     />
-                ) : (
-                    <div className="inline-block min-w-full">
+                ) : (<>
+                    <div className="md:hidden p-4 space-y-4">
+                        {goals.map(goal => (
+                            <ObeyaMobileGoalCard
+                                key={goal.id}
+                                goal={goal}
+                                currentYear={currentYear}
+                                onUpdateStatus={(gid, cid, status) => handleUpdateActionStatus(gid, cid, status)}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="hidden md:inline-block min-w-full">
                         <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex">
                             <div className="sticky left-0 w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
                             {(viewMode === 'strategic' ?
@@ -1606,7 +1763,7 @@ export default function ObeyaPage() {
                                 );
                             })}
                     </div>
-                )}
+                </>)}
             </main>
             <Coach goals={goals} />
         </div>
