@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -99,6 +100,14 @@ export async function POST(req: Request) {
         });
 
         console.log('[SIGNUP] User created successfully:', user.id);
+
+        // Send Welcome Email (Fire and forget, don't await/block response)
+        // We catch locally just in case, though sendWelcomeEmail already catches
+        if (email) {
+            sendWelcomeEmail(email, name || 'Member').catch(err =>
+                console.error('[SIGNUP] Failed to trigger welcome email:', err)
+            );
+        }
 
         // Return user without password
         const { password: _, ...userWithoutPassword } = user;
