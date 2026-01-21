@@ -40,17 +40,37 @@ interface TribeFormData {
 interface TribeCreationFormProps {
     onClose: () => void;
     onSuccess?: () => void;
+    initialData?: any; // Accepting existing tribe data for editing
 }
 
-export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationFormProps) {
+// Helper to parse existing matchmaking fields to form structure
+const parseMatchmaking = (data: any): MatchmakingCriteria => {
+    return {
+        ageRange: { enabled: data.matchmakingAgeRange || false, description: data.matchmakingAgeRangeDesc || '' },
+        lifeFocus: { enabled: data.matchmakingLifeFocus || false, description: data.matchmakingLifeFocusDesc || '' },
+        professional: { enabled: data.matchmakingProfessional || false, description: data.matchmakingProfessionalDesc || '' },
+        wealth: { enabled: data.matchmakingWealth || false, description: data.matchmakingWealthDesc || '' },
+        execution: { enabled: data.matchmakingExecution || false, description: data.matchmakingExecutionDesc || '' },
+        personality: { enabled: data.matchmakingPersonality || false, description: data.matchmakingPersonalityDesc || '' },
+        health: { enabled: data.matchmakingHealth || false, description: data.matchmakingHealthDesc || '' },
+        skills: { enabled: data.matchmakingSkills || false, description: data.matchmakingSkillsDesc || '' },
+        values: { enabled: data.matchmakingValues || false, description: data.matchmakingValuesDesc || '' },
+        social: { enabled: data.matchmakingSocial || false, description: data.matchmakingSocialDesc || '' },
+        intent: { enabled: data.matchmakingIntent || false, description: data.matchmakingIntentDesc || '' },
+    };
+};
+
+export default function TribeCreationForm({ onClose, onSuccess, initialData }: TribeCreationFormProps) {
+    const isEditing = !!initialData;
+
     const [formData, setFormData] = useState<TribeFormData>({
-        name: '',
-        topic: '',
-        meetingFrequency: '',
-        meetingTimeHour: 10,
-        meetingTimeMinute: 0,
-        maxMembers: 10,
-        matchmaking: {
+        name: initialData?.name || '',
+        topic: initialData?.topic || '',
+        meetingFrequency: initialData?.meetingFrequency || '', // 'daily' | 'weekly' | 'monthly'
+        meetingTimeHour: initialData?.meetingTimeHour ?? 10,
+        meetingTimeMinute: initialData?.meetingTimeMinute ?? 0,
+        maxMembers: initialData?.maxMembers || 10,
+        matchmaking: initialData ? parseMatchmaking(initialData) : {
             ageRange: { enabled: false, description: '' },
             lifeFocus: { enabled: false, description: '' },
             professional: { enabled: false, description: '' },
@@ -63,15 +83,15 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
             social: { enabled: false, description: '' },
             intent: { enabled: false, description: '' },
         },
-        minLevel: 1,
-        minGrit: 0,
-        minExperience: 0,
+        minLevel: initialData?.minLevel || 1,
+        minGrit: initialData?.minGrit || 0,
+        minExperience: initialData?.minExperience || 0,
         // minCompletionRate removed
-        minReputation: 0,
+        minReputation: initialData?.minReputation || 0,
 
-        isPaid: false,
-        subscriptionPrice: 0,
-        subscriptionFrequency: '',
+        isPaid: initialData?.isPaid || false,
+        subscriptionPrice: initialData?.subscriptionPrice || 0,
+        subscriptionFrequency: initialData?.subscriptionFrequency || 'monthly',
     });
 
     const [expandedSections, setExpandedSections] = useState({
@@ -184,8 +204,11 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
         setLoading(true);
 
         try {
-            const response = await fetch('/api/tribes/create', {
-                method: 'POST',
+            const url = isEditing ? `/api/tribes/${initialData.id}` : '/api/tribes/create';
+            const method = isEditing ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method,
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData),
             });
@@ -195,7 +218,7 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
                 onClose();
             } else {
                 const data = await response.json();
-                setError(data.error || 'Failed to create tribe');
+                setError(data.error || `Failed to ${isEditing ? 'update' : 'create'} tribe`);
             }
         } catch (err) {
             setError('An error occurred. Please try again.');
@@ -233,9 +256,11 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
                         <div>
                             <h2 className="text-2xl font-black text-gray-900 flex items-center gap-2">
                                 <Users size={28} className="text-blue-600" />
-                                Create Your Mastermind Table
+                                {isEditing ? 'Edit Tribe Settings' : 'Create Your Mastermind Table'}
                             </h2>
-                            <p className="text-gray-600 mt-1">Set up your tribe with matchmaking criteria</p>
+                            <p className="text-gray-600 mt-1">
+                                {isEditing ? 'Update your tribe configuration and requirements' : 'Set up your tribe with matchmaking criteria'}
+                            </p>
                         </div>
                         <button
                             onClick={onClose}
@@ -631,7 +656,7 @@ export default function TribeCreationForm({ onClose, onSuccess }: TribeCreationF
                             ) : (
                                 <>
                                     <Save size={18} />
-                                    Create Table
+                                    {isEditing ? 'Save Changes' : 'Create Table'}
                                 </>
                             )}
                         </button>

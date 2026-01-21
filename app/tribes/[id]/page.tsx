@@ -89,6 +89,7 @@ export default function TribeDetailsPage() {
 
     // Admin Console State
     const [adminTab, setAdminTab] = useState<'info' | 'sops' | 'members' | 'apps'>('info');
+    const [showEditModal, setShowEditModal] = useState(false); // New state for modal
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState<any>({});
     const [applications, setApplications] = useState<any[]>([]);
@@ -441,103 +442,68 @@ export default function TribeDetailsPage() {
                                         <div className="flex justify-between items-center mb-4">
                                             <h4 className="font-bold text-slate-700">General Information</h4>
                                             <button
-                                                onClick={() => isEditing ? handleUpdateTribe() : setIsEditing(true)}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold text-sm transition-colors ${isEditing ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}
+                                                onClick={() => setShowEditModal(true)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-600 rounded-lg font-bold text-sm hover:bg-slate-200 transition-colors"
                                             >
-                                                {isEditing ? <><Save size={16} /> Save Changes</> : <><Edit3 size={16} /> Edit Info</>}
+                                                <Edit3 size={16} /> Edit Details
                                             </button>
                                         </div>
 
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Tribe Name</label>
-                                                <input
-                                                    disabled={!isEditing}
-                                                    className="w-full text-lg font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0"
-                                                    value={editForm.name || ''}
-                                                    onChange={e => setEditForm({ ...editForm, name: e.target.value })}
-                                                />
+                                                <div className="w-full text-lg font-bold text-slate-900 bg-slate-50 border border-transparent rounded-xl p-3">
+                                                    {tribe.name}
+                                                </div>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Topic</label>
-                                                <input
-                                                    disabled={!isEditing}
-                                                    className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0"
-                                                    value={editForm.topic || ''}
-                                                    onChange={e => setEditForm({ ...editForm, topic: e.target.value })}
-                                                />
+                                                <div className="w-full font-bold text-slate-900 bg-slate-50 border border-transparent rounded-xl p-3">
+                                                    {tribe.topic || '-'}
+                                                </div>
                                             </div>
                                             <div className="md:col-span-2">
                                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Description</label>
-                                                <textarea
-                                                    disabled={!isEditing}
-                                                    rows={3}
-                                                    className="w-full text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0 disabled:resize-none"
-                                                    value={editForm.description || ''}
-                                                    onChange={e => setEditForm({ ...editForm, description: e.target.value })}
-                                                />
+                                                <div className="w-full text-slate-600 bg-slate-50 border border-transparent rounded-xl p-3">
+                                                    {tribe.description || 'No description provided.'}
+                                                </div>
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Meeting Time</label>
-                                                <input
-                                                    disabled={!isEditing}
-                                                    className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 focus:ring-2 focus:ring-indigo-500 outline-none disabled:bg-transparent disabled:border-transparent disabled:px-0"
-                                                    value={editForm.meetingTime || ''}
-                                                    onChange={e => setEditForm({ ...editForm, meetingTime: e.target.value })}
-                                                />
+                                                <div className="w-full font-bold text-slate-900 bg-slate-50 border border-transparent rounded-xl p-3">
+                                                    {tribe.meetingTime || '-'}
+                                                </div>
                                             </div>
 
-                                            {/* EXTENDED SETTINGS */}
+                                            {/* EXTENDED SETTINGS DISPLAY ONLY */}
                                             <div className="md:col-span-2 pt-4 border-t border-slate-100 mt-4">
-                                                <h5 className="font-bold text-indigo-900 mb-4">Requirements & Matchmaking</h5>
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <h5 className="font-bold text-indigo-900 mb-4">Current Requirements</h5>
+                                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                     <div>
                                                         <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Level</label>
-                                                        <input
-                                                            type="number"
-                                                            disabled={!isEditing}
-                                                            className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none disabled:bg-transparent"
-                                                            value={editForm.minLevel || 0}
-                                                            onChange={e => setEditForm({ ...editForm, minLevel: parseInt(e.target.value) })}
-                                                        />
+                                                        <div className="font-bold text-slate-900">{tribe.minLevel || 0}</div>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Grit (%)</label>
-                                                        <input
-                                                            type="number"
-                                                            disabled={!isEditing}
-                                                            className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none disabled:bg-transparent"
-                                                            value={editForm.minGrit || 0}
-                                                            onChange={e => setEditForm({ ...editForm, minGrit: parseInt(e.target.value) })}
-                                                        />
+                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Min Grit</label>
+                                                        <div className="font-bold text-slate-900">{tribe.minGrit || 0}%</div>
                                                     </div>
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Matchmaking Criteria</label>
-                                                        <input
-                                                            disabled={!isEditing}
-                                                            placeholder="e.g. SaaS Founders > $5k MRR"
-                                                            className="w-full font-bold text-slate-900 bg-slate-50 border border-slate-200 rounded-xl p-3 outline-none disabled:bg-transparent"
-                                                            value={editForm.matchmakingCriteria || ''}
-                                                            onChange={e => setEditForm({ ...editForm, matchmakingCriteria: e.target.value })}
-                                                        />
+                                                    <div>
+                                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Max Members</label>
+                                                        <div className="font-bold text-slate-900">{tribe.maxMembers}</div>
                                                     </div>
-                                                    <div className="md:col-span-2 flex flex-wrap gap-4">
-                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
-                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingSkills || false} onChange={e => setEditForm({ ...editForm, matchmakingSkills: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                                                            Match Skills
-                                                        </label>
-                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
-                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingValues || false} onChange={e => setEditForm({ ...editForm, matchmakingValues: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                                                            Match Values
-                                                        </label>
-                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
-                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingSocial || false} onChange={e => setEditForm({ ...editForm, matchmakingSocial: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                                                            Social Fit
-                                                        </label>
-                                                        <label className="flex items-center gap-2 font-bold text-sm text-slate-700 cursor-pointer">
-                                                            <input type="checkbox" disabled={!isEditing} checked={editForm.matchmakingIntent || false} onChange={e => setEditForm({ ...editForm, matchmakingIntent: e.target.checked })} className="w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500" />
-                                                            Intent Match
-                                                        </label>
+                                                </div>
+
+                                                <div className="mt-4">
+                                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Active Matchmaking Criteria</label>
+                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                        {tribe.matchmakingCriteria && <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full">Custom Criteria</span>}
+                                                        {tribe.matchmakingSkills && <span className="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full">Skills</span>}
+                                                        {tribe.matchmakingValues && <span className="px-3 py-1 bg-purple-50 text-purple-700 text-xs font-bold rounded-full">Values</span>}
+                                                        {tribe.matchmakingSocial && <span className="px-3 py-1 bg-pink-50 text-pink-700 text-xs font-bold rounded-full">Social</span>}
+                                                        {tribe.matchmakingIntent && <span className="px-3 py-1 bg-green-50 text-green-700 text-xs font-bold rounded-full">Intent</span>}
+                                                        {!tribe.matchmakingSkills && !tribe.matchmakingValues && !tribe.matchmakingSocial && !tribe.matchmakingIntent && !tribe.matchmakingCriteria && (
+                                                            <span className="text-slate-400 text-sm italic">None configured</span>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

@@ -89,9 +89,17 @@ export async function PUT(
         const body = await req.json();
         console.log("PUT Tribe Body:", body); // DEBUG
         const {
-            name, description, topic, meetingTime, standardProcedures,
-            minLevel, minGrit, matchmakingCriteria,
-            matchmakingSkills, matchmakingValues, matchmakingSocial, matchmakingIntent
+            name, description, topic, standardProcedures,
+            // Meeting Config
+            meetingTime, meetingFrequency, meetingTimeHour, meetingTimeMinute,
+            // Stats
+            minLevel, minGrit, minExperience, minReputation,
+            // Pricing
+            isPaid, subscriptionPrice, subscriptionFrequency, affiliateCommission, maxMembers,
+            // Complex Matchmaking Object (from Form)
+            matchmaking,
+            // Legacy/Simple Matchmaking (keep for backward compat if needed, or overwrite)
+            matchmakingCriteria, matchmakingSkills, matchmakingValues, matchmakingSocial, matchmakingIntent
         } = body;
 
         const tribe = await prisma.tribe.findUnique({
@@ -110,21 +118,78 @@ export async function PUT(
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
+        // Construct meetingTime string if not provided but Hour/Minute are
+        let finalMeetingTime = meetingTime;
+        if (!finalMeetingTime && (meetingTimeHour !== undefined || meetingTimeHour !== null) && (meetingTimeMinute !== undefined || meetingTimeMinute !== null)) {
+            // Pad with leading zeros
+            const h = meetingTimeHour?.toString().padStart(2, '0') || '00';
+            const m = meetingTimeMinute?.toString().padStart(2, '0') || '00';
+            finalMeetingTime = `${h}:${m}`;
+        }
+
         const updatedTribe = await prisma.tribe.update({
             where: { id: tribeId },
             data: {
                 name,
                 description,
                 topic,
-                meetingTime,
                 standardProcedures,
+
+                // Meeting Config
+                meetingTime: finalMeetingTime, // Use constructed or provided time
+                meetingFrequency,
+                meetingTimeHour: meetingTimeHour ?? null,
+                meetingTimeMinute: meetingTimeMinute ?? null,
+
+                // Stats
                 minLevel: minLevel ? parseInt(minLevel) : undefined,
                 minGrit: minGrit ? parseInt(minGrit) : undefined,
+                minExperience: minExperience ? parseInt(minExperience) : undefined,
+                minReputation: minReputation ? parseFloat(minReputation) : undefined,
+                maxMembers: maxMembers ? parseInt(maxMembers) : undefined,
+
+                // Pricing
+                isPaid,
+                subscriptionPrice: isPaid ? parseFloat(subscriptionPrice) : undefined,
+                subscriptionFrequency: isPaid ? subscriptionFrequency : undefined,
+                affiliateCommission: affiliateCommission ? parseInt(affiliateCommission) : undefined,
+
+                // Matchmaking - Simple
                 matchmakingCriteria,
-                matchmakingSkills,
-                matchmakingValues,
-                matchmakingSocial,
-                matchmakingIntent
+
+                // Matchmaking - Detailed (Spread 11 categories)
+                // Note: The form sends 'matchmaking' object with enabled/description
+                // We need to map it if it exists
+                ...(matchmaking ? {
+                    matchmakingAgeRange: matchmaking.ageRange?.enabled,
+                    matchmakingAgeRangeDesc: matchmaking.ageRange?.description,
+                    matchmakingLifeFocus: matchmaking.lifeFocus?.enabled,
+                    matchmakingLifeFocusDesc: matchmaking.lifeFocus?.description,
+                    matchmakingProfessional: matchmaking.professional?.enabled,
+                    matchmakingProfessionalDesc: matchmaking.professional?.description,
+                    matchmakingWealth: matchmaking.wealth?.enabled,
+                    matchmakingWealthDesc: matchmaking.wealth?.description,
+                    matchmakingExecution: matchmaking.execution?.enabled,
+                    matchmakingExecutionDesc: matchmaking.execution?.description,
+                    matchmakingPersonality: matchmaking.personality?.enabled,
+                    matchmakingPersonalityDesc: matchmaking.personality?.description,
+                    matchmakingHealth: matchmaking.health?.enabled,
+                    matchmakingHealthDesc: matchmaking.health?.description,
+                    matchmakingSkills: matchmaking.skills?.enabled,
+                    matchmakingSkillsDesc: matchmaking.skills?.description,
+                    matchmakingValues: matchmaking.values?.enabled,
+                    matchmakingValuesDesc: matchmaking.values?.description,
+                    matchmakingSocial: matchmaking.social?.enabled,
+                    matchmakingSocialDesc: matchmaking.social?.description,
+                    matchmakingIntent: matchmaking.intent?.enabled,
+                    matchmakingIntentDesc: matchmaking.intent?.description,
+                } : {
+                    // fallbacks if simple fields passed (e.g. from previous inline edit)
+                    matchmakingSkills,
+                    matchmakingValues,
+                    matchmakingSocial,
+                    matchmakingIntent
+                })
             }
         });
 
