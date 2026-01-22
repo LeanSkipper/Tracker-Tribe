@@ -817,6 +817,18 @@ export default function ObeyaPage() {
         }
     };
 
+    // Collapse state for entire goals (Excel-style)
+    const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
+
+    const toggleGoal = (goalId: string) => {
+        setCollapsedGoals(prev => {
+            const next = new Set(prev);
+            if (next.has(goalId)) next.delete(goalId);
+            else next.add(goalId);
+            return next;
+        });
+    };
+
     useEffect(() => {
         const fetchGoals = async () => {
             try {
@@ -1649,6 +1661,17 @@ export default function ObeyaPage() {
                                                         goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
                                             }`}>
                                             <div className="flex items-center gap-3">
+                                                {/* Goal collapse button (Excel-style) */}
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        toggleGoal(goal.id);
+                                                    }}
+                                                    className="text-white/80 hover:text-white transition-colors"
+                                                    title={collapsedGoals.has(goal.id) ? "Expand goal" : "Collapse goal"}
+                                                >
+                                                    <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
+                                                </button>
                                                 <span className="text-white font-bold text-xs uppercase tracking-wide">{goal.category}</span>
                                                 <span className="text-white font-bold text-lg">{goal.title}</span>
                                             </div>
@@ -1663,6 +1686,9 @@ export default function ObeyaPage() {
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {goal.rows.map((row, rIdx) => {
+                                                        // Hide all rows if goal is collapsed (Excel-style)
+                                                        if (collapsedGoals.has(goal.id)) return null;
+
                                                         const isOKR = 'type' in row;
                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
@@ -1746,6 +1772,9 @@ export default function ObeyaPage() {
                                             {/* 2. Data Columns (Right Side) */}
                                             <div className="flex-1 flex flex-col min-w-0">
                                                 {goal.rows.map((row, rIdx) => {
+                                                    // Hide all rows if goal is collapsed (Excel-style)
+                                                    if (collapsedGoals.has(goal.id)) return null;
+
                                                     const isOKR = 'type' in row;
                                                     const isKPI = isOKR && (row as MetricRow).type === 'KPI';
 
