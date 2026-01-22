@@ -404,8 +404,8 @@ export default function SharedObeyaTracker({
                                 return (
                                     <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {/* Revised Vision Band */}
-                                        <div className={`w-full h-[52px] ${categoryBgColor} flex items-center`}>
-                                            <div className={`sticky left-0 z-20 w-[150px] md:w-[400px] px-3 flex items-center justify-between ${categoryBgColor}`}>
+                                        <div className={`w-full min-h-[52px] ${categoryBgColor} flex items-stretch`}>
+                                            <div className={`sticky left-0 z-20 w-[150px] md:w-[400px] px-3 py-2 flex items-center justify-between ${categoryBgColor}`}>
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     <button
                                                         onClick={() => toggleGoal(goal.id)}
@@ -414,12 +414,13 @@ export default function SharedObeyaTracker({
                                                     >
                                                         <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
                                                     </button>
-                                                    <span className="text-white font-bold text-xs uppercase tracking-wide shrink-0">{goal.category}</span>
-                                                    <span className="text-white font-bold text-lg truncate max-w-[200px]" title={goal.title}>{goal.title}</span>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-bold text-xs uppercase tracking-wide shrink-0 opacity-80">{goal.category}</span>
+                                                        <span className="text-white font-bold text-sm md:text-lg leading-tight whitespace-normal break-words">{goal.title}</span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 shrink-0">
-                                                    <span className="text-white/70 text-xs">by {goal.userName}</span>
-                                                    {canEdit && <span className="text-xs text-white/60">(Edit)</span>}
+                                                <div className="flex items-center gap-2 shrink-0 self-start mt-1">
+                                                    {canEdit && <span className="text-xs text-white/60 hidden md:inline">(Edit)</span>}
                                                     {goal.visibility === 'TRIBE' && <Users size={14} className="text-white/80" />}
                                                     {goal.visibility === 'PUBLIC' && <Globe size={14} className="text-white/80" />}
                                                 </div>
