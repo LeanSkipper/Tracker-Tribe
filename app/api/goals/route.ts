@@ -184,8 +184,8 @@ export async function POST(req: Request) {
                     // This is a MetricRow (OKR or KPI)
 
                     // Check if existing OKR (has ID and ID exists in DB)
-                    // Note: Frontend might send temp IDs for new rows, usually typically 'new-...' or undefined
-                    const isExisting = row.id && !row.id.startsWith('new') && row.id.length > 10;
+                    // Frontend uses 'new-', 'okr-', 'kpi-' for temp IDs. DB IDs are CUIDs (start with 'c').
+                    const isExisting = row.id && !row.id.startsWith('new') && !row.id.startsWith('okr-') && !row.id.startsWith('kpi-') && row.id.length > 10;
 
                     let okr;
                     if (isExisting) {
@@ -264,7 +264,9 @@ export async function POST(req: Request) {
                             weekDate.setDate(startOfYear.getDate() + (weekNum - 1) * 7);
 
                             // Check if existing Action
-                            const isExistingAction = actionCard.id && !actionCard.id.startsWith('new') && actionCard.id.length > 10;
+                            // Frontend uses 'act-' for new actions (or sometimes Date.now() string)
+                            // We treat anything with 'act-' or 'new' as NEW.
+                            const isExistingAction = actionCard.id && !actionCard.id.startsWith('new') && !actionCard.id.startsWith('act-') && actionCard.id.length > 10 && !Number.isInteger(Number(actionCard.id));
 
                             if (isExistingAction) {
                                 // UPDATE existing Action
