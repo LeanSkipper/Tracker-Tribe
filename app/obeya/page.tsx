@@ -1643,10 +1643,10 @@ export default function ObeyaPage() {
 
                                         {/* Horizontal Vision Band */}
                                         <div className={`w-full p-3 flex items-center justify-between sticky left-0 z-20 ${goal.category === 'Health' ? 'bg-teal-600' :
-                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
-                                                    goal.category === 'Family' ? 'bg-indigo-500' :
-                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
-                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
+                                            goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                                goal.category === 'Family' ? 'bg-indigo-500' :
+                                                    goal.category === 'Leisure' ? 'bg-pink-500' :
+                                                        goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
                                             }`}>
                                             <div className="flex items-center gap-3">
                                                 <span className="text-white font-bold text-xs uppercase tracking-wide">{goal.category}</span>
@@ -1689,6 +1689,21 @@ export default function ObeyaPage() {
                                                         return (
                                                             <div key={row.id} className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative`}>
                                                                 <div className="w-56 p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
+                                                                    {/* Collapse button and OKR number for OKRs */}
+                                                                    {isOKR && !isKPI && (
+                                                                        <>
+                                                                            <button
+                                                                                onClick={() => toggleOKR(row.id)}
+                                                                                className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
+                                                                                title={collapsedOKRs.has(row.id) ? "Expand OKR" : "Collapse OKR"}
+                                                                            >
+                                                                                <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
+                                                                            </button>
+                                                                            <span className="text-blue-600 font-bold text-xs flex-shrink-0">
+                                                                                OKR #{goal.rows.filter(r => 'type' in r && r.type === 'OKR').indexOf(row) + 1}
+                                                                            </span>
+                                                                        </>
+                                                                    )}
                                                                     {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1 z-20"><Edit2 size={12} /></button>}
                                                                     <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                         {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
