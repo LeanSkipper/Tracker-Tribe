@@ -888,6 +888,7 @@ export default function ObeyaPage() {
                             category: g.category || 'Business/Career',
                             title: g.vision,
                             isShared: g.visibility === 'TRIBE', // Map visibility to isShared
+                            visibility: g.visibility || 'PRIVATE', // Add visibility field
                             rows: [...okrRows, actionRow]
                         };
                     }));
@@ -1695,7 +1696,7 @@ export default function ObeyaPage() {
                                                                     headers: { 'Content-Type': 'application/json' },
                                                                     body: JSON.stringify({ visibility: 'PRIVATE' })
                                                                 });
-                                                                fetchGoals();
+                                                                window.location.reload();
                                                             }}
                                                             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                                                         >
@@ -1708,7 +1709,7 @@ export default function ObeyaPage() {
                                                                     headers: { 'Content-Type': 'application/json' },
                                                                     body: JSON.stringify({ visibility: 'TRIBE' })
                                                                 });
-                                                                fetchGoals();
+                                                                window.location.reload();
                                                             }}
                                                             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                                                         >
@@ -1721,7 +1722,7 @@ export default function ObeyaPage() {
                                                                     headers: { 'Content-Type': 'application/json' },
                                                                     body: JSON.stringify({ visibility: 'PUBLIC' })
                                                                 });
-                                                                fetchGoals();
+                                                                window.location.reload();
                                                             }}
                                                             className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
                                                         >
