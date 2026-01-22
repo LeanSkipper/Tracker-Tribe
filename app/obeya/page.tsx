@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle, Share2, Globe } from 'lucide-react';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
@@ -1675,9 +1675,64 @@ export default function ObeyaPage() {
                                                 <span className="text-white font-bold text-xs uppercase tracking-wide">{goal.category}</span>
                                                 <span className="text-white font-bold text-lg">{goal.title}</span>
                                             </div>
-                                            <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
-                                                <Edit2 size={16} />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                {/* Visibility Toggle */}
+                                                <div className="relative group">
+                                                    <button
+                                                        className="text-white/80 hover:text-white transition-colors p-1.5 rounded hover:bg-white/10"
+                                                        title="Share settings"
+                                                    >
+                                                        {goal.visibility === 'TRIBE' ? <Users size={16} /> :
+                                                            goal.visibility === 'PUBLIC' ? <Globe size={16} /> :
+                                                                <Circle size={16} />}
+                                                    </button>
+                                                    {/* Dropdown */}
+                                                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-30">
+                                                        <button
+                                                            onClick={async () => {
+                                                                await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                    method: 'PATCH',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ visibility: 'PRIVATE' })
+                                                                });
+                                                                fetchGoals();
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                                        >
+                                                            <Circle size={14} /> Private
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                    method: 'PATCH',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ visibility: 'TRIBE' })
+                                                                });
+                                                                fetchGoals();
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                                        >
+                                                            <Users size={14} /> Share with Tribe
+                                                        </button>
+                                                        <button
+                                                            onClick={async () => {
+                                                                await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                    method: 'PATCH',
+                                                                    headers: { 'Content-Type': 'application/json' },
+                                                                    body: JSON.stringify({ visibility: 'PUBLIC' })
+                                                                });
+                                                                fetchGoals();
+                                                            }}
+                                                            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                                        >
+                                                            <Globe size={14} /> Public
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
+                                                    <Edit2 size={16} />
+                                                </button>
+                                            </div>
                                         </div>
 
                                         <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white">
