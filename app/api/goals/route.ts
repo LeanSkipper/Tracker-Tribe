@@ -167,38 +167,81 @@ export async function POST(req: Request) {
             }
             // --- GAMIFICATION LOGIC END ---
 
-            // Delete existing OKRs and their actions for this goal (only if updating)
-            if (!isNewGoal) {
-                await prisma.oKR.deleteMany({ where: { goalId: goal.id } });
-            }
+            // DESTRUCTIVE OPERATION REMOVED:
+            // We no longer delete all OKRs. We will update existing ones and create new ones.
+            // if (!isNewGoal) {
+            //    await prisma.oKR.deleteMany({ where: { goalId: goal.id } });
+            // }
 
             let firstOkrId: string | null = null;
+            if (!isNewGoal) {
+                const existingOkrs = await prisma.oKR.findMany({ where: { goalId: goal.id } });
+                if (existingOkrs.length > 0) firstOkrId = existingOkrs[0].id; // Fallback to existing if updating
+            }
 
             for (const row of rows) {
                 if ('type' in row && (row.type === 'OKR' || row.type === 'KPI')) {
                     // This is a MetricRow (OKR or KPI)
-                    const okr = await prisma.oKR.create({
-                        data: {
-                            goalId: goal.id,
-                            metricName: row.label,
-                            type: row.type,
-                            targetValue: row.targetValue,
-                            currentValue: row.startValue,
-                            // Ensure backward compat or defaults
-                            startYear: row.startYear || 2026,
-                            startMonth: row.startMonth || 0,
-                            deadlineYear: row.deadlineYear || 2026,
-                            deadlineMonth: row.deadlineMonth || 11,
-                            monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
-                            sharedTribes: {
-                                connect: row.sharedTribeIds?.map((id: string) => ({ id })) || []
+
+                    // Check if existing OKR (has ID and ID exists in DB)
+                    // Note: Frontend might send temp IDs for new rows, usually typically 'new-...' or undefined
+                    const isExisting = row.id && !row.id.startsWith('new') && row.id.length > 10;
+
+                    let okr;
+                    if (isExisting) {
+                        // UPDATE existing OKR
+                        okr = await prisma.oKR.update({
+                            where: { id: row.id },
+                            data: {
+                                metricName: row.label,
+                                type: row.type,
+                                targetValue: row.targetValue,
+                                currentValue: row.startValue,
+                                startYear: row.startYear || 2026,
+                                startMonth: row.startMonth || 0,
+                                deadlineYear: row.deadlineYear || 2026,
+                                deadlineMonth: row.deadlineMonth || 11,
+                                monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
+                                // For shared tribes, we might want to be careful not to wipe them out if not sending them?
+                                // Assuming payload sends full list if it sends it at all.
+                                ...(row.sharedTribeIds ? {
+                                    sharedTribes: {
+                                        set: row.sharedTribeIds.map((id: string) => ({ id }))
+                                    }
+                                } : {})
                             }
-                        }
-                    });
+                        });
+                    } else {
+                        // CREATE new OKR
+                        okr = await prisma.oKR.create({
+                            data: {
+                                goalId: goal.id,
+                                metricName: row.label,
+                                type: row.type,
+                                targetValue: row.targetValue,
+                                currentValue: row.startValue,
+                                startYear: row.startYear || 2026,
+                                startMonth: row.startMonth || 0,
+                                deadlineYear: row.deadlineYear || 2026,
+                                deadlineMonth: row.deadlineMonth || 11,
+                                monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
+                                sharedTribes: {
+                                    connect: row.sharedTribeIds?.map((id: string) => ({ id })) || []
+                                }
+                            }
+                        });
+                    }
+
                     if (!firstOkrId) firstOkrId = okr.id;
+
                 } else if (!('type' in row)) {
                     // This is an ActionRow
                     const actionRow = row as any;
+
+                    // Actions are typically managed individually via their own endpoints (updateStatus, etc.)
+                    // BUT when saving a full goal, we might be creating new ones or updating titles.
+                    // The Frontend usually sends the full list of actions for the goal.
+
                     if (actionRow.actions && Array.isArray(actionRow.actions)) {
                         // Only create actions if we have at least one OKR
                         if (!firstOkrId) {
@@ -220,16 +263,34 @@ export async function POST(req: Request) {
                             const weekDate = new Date(startOfYear);
                             weekDate.setDate(startOfYear.getDate() + (weekNum - 1) * 7);
 
-                            await prisma.action.create({
-                                data: {
-                                    userId: user.id,
-                                    okrId: firstOkrId,
-                                    description: actionCard.title,
-                                    status: dbStatus,
-                                    weekDate: weekDate,
-                                    dueDate: weekDate,
-                                }
-                            });
+                            // Check if existing Action
+                            const isExistingAction = actionCard.id && !actionCard.id.startsWith('new') && actionCard.id.length > 10;
+
+                            if (isExistingAction) {
+                                // UPDATE existing Action
+                                await prisma.action.update({
+                                    where: { id: actionCard.id },
+                                    data: {
+                                        description: actionCard.title,
+                                        status: dbStatus,
+                                        // Update week if dragged (handled by handleMoveAction usually, but here for full save)
+                                        weekDate: weekDate,
+                                        dueDate: weekDate
+                                    }
+                                }).catch(e => console.warn("Failed to update action (might have been deleted):", e));
+                            } else {
+                                // CREATE new Action
+                                await prisma.action.create({
+                                    data: {
+                                        userId: user.id,
+                                        okrId: firstOkrId,
+                                        description: actionCard.title,
+                                        status: dbStatus,
+                                        weekDate: weekDate,
+                                        dueDate: weekDate,
+                                    }
+                                });
+                            }
                         }
                     }
                 }
