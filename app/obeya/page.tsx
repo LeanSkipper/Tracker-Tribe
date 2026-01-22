@@ -11,6 +11,7 @@ import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
 import PitStopReminder from '@/components/PitStopReminder';
 import { usePitStopStatus } from '@/hooks/usePitStopStatus';
 import { GoalTemplate } from '@/lib/goalTemplates';
+import { getISOWeekNumber, getWeekDayRange } from '@/lib/dateUtils';
 import KanbanBoard from '@/components/KanbanBoard';
 
 
@@ -22,38 +23,8 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
     return acc;
 }, {} as Record<string, string[]>);
 
-// Helper to calculate week number with Sunday as first day of week
-const getWeekNumber = (date: Date): number => {
-    const year = date.getFullYear();
-    const startOfYear = new Date(year, 0, 1);
-    const dayOfWeek = startOfYear.getDay(); // 0 = Sunday, 1 = Monday, etc.
+// Helpers replaced by lib/dateUtils
 
-    // Calculate days since start of year
-    const daysSinceStart = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-
-    // Adjust for Sunday start: if Jan 1 is not Sunday, add offset to align to Sunday
-    const adjustedDays = daysSinceStart + dayOfWeek;
-
-    return Math.floor(adjustedDays / 7) + 1;
-};
-
-// Helper to get day range for a week (Sunday-based)
-const getWeekDayRange = (weekId: string, year: number): string => {
-    const weekNum = parseInt(weekId.replace('W', ''));
-    const startOfYear = new Date(year, 0, 1);
-    const dayOfWeek = startOfYear.getDay();
-
-    // Calculate the first Sunday of the year (or Jan 1 if it's Sunday)
-    const firstSunday = dayOfWeek === 0 ? startOfYear : new Date(year, 0, 1 + (7 - dayOfWeek));
-
-    // Calculate week start (Sunday) and end (Saturday)
-    const daysFromFirstSunday = (weekNum - 1) * 7;
-    const weekStart = new Date(firstSunday.getTime() + daysFromFirstSunday * 24 * 60 * 60 * 1000);
-    const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-
-    const formatDay = (date: Date) => `${date.getDate()}`;
-    return `${formatDay(weekStart)}-${formatDay(weekEnd)}`;
-};
 
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
 type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; };
@@ -122,7 +93,7 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
 
     // Get current week actions
     const now = new Date();
-    const globalWeekNum = getWeekNumber(now);
+    const globalWeekNum = getISOWeekNumber(now);
 
     // Time Window State (Center of the 3-week view)
     const [weekOffset, setWeekOffset] = useState(0);
@@ -865,7 +836,7 @@ export default function ObeyaPage() {
                             (o.actions || []).map((a: any) => {
                                 // Convert weekDate back to weekId
                                 const weekDate = new Date(a.weekDate);
-                                const weekNum = getWeekNumber(weekDate);
+                                const weekNum = getISOWeekNumber(weekDate);
 
                                 return {
                                     id: a.id,
@@ -974,7 +945,7 @@ export default function ObeyaPage() {
                     const allActions = (g.okrs || []).flatMap((o: any) =>
                         (o.actions || []).map((a: any) => {
                             const weekDate = new Date(a.weekDate);
-                            const weekNum = getWeekNumber(weekDate);
+                            const weekNum = getISOWeekNumber(weekDate);
                             return {
                                 id: a.id,
                                 weekId: `W${weekNum}`,
@@ -1156,7 +1127,7 @@ export default function ObeyaPage() {
 
         // Get current week
         const now = new Date();
-        const currentWeek = getWeekNumber(now);
+        const currentWeek = getISOWeekNumber(now);
         const weekId = `W${currentWeek}`;
 
         await handleAddAction(weekId, goalId, title);
@@ -1218,7 +1189,7 @@ export default function ObeyaPage() {
         const title = window.prompt("Enter task title:");
         if (!title) return;
         const now = new Date();
-        const currentWeek = getWeekNumber(now);
+        const currentWeek = getISOWeekNumber(now);
         const weekId = `W${currentWeek}`;
         await handleAddAction(weekId, goalId, title);
     };
@@ -1613,7 +1584,7 @@ export default function ObeyaPage() {
                                     {viewMode === 'operational' && (() => {
                                         // Calculate current week (Sunday-based)
                                         const now = new Date();
-                                        const currentWeekNum = getWeekNumber(now);
+                                        const currentWeekNum = getISOWeekNumber(now);
                                         const currentWeekId = `W${currentWeekNum}`;
                                         const isCurrentYear = y === now.getFullYear();
 
@@ -1631,7 +1602,7 @@ export default function ObeyaPage() {
                                                                     : 'text-gray-400'
                                                                     }`}
                                                             >
-                                                                {getWeekDayRange(w, y)}
+                                                                {getWeekDayRange(y, parseInt(w.replace('W', '')))}
                                                             </div>
                                                         );
                                                     })}

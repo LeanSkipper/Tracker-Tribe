@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { ChevronRight, Users, Globe, Layers, User, Plus } from 'lucide-react';
 
+import { getISOWeekNumber, getWeekDayRange } from '@/lib/dateUtils';
+
 // Helper functions (same as before)
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
@@ -10,29 +12,6 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
     acc[m] = [1, 2, 3, 4].map(n => `W${startW + n - 1}`);
     return acc;
 }, {} as Record<string, string[]>);
-
-const getWeekNumber = (date: Date): number => {
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const firstSunday = new Date(firstDayOfYear);
-    const dayOfWeek = firstDayOfYear.getDay();
-    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-    firstSunday.setDate(firstDayOfYear.getDate() + daysUntilSunday);
-    const diffTime = date.getTime() - firstSunday.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return Math.floor(diffDays / 7) + 1;
-};
-
-const getWeekDayRange = (year: number, weekNum: number): string => {
-    const firstDayOfYear = new Date(year, 0, 1);
-    const dayOfWeek = firstDayOfYear.getDay();
-    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-    const firstSunday = new Date(year, 0, 1 + daysUntilSunday);
-    const daysFromFirstSunday = (weekNum - 1) * 7;
-    const weekStart = new Date(firstSunday.getTime() + daysFromFirstSunday * 24 * 60 * 60 * 1000);
-    const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-    const formatDay = (date: Date) => `${date.getDate()}`;
-    return `${formatDay(weekStart)}-${formatDay(weekEnd)}`;
-};
 
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
 type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; };
@@ -182,7 +161,7 @@ export default function SharedObeyaTracker({
         const title = window.prompt("Enter task title:");
         if (!title) return;
 
-        const currentWeekId = `W${getWeekNumber(new Date())}`;
+        const currentWeekId = `W${getISOWeekNumber(new Date())}`;
         let updatedGoalToSave: GoalData | undefined;
 
         setGoals(prev => prev.map(g => {
@@ -279,7 +258,7 @@ export default function SharedObeyaTracker({
 
     // Current date calculations for highlighting
     const now = new Date();
-    const currentWeekNum = getWeekNumber(now);
+    const currentWeekNum = getISOWeekNumber(now);
     const currentWeekId = `W${currentWeekNum}`;
     const isCurrentYearDisplayed = currentYear === now.getFullYear();
     const groupedGoals = getGroupedGoals();

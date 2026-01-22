@@ -7,17 +7,7 @@ import SharedObeyaTracker from '@/components/SharedObeyaTracker';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 
 import TribeScoreChart from '@/components/TribeScoreChart';
-
-const getWeekNumber = (date: Date): number => {
-    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const firstSunday = new Date(firstDayOfYear);
-    const dayOfWeek = firstDayOfYear.getDay();
-    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
-    firstSunday.setDate(firstDayOfYear.getDate() + daysUntilSunday);
-    const diffTime = date.getTime() - firstSunday.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return Math.floor(diffDays / 7) + 1;
-};
+import { getISOWeekNumber } from '@/lib/dateUtils';
 
 export default function SessionPage() {
     const params = useParams();
@@ -83,7 +73,7 @@ export default function SessionPage() {
             const allActions = (goal.okrs || []).flatMap((okr: any) =>
                 (okr.actions || []).map((action: any) => {
                     const weekDate = new Date(action.weekDate);
-                    const weekNum = getWeekNumber(weekDate);
+                    const weekNum = getISOWeekNumber(weekDate);
                     return {
                         id: action.id,
                         weekId: `W${weekNum}`,
