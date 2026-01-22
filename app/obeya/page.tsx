@@ -22,6 +22,17 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
     return acc;
 }, {} as Record<string, string[]>);
 
+// Helper to get day range for a week
+const getWeekDayRange = (weekId: string, year: number): string => {
+    const weekNum = parseInt(weekId.replace('W', ''));
+    const daysToWeekStart = (weekNum - 1) * 7;
+    const weekStart = new Date(year, 0, 1 + daysToWeekStart);
+    const weekEnd = new Date(year, 0, 1 + daysToWeekStart + 6);
+
+    const formatDay = (date: Date) => `${date.getDate()}`;
+    return `${formatDay(weekStart)}-${formatDay(weekEnd)}`;
+};
+
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
 type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; };
 type MetricRow = {
@@ -1513,23 +1524,38 @@ export default function ObeyaPage() {
                                         <span>{m}</span>
                                         {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
                                     </div>
-                                    {viewMode === 'operational' && <div className="flex">{MONTH_WEEKS[m].map(w => {
-                                        const ps = pitStops.find(p => p.week === w && p.year === currentYear);
-                                        return (
-                                            <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50 flex flex-col items-center gap-1">
-                                                <span>{w}</span>
-                                                {ps && (
-                                                    <button
-                                                        onClick={() => setViewingPitStop(ps)}
-                                                        className="text-amber-500 hover:text-amber-600 transition-colors hover:scale-110"
-                                                        title="View Pit Stop"
-                                                    >
-                                                        <Archive size={12} />
-                                                    </button>
-                                                )}
+                                    {viewMode === 'operational' && (
+                                        <>
+                                            {/* Day Range Row */}
+                                            <div className="flex border-b border-gray-100">
+                                                {MONTH_WEEKS[m].map(w => (
+                                                    <div key={`${w}-days`} className="flex-1 text-center text-[9px] text-gray-400 py-0.5 border-r border-gray-50 font-medium">
+                                                        {getWeekDayRange(w, y)}
+                                                    </div>
+                                                ))}
                                             </div>
-                                        );
-                                    })}</div>}
+                                            {/* Week Row */}
+                                            <div className="flex">
+                                                {MONTH_WEEKS[m].map(w => {
+                                                    const ps = pitStops.find(p => p.week === w && p.year === currentYear);
+                                                    return (
+                                                        <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50 flex flex-col items-center gap-1">
+                                                            <span>{w}</span>
+                                                            {ps && (
+                                                                <button
+                                                                    onClick={() => setViewingPitStop(ps)}
+                                                                    className="text-amber-500 hover:text-amber-600 transition-colors hover:scale-110"
+                                                                    title="View Pit Stop"
+                                                                >
+                                                                    <Archive size={12} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             ))}
                         </div>
