@@ -1524,38 +1524,64 @@ export default function ObeyaPage() {
                                         <span>{m}</span>
                                         {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
                                     </div>
-                                    {viewMode === 'operational' && (
-                                        <>
-                                            {/* Day Range Row */}
-                                            <div className="flex border-b border-gray-100">
-                                                {MONTH_WEEKS[m].map(w => (
-                                                    <div key={`${w}-days`} className="flex-1 text-center text-[9px] text-gray-400 py-0.5 border-r border-gray-50 font-medium">
-                                                        {getWeekDayRange(w, y)}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                            {/* Week Row */}
-                                            <div className="flex">
-                                                {MONTH_WEEKS[m].map(w => {
-                                                    const ps = pitStops.find(p => p.week === w && p.year === currentYear);
-                                                    return (
-                                                        <div key={w} className="flex-1 text-center text-[10px] text-gray-400 py-1 border-r border-gray-50 flex flex-col items-center gap-1">
-                                                            <span>{w}</span>
-                                                            {ps && (
-                                                                <button
-                                                                    onClick={() => setViewingPitStop(ps)}
-                                                                    className="text-amber-500 hover:text-amber-600 transition-colors hover:scale-110"
-                                                                    title="View Pit Stop"
-                                                                >
-                                                                    <Archive size={12} />
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </>
-                                    )}
+                                    {viewMode === 'operational' && (() => {
+                                        // Calculate current week
+                                        const now = new Date();
+                                        const startOfYear = new Date(now.getFullYear(), 0, 1);
+                                        const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+                                        const currentWeekNum = Math.floor(daysSinceStart / 7) + 1;
+                                        const currentWeekId = `W${currentWeekNum}`;
+                                        const isCurrentYear = y === now.getFullYear();
+
+                                        return (
+                                            <>
+                                                {/* Day Range Row */}
+                                                <div className="flex border-b border-gray-100">
+                                                    {MONTH_WEEKS[m].map(w => {
+                                                        const isCurrentWeek = isCurrentYear && w === currentWeekId;
+                                                        return (
+                                                            <div
+                                                                key={`${w}-days`}
+                                                                className={`flex-1 text-center text-[9px] py-0.5 border-r border-gray-50 font-medium transition-colors ${isCurrentWeek
+                                                                        ? 'bg-blue-100 text-blue-700'
+                                                                        : 'text-gray-400'
+                                                                    }`}
+                                                            >
+                                                                {getWeekDayRange(w, y)}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                                {/* Week Row */}
+                                                <div className="flex">
+                                                    {MONTH_WEEKS[m].map(w => {
+                                                        const ps = pitStops.find(p => p.week === w && p.year === currentYear);
+                                                        const isCurrentWeek = isCurrentYear && w === currentWeekId;
+                                                        return (
+                                                            <div
+                                                                key={w}
+                                                                className={`flex-1 text-center text-[10px] py-1 border-r border-gray-50 flex flex-col items-center gap-1 transition-colors ${isCurrentWeek
+                                                                        ? 'bg-blue-100 text-blue-700 font-bold'
+                                                                        : 'text-gray-400'
+                                                                    }`}
+                                                            >
+                                                                <span>{w}</span>
+                                                                {ps && (
+                                                                    <button
+                                                                        onClick={() => setViewingPitStop(ps)}
+                                                                        className="text-amber-500 hover:text-amber-600 transition-colors hover:scale-110"
+                                                                        title="View Pit Stop"
+                                                                    >
+                                                                        <Archive size={12} />
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
                                 </div>
                             ))}
                         </div>
