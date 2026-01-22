@@ -2,10 +2,19 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Users, Target, Calendar, ArrowLeft, CheckCircle2 } from 'lucide-react';
-import MemberGoalTracker from '@/components/MemberGoalTracker';
+import { Users, Target, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import SharedObeyaTracker from '@/components/SharedObeyaTracker';
 
-type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'team-work';
+const getWeekNumber = (date: Date): number => {
+    const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+    const firstSunday = new Date(firstDayOfYear);
+    const dayOfWeek = firstDayOfYear.getDay();
+    const daysUntilSunday = dayOfWeek === 0 ? 0 : 7 - dayOfWeek;
+    firstSunday.setDate(firstDayOfYear.getDate() + daysUntilSunday);
+    const diffTime = date.getTime() - firstSunday.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return Math.floor(diffDays / 7) + 1;
+};
 
 export default function SessionPage() {
     const params = useParams();
@@ -15,7 +24,7 @@ export default function SessionPage() {
     const [members, setMembers] = useState<any[]>([]);
     const [tribe, setTribe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [trackerMode, setTrackerMode] = useState<ViewMode>('team-work');
+    const [currentUserId, setCurrentUserId] = useState<string>('');
 
     useEffect(() => {
         if (tribeId) {
@@ -25,16 +34,13 @@ export default function SessionPage() {
 
     const fetchSessionData = async () => {
         try {
-            // Fetch tribe details with members AND their goals (now included in API)
             const tribeRes = await fetch(`/api/tribes/${tribeId}`, { cache: 'no-store' });
 
             if (tribeRes.ok) {
                 const data = await tribeRes.json();
                 setTribe(data.tribe);
-
-                // transformMembers in API already flattens user data
-                // We just need to ensure goals are present (which they are via the new include)
                 setMembers(data.tribe.members || []);
+                setCurrentUserId(data.currentUserId || '');
             }
             setLoading(false);
         } catch (err) {
@@ -42,6 +48,61 @@ export default function SessionPage() {
             setLoading(false);
         }
     };
+
+    // Transform goals for SharedObeyaTracker
+    const transformedGoals = members.flatMap(member =>
+        (member.goals || []).map((goal: any) => {
+            // Transform OKRs to MetricRows
+            const metricRows = (goal.okrs || []).map((okr: any) => {
+                let monthlyData = [];
+                try {
+                    monthlyData = typeof okr.monthlyData === 'string'
+                        ? JSON.parse(okr.monthlyData)
+                        : (okr.monthlyData || []);
+                } catch (e) {
+                    monthlyData = [];
+                }
+
+                return {
+                    id: okr.id,
+                    type: okr.type || 'OKR',
+                    label: okr.metricName,
+                    monthlyData
+                };
+            });
+
+            // Transform actions to ActionRow
+            const allActions = (goal.okrs || []).flatMap((okr: any) =>
+                (okr.actions || []).map((action: any) => {
+                    const weekDate = new Date(action.weekDate);
+                    const weekNum = getWeekNumber(weekDate);
+                    return {
+                        id: action.id,
+                        weekId: `W${weekNum}`,
+                        year: weekDate.getFullYear(),
+                        title: action.description,
+                        status: action.status === 'DONE' ? 'DONE' : 'TBD'
+                    };
+                })
+            );
+
+            const actionRow = {
+                id: 'act-' + goal.id,
+                label: 'Action Plan',
+                actions: allActions
+            };
+
+            return {
+                id: goal.id,
+                userId: member.userId,
+                userName: member.name || 'Unknown',
+                category: goal.category || 'Business/Career',
+                title: goal.vision,
+                visibility: goal.visibility || 'PRIVATE',
+                rows: [...metricRows, actionRow]
+            };
+        })
+    );
 
     if (loading) {
         return (
@@ -98,116 +159,19 @@ export default function SessionPage() {
                 </div>
 
                 {/* SHARED GPS TRACKER */}
-                <div>
+                <div className="bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-3xl font-black text-slate-900 flex items-center gap-3">
                             <Target className="text-indigo-600" />
                             Shared GPS Tracker
                         </h2>
-
-                        {/* View Switcher */}
-                        <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200">
-                            {[
-                                { id: 'team-work', label: 'Team Work' },
-                                { id: 'tactical', label: 'Planning' },
-                                { id: 'strategic', label: 'Strategy' }
-                            ].map(view => (
-                                <button
-                                    key={view.id}
-                                    onClick={() => setTrackerMode(view.id as ViewMode)}
-                                    className={`
-                                        px-4 py-2 rounded-lg text-sm font-bold transition-all
-                                        ${trackerMode === view.id
-                                            ? 'bg-indigo-600 text-white shadow-md'
-                                            : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'
-                                        }
-                                    `}
-                                >
-                                    {view.label}
-                                </button>
-                            ))}
-                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-8">
-                        {members.map(member => (
-                            <div key={member.id} className="bg-white rounded-3xl p-6 shadow-lg border border-slate-100">
-                                <div className="flex items-center gap-4 mb-6 border-b border-slate-100 pb-4">
-                                    <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-100 border-2 border-slate-200">
-                                        {member.avatarUrl ? (
-                                            <img src={member.avatarUrl} alt={member.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-slate-400 font-bold">
-                                                {(member.name || '?').charAt(0)}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
-                                            {member.name}
-                                            {(member.customTitle || member.role) && (
-                                                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wide border ${(member.customTitle || member.role) === 'ADMIN' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                                    (member.customTitle || member.role) === 'MODERATOR' ? 'bg-indigo-50 text-indigo-600 border-indigo-200' :
-                                                        'bg-slate-50 text-slate-500 border-slate-200'
-                                                    }`}>
-                                                    {member.customTitle || member.role}
-                                                </span>
-                                            )}
-                                        </h3>
-                                        <div className="text-xs font-bold text-slate-400 uppercase">Level {member.level || 1} • Grit {member.grit || 0}%</div>
-                                    </div>
-                                </div>
-
-                                {/* OKR/KPI Summary - Small and Read-Only */}
-                                <div className="mb-4 flex flex-wrap gap-2">
-                                    {member.goals?.flatMap((g: any) =>
-                                        (g.okrs || []).map((okr: any) => {
-                                            // Get current month data
-                                            let monthlyData = [];
-                                            try {
-                                                monthlyData = typeof okr.monthlyData === 'string'
-                                                    ? JSON.parse(okr.monthlyData)
-                                                    : (okr.monthlyData || []);
-                                            } catch (e) { }
-
-                                            const currentMonth = new Date().getMonth();
-                                            const currentYear = new Date().getFullYear();
-                                            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                                            const data = monthlyData.find((d: any) =>
-                                                d.monthId === monthNames[currentMonth] && d.year === currentYear
-                                            );
-
-                                            const hasActual = data?.actual !== null && data?.actual !== undefined;
-                                            const isOnTrack = hasActual && (
-                                                (okr.targetValue >= okr.currentValue && data.actual >= data.target) ||
-                                                (okr.targetValue < okr.currentValue && data.actual <= data.target)
-                                            );
-
-                                            return (
-                                                <div key={okr.id} className={`px-2 py-1 rounded-md text-xs font-medium border ${okr.type === 'KPI'
-                                                    ? 'bg-purple-50 border-purple-200 text-purple-700'
-                                                    : hasActual
-                                                        ? isOnTrack
-                                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                                                            : 'bg-rose-50 border-rose-200 text-rose-700'
-                                                        : 'bg-slate-50 border-slate-200 text-slate-600'
-                                                    }`}>
-                                                    <span className="font-bold">{okr.metricName}:</span>{' '}
-                                                    <span className="font-black">{hasActual ? data.actual : '—'}</span>
-                                                    <span className="opacity-60">/{data?.target || okr.targetValue}</span>
-                                                </div>
-                                            );
-                                        })
-                                    )}
-                                </div>
-
-                                <MemberGoalTracker
-                                    member={member}
-                                    viewMode={trackerMode}
-                                />
-                            </div>
-                        ))}
-                    </div>
+                    <SharedObeyaTracker
+                        goals={transformedGoals}
+                        currentUserId={currentUserId}
+                        readOnly={false}
+                    />
                 </div>
 
             </div>
