@@ -84,6 +84,14 @@ export default function SharedObeyaTracker({
         setGoals(initialGoals);
     }, [initialGoals]);
 
+    // Mobile check: Collapse all on mount if screen is narrow
+    React.useEffect(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            const allGoalIds = initialGoals.map(g => g.id);
+            setCollapsedGoals(new Set(allGoalIds));
+        }
+    }, []);
+
     const handleSaveGoal = async (updatedGoal: GoalData) => {
         try {
             await fetch('/api/goals', {
@@ -321,7 +329,7 @@ export default function SharedObeyaTracker({
                 {/* 1. Sticky Header Row (Months & Weeks) */}
                 <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
                     {/* Top Left Corner (Sticky) */}
-                    <div className="sticky left-0 w-[400px] bg-white border-r border-gray-200 z-40 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">
+                    <div className="sticky left-0 w-[150px] md:w-[400px] bg-white border-r border-gray-200 z-40 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">
                         STRATEGIC CONTEXT
                     </div>
 
@@ -375,10 +383,10 @@ export default function SharedObeyaTracker({
                             {/* Group Header - Only if grouping is active */}
                             {groupBy !== 'none' && (
                                 <div className="w-full bg-gray-50/50 border-b border-gray-200 sticky left-0">
-                                    <div className="sticky left-0 w-[400px] px-4 py-2 font-bold text-gray-600 bg-gray-50 border-r border-gray-200 z-20 flex items-center gap-2">
+                                    <div className="sticky left-0 w-[150px] md:w-[400px] px-4 py-2 font-bold text-gray-600 bg-gray-50 border-r border-gray-200 z-20 flex items-center gap-2 overflow-hidden">
                                         {groupBy === 'member' ? <User size={14} /> : <Layers size={14} />}
-                                        {groupName}
-                                        <span className="text-xs font-normal text-gray-400 ml-2">({groupGoals.length} goals)</span>
+                                        <span className="truncate">{groupName}</span>
+                                        <span className="text-xs font-normal text-gray-400 ml-2 whitespace-nowrap">({groupGoals.length})</span>
                                     </div>
                                 </div>
                             )}
@@ -397,7 +405,7 @@ export default function SharedObeyaTracker({
                                     <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {/* Revised Vision Band */}
                                         <div className={`w-full h-[52px] ${categoryBgColor} flex items-center`}>
-                                            <div className={`sticky left-0 z-20 w-[400px] px-3 flex items-center justify-between ${categoryBgColor}`}>
+                                            <div className={`sticky left-0 z-20 w-[150px] md:w-[400px] px-3 flex items-center justify-between ${categoryBgColor}`}>
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     <button
                                                         onClick={() => toggleGoal(goal.id)}
@@ -461,7 +469,7 @@ export default function SharedObeyaTracker({
                                                 return (
                                                     <div key={row.id} className={`flex ${heightClass} border-b border-gray-50 last:border-0 group`}>
                                                         {/* Left Sticky Label Column */}
-                                                        <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 p-3 flex items-center gap-2">
+                                                        <div className="sticky left-0 w-[150px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 p-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
                                                             {isOKR && !isKPI && (
                                                                 <button
                                                                     onClick={() => toggleOKR(row.id)}
@@ -589,8 +597,8 @@ export default function SharedObeyaTracker({
                                                                                             <div
                                                                                                 key={action.id}
                                                                                                 className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all ${action.status === 'DONE'
-                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
-                                                                                                        : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
+                                                                                                    ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                    : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
                                                                                                     } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                                                                                                 draggable={canEdit}
                                                                                                 onDragStart={(e) => {

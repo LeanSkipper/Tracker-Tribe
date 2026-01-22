@@ -142,6 +142,17 @@ export default function SessionPage() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
             <div className="max-w-[1600px] mx-auto">
+                {/* Mobile Landscape Alert */}
+                <div className="md:hidden bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-6 flex items-start gap-3">
+                    <div className="bg-yellow-100 p-2 rounded-lg text-yellow-700 shrink-0">
+                        <TrendingUp className="rotate-90" size={16} />
+                    </div>
+                    <div>
+                        <h4 className="font-bold text-yellow-800 text-sm">Pro Tip: Rotate Screen</h4>
+                        <p className="text-xs text-yellow-700">Turn your phone sideways (Landscape) for the best experience managing goals.</p>
+                    </div>
+                </div>
+
                 {/* Header */}
                 <div className="mb-8">
                     <button
