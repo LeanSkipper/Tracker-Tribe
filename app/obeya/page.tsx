@@ -1638,7 +1638,7 @@ export default function ObeyaPage() {
                                                         <div key={row.id} className={`flex ${heightClass}`}>
                                                             {/* Iteration of Months for Data */}
                                                             {(viewMode === 'strategic' ?
-                                                                ['2025', '2026', '2027'].flatMap(y => MONTHS.map(m => ({ month: m, year: parseInt(y), key: `${y}-${m}` })))
+                                                                [currentYear, currentYear + 1, currentYear + 2].flatMap(y => MONTHS.map(m => ({ month: m, year: y, key: `${y}-${m}` })))
                                                                 :
                                                                 MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
                                                             ).map(({ month: m, year: y, key }) => (
