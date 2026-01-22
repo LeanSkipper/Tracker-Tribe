@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronRight, Users, Globe, Layers, User } from 'lucide-react';
+import { ChevronRight, Users, Globe, Layers, User, Plus } from 'lucide-react';
 
-// Helper functions
+// Helper functions (same as before)
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
     const startW = i * 4 + 1;
@@ -77,6 +77,7 @@ export default function SharedObeyaTracker({
     const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
     const [editingCell, setEditingCell] = useState<{ id: string; value: string } | null>(null);
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
+    const [draggedTask, setDraggedTask] = useState<{ id: string; goalId: string; sourceWeek: string } | null>(null);
 
     // Sync props to state if they change
     React.useEffect(() => {
@@ -157,6 +158,65 @@ export default function SharedObeyaTracker({
                     return { ...a, status: newStatus };
                 });
 
+                return { ...r, actions: updatedActions };
+            });
+
+            const updatedG = { ...g, rows: updatedRows };
+            updatedGoalToSave = updatedG;
+            return updatedG;
+        }));
+
+        if (updatedGoalToSave) handleSaveGoal(updatedGoalToSave);
+    };
+
+    const handleAddAction = (goalId: string, rowId: string) => {
+        if (readOnly) return;
+        const title = window.prompt("Enter task title:");
+        if (!title) return;
+
+        const currentWeekId = `W${getWeekNumber(new Date())}`;
+        let updatedGoalToSave: GoalData | undefined;
+
+        setGoals(prev => prev.map(g => {
+            if (g.id !== goalId) return g;
+
+            const updatedRows = g.rows.map(r => {
+                if (r.id !== rowId) return r;
+                if ('type' in r) return r;
+
+                const actionRow = r as ActionRow;
+                const newAction: ActionCard = {
+                    id: Math.random().toString(36).substr(2, 9), // Temp ID
+                    weekId: currentWeekId,
+                    year: currentYear,
+                    title,
+                    status: 'TBD'
+                };
+
+                return { ...r, actions: [...actionRow.actions, newAction] };
+            });
+
+            const updatedG = { ...g, rows: updatedRows };
+            updatedGoalToSave = updatedG;
+            return updatedG;
+        }));
+
+        if (updatedGoalToSave) handleSaveGoal(updatedGoalToSave);
+    };
+
+    const handleMoveAction = (goalId: string, actionId: string, targetWeekId: string) => {
+        if (readOnly) return;
+        let updatedGoalToSave: GoalData | undefined;
+
+        setGoals(prev => prev.map(g => {
+            if (g.id !== goalId) return g;
+
+            const updatedRows = g.rows.map(r => {
+                if ('type' in r) return r;
+                const actionRow = r as ActionRow;
+                const updatedActions = actionRow.actions.map(a =>
+                    a.id === actionId ? { ...a, weekId: targetWeekId } : a
+                );
                 return { ...r, actions: updatedActions };
             });
 
@@ -415,6 +475,16 @@ export default function SharedObeyaTracker({
                                                                 {isKPI && <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mr-2" />}
                                                                 {row.label}
                                                             </div>
+                                                            {/* Add Task Button for Goal Owners */}
+                                                            {isActionRow && canEdit && (
+                                                                <button
+                                                                    onClick={() => handleAddAction(goal.id, row.id)}
+                                                                    className="ml-2 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                    title="Add Task to Current Week"
+                                                                >
+                                                                    <Plus size={14} />
+                                                                </button>
+                                                            )}
 
                                                             <div className="text-[10px] font-bold text-gray-300 bg-gray-50 px-1 rounded ml-2">
                                                                 {isOKR ? (isKPI ? 'KPI' : 'OKR') : 'Act'}
@@ -496,19 +566,44 @@ export default function SharedObeyaTracker({
                                                                                 const weekActions = actionRow.actions.filter(a => a.weekId === w && a.year === currentYear);
 
                                                                                 return (
-                                                                                    <div key={w} className="flex-1 border-r border-gray-50 last:border-0 bg-gray-50/20 p-1 flex flex-col gap-1 items-center justify-start overflow-hidden">
+                                                                                    <div
+                                                                                        key={w}
+                                                                                        className="flex-1 border-r border-gray-50 last:border-0 bg-gray-50/20 p-1 flex flex-col gap-1 items-center justify-start overflow-hidden transition-colors"
+                                                                                        onDragOver={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
+                                                                                                e.currentTarget.classList.add('bg-blue-100');
+                                                                                            }
+                                                                                        }}
+                                                                                        onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-100')}
+                                                                                        onDrop={(e) => {
+                                                                                            e.preventDefault();
+                                                                                            e.currentTarget.classList.remove('bg-blue-100');
+                                                                                            if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
+                                                                                                handleMoveAction(goal.id, draggedTask.id, w);
+                                                                                                setDraggedTask(null);
+                                                                                            }
+                                                                                        }}
+                                                                                    >
                                                                                         {weekActions.map(action => (
-                                                                                            <button
+                                                                                            <div
                                                                                                 key={action.id}
                                                                                                 className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all ${action.status === 'DONE'
-                                                                                                    ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
-                                                                                                    : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
-                                                                                                    } ${canEdit ? 'cursor-pointer' : 'cursor-default'}`}
+                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                        : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
+                                                                                                    } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+                                                                                                draggable={canEdit}
+                                                                                                onDragStart={(e) => {
+                                                                                                    if (canEdit) {
+                                                                                                        setDraggedTask({ id: action.id, goalId: goal.id, sourceWeek: w });
+                                                                                                        e.dataTransfer.effectAllowed = 'move';
+                                                                                                    }
+                                                                                                }}
                                                                                                 title={action.title}
                                                                                                 onClick={() => canEdit && handleUpdateActionStatus(goal.id, action.id)}
                                                                                             >
                                                                                                 {action.title}
-                                                                                            </button>
+                                                                                            </div>
                                                                                         ))}
                                                                                     </div>
                                                                                 );

@@ -1197,6 +1197,32 @@ export default function ObeyaPage() {
         });
     };
 
+    const handleMoveAction = async (goalId: string, actionId: string, targetWeekId: string) => {
+        setGoals(prev => {
+            const next = prev.map(g => {
+                if (g.id !== goalId) return g;
+                return {
+                    ...g, rows: g.rows.map(r => {
+                        if ('type' in r) return r;
+                        return { ...r, actions: r.actions.map(a => a.id === actionId ? { ...a, weekId: targetWeekId } : a) };
+                    })
+                };
+            });
+            const updatedGoal = next.find(g => g.id === goalId);
+            if (updatedGoal) handleSaveGoal(updatedGoal);
+            return next;
+        });
+    };
+
+    const handleAddActionToCurrentWeek = async (goalId: string, rowId: string) => {
+        const title = window.prompt("Enter task title:");
+        if (!title) return;
+        const now = new Date();
+        const currentWeek = getWeekNumber(now);
+        const weekId = `W${currentWeek}`;
+        await handleAddAction(weekId, goalId, title);
+    };
+
     const handleSelectTemplate = (template: GoalTemplate) => {
         // Convert template to GoalCategory format
         const newGoal: GoalCategory = {
@@ -1819,6 +1845,15 @@ export default function ObeyaPage() {
                                                                 <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
                                                                     <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
                                                                     {isOKR && (row as MetricRow).unit && <span className="text-[9px] text-gray-300">({(row as MetricRow).unit})</span>}
+                                                                    {!isOKR && (
+                                                                        <button
+                                                                            onClick={() => handleAddActionToCurrentWeek(goal.id, row.id)}
+                                                                            className="mt-1 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                            title="Add Task to Current Week"
+                                                                        >
+                                                                            <Plus size={14} />
+                                                                        </button>
+                                                                    )}
                                                                 </div>
                                                             </div>
                                                         );
@@ -1963,46 +1998,9 @@ export default function ObeyaPage() {
                                                                                                 e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
 
                                                                                                 if (draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
-                                                                                                    // Update locally
-                                                                                                    setGoals(prev => prev.map(g => {
-                                                                                                        if (g.id !== goal.id) return g;
-                                                                                                        return {
-                                                                                                            ...g,
-                                                                                                            rows: g.rows.map(r => {
-                                                                                                                if (!('actions' in r)) return r;
-                                                                                                                return {
-                                                                                                                    ...r,
-                                                                                                                    actions: r.actions.map(a =>
-                                                                                                                        a.id === draggedTask.actionId
-                                                                                                                            ? { ...a, weekId: w }
-                                                                                                                            : a
-                                                                                                                    )
-                                                                                                                };
-                                                                                                            })
-                                                                                                        };
-                                                                                                    }));
-
-                                                                                                    // Persist
-                                                                                                    const goalToSave = goals.find(g => g.id === goal.id);
-                                                                                                    if (goalToSave) {
-                                                                                                        const updated = {
-                                                                                                            ...goalToSave,
-                                                                                                            rows: goalToSave.rows.map(r => {
-                                                                                                                if (!('actions' in r)) return r;
-                                                                                                                return {
-                                                                                                                    ...r,
-                                                                                                                    actions: r.actions.map(a =>
-                                                                                                                        a.id === draggedTask.actionId
-                                                                                                                            ? { ...a, weekId: w }
-                                                                                                                            : a
-                                                                                                                    )
-                                                                                                                };
-                                                                                                            })
-                                                                                                        };
-                                                                                                        handleSaveGoal(updated);
-                                                                                                    }
+                                                                                                    handleMoveAction(goal.id, draggedTask.actionId, w);
+                                                                                                    setDraggedTask(null);
                                                                                                 }
-                                                                                                setDraggedTask(null);
                                                                                             }}
                                                                                         >
                                                                                             {weekActions.map(a => (
@@ -2066,13 +2064,7 @@ export default function ObeyaPage() {
                                                                                                 </div>
                                                                                             ))}
 
-                                                                                            <button
-                                                                                                onClick={() => setActiveWeekModal({ week: w, goalId: goal.id })}
-                                                                                                className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors p-2 rounded-lg border-2 border-dashed border-gray-200 hover:border-blue-300 flex items-center justify-center"
-                                                                                                title="Add task"
-                                                                                            >
-                                                                                                <Plus size={14} />
-                                                                                            </button>
+                                                                                            {/* Button removed */}
                                                                                         </div>
                                                                                     );
                                                                                 })}
