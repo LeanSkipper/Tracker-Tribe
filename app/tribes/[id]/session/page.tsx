@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Users, Target, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Users, Target, ArrowLeft, CheckCircle2, Lock, Unlock, Link, Video, Play, ExternalLink, Edit2 } from 'lucide-react';
 import SharedObeyaTracker from '@/components/SharedObeyaTracker';
+import PitStopModal from '@/components/PitStop/PitStopModal';
 
 const getWeekNumber = (date: Date): number => {
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
@@ -25,12 +26,10 @@ export default function SessionPage() {
     const [tribe, setTribe] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string>('');
-
-    useEffect(() => {
-        if (tribeId) {
-            fetchSessionData();
-        }
-    }, [tribeId]);
+    const [isPitStopOpen, setIsPitStopOpen] = useState(false);
+    const [meetingLink, setMeetingLink] = useState('');
+    const [isEditingLink, setIsEditingLink] = useState(false);
+    const [savingLink, setSavingLink] = useState(false);
 
     const fetchSessionData = async () => {
         try {
@@ -41,6 +40,7 @@ export default function SessionPage() {
                 setTribe(data.tribe);
                 setMembers(data.tribe.members || []);
                 setCurrentUserId(data.currentUserId || '');
+                setMeetingLink(data.tribe.meetingLink || '');
             }
             setLoading(false);
         } catch (err) {
@@ -48,6 +48,12 @@ export default function SessionPage() {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        if (tribeId) {
+            fetchSessionData();
+        }
+    }, [tribeId]);
 
     // Transform goals for SharedObeyaTracker
     const transformedGoals = members.flatMap(member =>
@@ -104,6 +110,25 @@ export default function SessionPage() {
         })
     );
 
+    const handleSaveMeetingLink = async () => {
+        if (!tribeId) return;
+        setSavingLink(true);
+        try {
+            await fetch(`/api/tribes/${tribeId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ meetingLink })
+            });
+            setIsEditingLink(false);
+        } catch (error) {
+            console.error("Failed to save meeting link:", error);
+            alert("Failed to save meeting link");
+        }
+        setSavingLink(false);
+    };
+
+    const isAdmin = members.some(m => m.userId === currentUserId && (m.role === 'ADMIN' || m.role === 'MODERATOR')) || tribe?.creator?.id === currentUserId;
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -125,7 +150,7 @@ export default function SessionPage() {
                         Back to Tribe Room
                     </button>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div>
                             <h1 className="text-4xl font-black text-slate-900 mb-2">
                                 🔴 Live Session
@@ -133,6 +158,58 @@ export default function SessionPage() {
                             <h2 className="text-xl font-bold text-indigo-600 flex items-center gap-2">
                                 {tribe?.name} <span className="text-slate-400 font-normal text-sm">| {tribe?.meetingTime}</span>
                             </h2>
+                        </div>
+
+                        {/* Meeting Link Section */}
+                        <div className="bg-indigo-50 p-3 rounded-xl border border-indigo-100 flex items-center gap-3 min-w-[300px]">
+                            <div className="bg-indigo-100 p-2 rounded-lg text-indigo-600">
+                                <Video size={20} />
+                            </div>
+                            <div className="flex-1">
+                                <div className="text-xs font-bold text-indigo-400 uppercase tracking-wide mb-1">Meeting Link</div>
+                                {isEditingLink ? (
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            value={meetingLink}
+                                            onChange={(e) => setMeetingLink(e.target.value)}
+                                            placeholder="https://zoom.us/j/..."
+                                            className="text-sm border rounded px-2 py-1 w-full"
+                                        />
+                                        <button
+                                            onClick={handleSaveMeetingLink}
+                                            disabled={savingLink}
+                                            className="bg-indigo-600 text-white text-xs px-2 py-1 rounded hover:bg-indigo-700"
+                                        >
+                                            {savingLink ? '...' : 'Save'}
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-between">
+                                        {meetingLink ? (
+                                            <a
+                                                href={meetingLink.startsWith('http') ? meetingLink : `https://${meetingLink}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-sm font-bold text-indigo-700 hover:underline flex items-center gap-1 truncate max-w-[200px]"
+                                            >
+                                                Join Meeting <ExternalLink size={12} />
+                                            </a>
+                                        ) : (
+                                            <span className="text-sm text-slate-400 italic">No link set</span>
+                                        )}
+                                        {isAdmin && (
+                                            <button
+                                                onClick={() => setIsEditingLink(true)}
+                                                className="text-slate-400 hover:text-indigo-600 ml-2"
+                                                title="Edit Link"
+                                            >
+                                                <Edit2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -142,18 +219,41 @@ export default function SessionPage() {
                     <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
                         <CheckCircle2 className="text-emerald-500" /> Check-in Routine
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-slate-600">
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="font-bold text-slate-900 mb-2">1. Personal Check-in</div>
-                            <p className="text-sm">"On a scale of 1-10, how present are you? What is your biggest win from last week?"</p>
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 text-slate-600">
+                        {/* Step 1 */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col h-full">
+                            <div className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">1. Pit Stop</div>
+                            <p className="text-xs mb-3 flex-1">Run your weekly Pit Stop to reflect on progress.</p>
+                            <button
+                                onClick={() => setIsPitStopOpen(true)}
+                                className="w-full bg-indigo-600 text-white py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Play size={14} /> Run Pit Stop
+                            </button>
                         </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="font-bold text-slate-900 mb-2">2. Metric Review</div>
-                            <p className="text-sm">Review KPIs and OKR progress below. Identify any red flags or blockers.</p>
+
+                        {/* Step 2 */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col h-full">
+                            <div className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">2. Peer Support</div>
+                            <p className="text-xs">Listen to your peer’s pitch. Propose, help, support, challenge, and congrat them.</p>
                         </div>
-                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                            <div className="font-bold text-slate-900 mb-2">3. The Hot Seat</div>
-                            <p className="text-sm">Dive deep into one member's challenge. Brainstorm solutions and commit to actions.</p>
+
+                        {/* Step 3 */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col h-full">
+                            <div className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">3. Pitch</div>
+                            <p className="text-xs">Pitch to your peers. Share your thoughts. Keep engaged and committed to your action plan.</p>
+                        </div>
+
+                        {/* Step 4 */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col h-full">
+                            <div className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">4. Open Space</div>
+                            <p className="text-xs">Open floor according to host rules: eg. books, tools, tricks, challenges, new ideas.</p>
+                        </div>
+
+                        {/* Step 5 */}
+                        <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 flex flex-col h-full">
+                            <div className="font-bold text-slate-900 mb-2 text-sm uppercase tracking-wide">5. Closing</div>
+                            <p className="text-xs">Confirm next meeting time and close the session with high energy!</p>
                         </div>
                     </div>
                 </div>
@@ -175,6 +275,15 @@ export default function SessionPage() {
                 </div>
 
             </div>
+
+            {/* Pit Stop Modal */}
+            <PitStopModal
+                isOpen={isPitStopOpen}
+                onClose={() => setIsPitStopOpen(false)}
+                onComplete={() => {
+                    // Start 5 min timer or refresh session data?
+                }}
+            />
         </div>
     );
 }

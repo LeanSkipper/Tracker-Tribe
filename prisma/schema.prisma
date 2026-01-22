@@ -321,6 +321,7 @@ model Tribe {
   topic       String?
   meetingTime String?  // e.g. "Friday 10:00 AM"
   meetingDay  String?  // e.g. "Friday" (for sorting/filtering)
+  meetingLink String?  // URL for the video call
   maxMembers  Int      @default(10)
   reliabilityRate Float @default(0) // 0-100 percentage
   

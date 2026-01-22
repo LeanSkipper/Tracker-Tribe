@@ -102,7 +102,7 @@ export async function PUT(
         const {
             name, description, topic, standardProcedures,
             // Meeting Config
-            meetingTime, meetingFrequency, meetingTimeHour, meetingTimeMinute,
+            meetingTime, meetingFrequency, meetingTimeHour, meetingTimeMinute, meetingLink,
             // Stats
             minLevel, minGrit, minExperience, minReputation,
             // Pricing
@@ -148,6 +148,7 @@ export async function PUT(
 
                 // Meeting Config
                 meetingTime: finalMeetingTime, // Use constructed or provided time
+                meetingLink, // New field
                 meetingFrequency,
                 meetingTimeHour: meetingTimeHour ?? null,
                 meetingTimeMinute: meetingTimeMinute ?? null,
