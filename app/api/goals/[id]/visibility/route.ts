@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export async function PATCH(
     req: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await getServerSession(authOptions);
@@ -14,7 +14,7 @@ export async function PATCH(
         }
 
         const { visibility } = await req.json();
-        const goalId = params.id;
+        const { id: goalId } = await params;
 
         // Validate visibility value
         if (!['PRIVATE', 'TRIBE', 'PUBLIC'].includes(visibility)) {
