@@ -1638,29 +1638,30 @@ export default function ObeyaPage() {
                                 const okrRowsCount = goal.rows.filter(r => 'type' in r && r.type === 'OKR').length;
 
                                 return (
-                                    <div key={goal.id} className="bg-white">
+                                    <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
+
+                                        {/* Horizontal Vision Band */}
+                                        <div className={`w-full p-3 flex items-center justify-between sticky left-0 z-20 ${goal.category === 'Health' ? 'bg-teal-600' :
+                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                                    goal.category === 'Family' ? 'bg-indigo-500' :
+                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
+                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
+                                            }`}>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-white font-bold text-xs uppercase tracking-wide">{goal.category}</span>
+                                                <span className="text-white font-bold text-lg">{goal.title}</span>
+                                            </div>
+                                            <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
+                                                <Edit2 size={16} />
+                                            </button>
+                                        </div>
+
                                         <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white">
                                             {/* 1. Left Sticky Column (Merged Vision + Labels) */}
-                                            <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex shadow-sm">
-                                                {/* Merged Vision Bar */}
-                                                <div className={`w-[2.5rem] flex flex-col items-center justify-center font-bold text-white text-[10px] text-center leading-tight relative overflow-hidden py-2
-                                                ${goal.category === 'Health' ? 'bg-teal-600' :
-                                                        goal.category === 'Wealth' ? 'bg-emerald-600' :
-                                                            goal.category === 'Family' ? 'bg-indigo-500' :
-                                                                goal.category === 'Leisure' ? 'bg-pink-500' :
-                                                                    goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'}
-                                             `}>
-                                                    <div className="absolute top-0 left-0 w-full h-1 bg-white/20"></div>
-                                                    <div className="absolute top-1 left-1/2 -translate-x-1/2 px-1 rounded bg-black/10 text-[8px] whitespace-normal w-full break-words mb-2 z-10">{goal.category.substring(0, 3)}</div>
-
-                                                    <div className="writing-vertical-rl text-orientation-mixed transform rotate-180 uppercase tracking-widest whitespace-normal break-words w-full flex items-center justify-center grow">
-                                                        {goal.title}
-                                                    </div>
-                                                </div>
-
+                                            <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 shadow-sm">
                                                 {/* Labels Column */}
-                                                <div className="flex-1 flex flex-col w-[calc(400px-2.5rem)]">
+                                                <div className="flex-1 flex flex-col w-full">
                                                     {goal.rows.map((row, rIdx) => {
                                                         const isOKR = 'type' in row;
                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
