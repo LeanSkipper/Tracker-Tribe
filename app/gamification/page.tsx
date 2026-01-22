@@ -3,8 +3,20 @@
 import React from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Star, TrendingUp, Shield, Zap, Award, Target, HelpCircle } from 'lucide-react';
+import ScoreEvolutionChart from '@/components/ScoreEvolutionChart';
 
 export default function GamificationRulesPage() {
+    const [history, setHistory] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        fetch('/api/profile/history')
+            .then(res => res.json())
+            .then(data => {
+                if (Array.isArray(data)) setHistory(data);
+            })
+            .catch(err => console.error(err));
+    }, []);
+
     return (
         <div className="min-h-screen bg-slate-50 p-4 md:p-8">
             <div className="max-w-4xl mx-auto space-y-8">
@@ -17,6 +29,15 @@ export default function GamificationRulesPage() {
                         <h1 className="text-2xl md:text-3xl font-black text-slate-900">Rules of the Game</h1>
                         <p className="text-slate-600">How to level up and increase your Global Score</p>
                     </div>
+                </div>
+
+                {/* Score Evolution Chart */}
+                <div className="bg-white rounded-3xl shadow-xl p-6 md:p-8">
+                    <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <TrendingUp className="text-indigo-600" />
+                        Your Score Evolution
+                    </h2>
+                    <ScoreEvolutionChart data={history} />
                 </div>
 
                 {/* Global Score Formula */}
@@ -179,10 +200,10 @@ export default function GamificationRulesPage() {
 function XPItem({ label, value, highlight = false, isNegative = false }: { label: string, value: number, highlight?: boolean, isNegative?: boolean }) {
     return (
         <div className={`flex items-center justify-between p-3 rounded-xl border ${highlight
-                ? 'bg-blue-50 border-blue-100'
-                : isNegative
-                    ? 'bg-red-50 border-red-100'
-                    : 'bg-white border-slate-100 hover:border-slate-200'
+            ? 'bg-blue-50 border-blue-100'
+            : isNegative
+                ? 'bg-red-50 border-red-100'
+                : 'bg-white border-slate-100 hover:border-slate-200'
             }`}>
             <span className={`font-medium ${isNegative ? 'text-red-700' : 'text-slate-700'}`}>{label}</span>
             <span className={`font-black ${isNegative ? 'text-red-600' : highlight ? 'text-blue-600' : 'text-green-600'

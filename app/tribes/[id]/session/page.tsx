@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Users, Target, ArrowLeft, CheckCircle2, Lock, Unlock, Link, Video, Play, ExternalLink, Edit2 } from 'lucide-react';
+import { Users, Target, ArrowLeft, CheckCircle2, Lock, Unlock, Link, Video, Play, ExternalLink, Edit2, TrendingUp } from 'lucide-react';
 import SharedObeyaTracker from '@/components/SharedObeyaTracker';
 import PitStopModal from '@/components/PitStop/PitStopModal';
+
+import TribeScoreChart from '@/components/TribeScoreChart';
 
 const getWeekNumber = (date: Date): number => {
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
@@ -212,6 +214,14 @@ export default function SessionPage() {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                {/* Tribe Score Evolution */}
+                <div className="mb-8 bg-white rounded-3xl p-8 shadow-sm border border-slate-100">
+                    <h3 className="text-2xl font-black text-slate-900 mb-6 flex items-center gap-3">
+                        <TrendingUp className="text-indigo-600" /> Tribe Momentum
+                    </h3>
+                    <TribeScoreChart tribeId={tribeId} />
                 </div>
 
                 {/* CHECK-IN ROUTINE */}

@@ -72,7 +72,8 @@ export async function awardXP(userId: string, action: XPAction) {
                 currentXP: true,
                 level: true,
                 lifetimePositiveXP: true,
-                lifetimeNegativeXP: true
+                lifetimeNegativeXP: true,
+                reputationScore: true
             }
         });
 
@@ -114,6 +115,21 @@ export async function awardXP(userId: string, action: XPAction) {
                 lifetimePositiveXP: newLifetimePos,
                 lifetimeNegativeXP: newLifetimeNeg,
                 grit: newGrit
+            }
+        });
+
+        // Calculate and Log Global Score for History
+        const globalScore = calculateGlobalScore({
+            level: newLevel,
+            grit: newGrit,
+            currentXP: newCurrentXP,
+            reputationScore: user.reputationScore
+        });
+
+        await prisma.scoreHistory.create({
+            data: {
+                userId,
+                score: globalScore
             }
         });
 
