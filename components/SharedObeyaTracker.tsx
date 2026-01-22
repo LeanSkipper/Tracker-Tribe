@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ChevronRight, Edit2, Users, Globe, Circle, TrendingUp, MessageSquare } from 'lucide-react';
+import { ChevronRight, Users, Globe } from 'lucide-react';
 
 // Helper functions
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -40,6 +40,9 @@ type MetricRow = {
     id: string;
     type: 'OKR' | 'KPI';
     label: string;
+    unit?: string;
+    startValue: number;
+    targetValue: number;
     monthlyData: MonthlyData[];
 };
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
@@ -61,13 +64,106 @@ interface SharedObeyaTrackerProps {
 }
 
 export default function SharedObeyaTracker({
-    goals,
+    goals: initialGoals,
     currentUserId,
     currentYear = new Date().getFullYear(),
     readOnly = false
 }: SharedObeyaTrackerProps) {
+    // Local state for optimistic updates
+    const [goals, setGoals] = useState<GoalData[]>(initialGoals);
     const [collapsedOKRs, setCollapsedOKRs] = useState<Set<string>>(new Set());
     const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
+    const [editingCell, setEditingCell] = useState<{ id: string; value: string } | null>(null);
+
+    // Sync props to state if they change
+    React.useEffect(() => {
+        setGoals(initialGoals);
+    }, [initialGoals]);
+
+    const handleSaveGoal = async (updatedGoal: GoalData) => {
+        try {
+            await fetch('/api/goals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedGoal)
+            });
+        } catch (err) {
+            console.error("Failed to save goal:", err);
+            // Optionally revert state here
+        }
+    };
+
+    const handleCommitMetric = (goalId: string, rowId: string, monthId: string, type: 'target' | 'actual', value: string) => {
+        const numValue = value === '' ? null : parseFloat(value);
+        if (value !== '' && isNaN(numValue as number)) return; // Invalid input
+
+        let updatedGoalToSave: GoalData | undefined;
+
+        setGoals(prev => prev.map(g => {
+            if (g.id !== goalId) return g;
+
+            const updatedRows = g.rows.map(r => {
+                if (r.id !== rowId || !('monthlyData' in r)) return r;
+
+                // Find or create monthly data
+                const existingDataIndex = r.monthlyData.findIndex(d => d.monthId === monthId && d.year === currentYear);
+                let newMonthlyData = [...r.monthlyData];
+
+                if (existingDataIndex >= 0) {
+                    newMonthlyData[existingDataIndex] = {
+                        ...newMonthlyData[existingDataIndex],
+                        [type]: numValue
+                    };
+                } else {
+                    newMonthlyData.push({
+                        monthId,
+                        year: currentYear,
+                        target: type === 'target' ? numValue : null,
+                        actual: type === 'actual' ? numValue : null,
+                    });
+                }
+
+                return { ...r, monthlyData: newMonthlyData };
+            });
+
+            const updatedG = { ...g, rows: updatedRows };
+            if (g.id === goalId) updatedGoalToSave = updatedG;
+            return updatedG;
+        }));
+
+        if (updatedGoalToSave) handleSaveGoal(updatedGoalToSave);
+        setEditingCell(null);
+    };
+
+    const handleUpdateActionStatus = (goalId: string, actionId: string) => {
+        if (readOnly) return;
+
+        let updatedGoalToSave: GoalData | undefined;
+
+        setGoals(prev => prev.map(g => {
+            if (g.id !== goalId) return g;
+
+            const updatedRows = g.rows.map(r => {
+                if ('type' in r) return r; // Skip metric rows
+
+                const actionRow = r as ActionRow;
+                const updatedActions = actionRow.actions.map(a => {
+                    if (a.id !== actionId) return a;
+                    // Toggle status
+                    const newStatus: ActionCard['status'] = a.status === 'DONE' ? 'TBD' : 'DONE';
+                    return { ...a, status: newStatus };
+                });
+
+                return { ...r, actions: updatedActions };
+            });
+
+            const updatedG = { ...g, rows: updatedRows };
+            updatedGoalToSave = updatedG;
+            return updatedG;
+        }));
+
+        if (updatedGoalToSave) handleSaveGoal(updatedGoalToSave);
+    };
 
     const toggleOKR = (okrId: string) => {
         setCollapsedOKRs(prev => {
@@ -90,7 +186,7 @@ export default function SharedObeyaTracker({
     const toggleExpandAll = () => {
         if (collapsedOKRs.size === 0) {
             const allOKRIds = goals.flatMap(g =>
-                g.rows.filter(r => 'type' in r && r.type === 'OKR').map(r => r.id)
+                g.rows.filter(r => 'type' in r && (r as MetricRow).type === 'OKR').map(r => r.id)
             );
             setCollapsedOKRs(new Set(allOKRIds));
         } else {
@@ -98,155 +194,291 @@ export default function SharedObeyaTracker({
         }
     };
 
-    const currentWeekNum = getWeekNumber(new Date());
+    // Current date calculations for highlighting
+    const now = new Date();
+    const currentWeekNum = getWeekNumber(now);
+    const currentWeekId = `W${currentWeekNum}`;
+    const isCurrentYearDisplayed = currentYear === now.getFullYear();
 
     return (
-        <div className=\"w-full\">
-    {/* Header with Expand/Collapse All */ }
-    <div className=\"flex justify-between items-center mb-4\">
-        < h3 className =\"text-xl font-bold text-gray-900\">Shared Goals</h3>
-            < button
-    onClick = { toggleExpandAll }
-    className =\"px-3 py-2 rounded-md text-xs font-bold bg-white shadow-sm text-gray-600 hover:text-blue-600 border border-gray-200 transition-colors flex items-center gap-1\"
-        >
-        { collapsedOKRs.size === 0 ? 'Collapse All' : 'Expand All' }
-                </button >
-            </div >
+        <div className="w-full flex-col flex h-full">
+            {/* Header Toolbar */}
+            <div className="flex justify-between items-center mb-4 px-1">
+                <h3 className="text-xl font-bold text-gray-900">Shared Goals</h3>
+                <button
+                    onClick={toggleExpandAll}
+                    className="px-3 py-2 rounded-md text-xs font-bold bg-white shadow-sm text-gray-600 hover:text-blue-600 border border-gray-200 transition-colors flex items-center gap-1"
+                >
+                    {collapsedOKRs.size === 0 ? 'Collapse All' : 'Expand All'}
+                </button>
+            </div>
 
-        {/* Goals */ }
-        < div className =\"space-y-4\">
-    {
-        goals.map(goal => {
-            const categoryBgColor = goal.category === 'Health' ? 'bg-teal-600' :
-                goal.category === 'Wealth' ? 'bg-emerald-600' :
-                    goal.category === 'Family' ? 'bg-indigo-500' :
-                        goal.category === 'Leisure' ? 'bg-pink-500' :
-                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500';
+            {/* Main Scrollable Grid Container */}
+            <div className="flex-1 overflow-x-auto overflow-y-visible border border-gray-200 rounded-lg bg-white shadow-sm relative">
 
-            const isOwner = currentUserId === goal.userId;
-            const canEdit = !readOnly && isOwner;
+                {/* 1. Sticky Header Row (Months & Weeks) */}
+                <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
+                    {/* Top Left Corner (Sticky) */}
+                    <div className="sticky left-0 w-[400px] bg-white border-r border-gray-200 z-40 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">
+                        STRATEGIC CONTEXT
+                    </div>
 
-            return (
-                <div key={goal.id} className=\"bg-white border border-gray-200 rounded-lg overflow-hidden\">
-            {/* Vision Band */ }
-                            <div className={`w-full p-3 flex items-center justify-between ${categoryBgColor}`}>
-                                <div className=\"flex items-center gap-3\">
-                                    <button
-                                        onClick={() => toggleGoal(goal.id)}
-                                        className=\"text-white/80 hover:text-white transition-colors\"
-                                        title={collapsedGoals.has(goal.id) ? \"Expand goal\" : \"Collapse goal\"}
-                                    >
-                                        <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
-                                    </button>
-                                    <span className=\"text-white font-bold text-xs uppercase tracking-wide\">{goal.category}</span>
-                < span className =\"text-white font-bold text-lg\">{goal.title}</span>
-                    < span className =\"text-white/70 text-sm\">by {goal.userName}</span>
-                                </div >
-                <div className=\"flex items-center gap-2\">
-            {
-                goal.visibility === 'TRIBE' && <Users size={14} className=\"text-white/80\" />}
-                {
-                    goal.visibility === 'PUBLIC' && <Globe size={14} className=\"text-white/80\" />}
-                    {
-                        canEdit && <span className=\"text-xs text-white/60\">(You can edit)</span>}
-                                </div >
-                            </div >
+                    {/* Month/Week Columns */}
+                    {MONTHS.map(m => (
+                        <div key={`${currentYear}-${m}`} className="w-[16rem] shrink-0 border-r border-gray-200">
+                            {/* Month Header */}
+                            <div className="bg-gray-50 text-center py-1 font-bold text-gray-700 text-sm border-b border-gray-100">
+                                {m}
+                            </div>
 
-                            {/* Goal Content */ }
-                        {
-                            !collapsedGoals.has(goal.id) && (
-                                <div className=\"p-4\">
-                            {/* OKRs and KPIs */ }
-                            {
-                                goal.rows.filter(r => 'type' in r).map((row, idx) => {
-                                    const metricRow = row as MetricRow;
-                                    const isOKR = metricRow.type === 'OKR';
-                                    const isCollapsed = collapsedOKRs.has(metricRow.id);
+                            {/* Days Range Row */}
+                            <div className="flex border-b border-gray-100">
+                                {MONTH_WEEKS[m].map(w => {
+                                    const isCurrentWeek = isCurrentYearDisplayed && w === currentWeekId;
+                                    return (
+                                        <div
+                                            key={`${w}-days`}
+                                            className={`flex-1 text-center text-[9px] py-0.5 border-r border-gray-50 font-medium transition-colors ${isCurrentWeek ? 'bg-blue-100 text-blue-700' : 'text-gray-400'
+                                                }`}
+                                        >
+                                            {getWeekDayRange(currentYear, parseInt(w.replace('W', '')))}
+                                        </div>
+                                    );
+                                })}
+                            </div>
 
-                                    // Find parent OKR for KPIs
-                                    let parentOKR = null;
-                                    if (!isOKR) {
-                                        const currentIndex = goal.rows.indexOf(row);
-                                        for (let i = currentIndex - 1; i >= 0; i--) {
-                                            const r = goal.rows[i];
-                                            if ('type' in r && r.type === 'OKR') {
-                                                parentOKR = r;
-                                                break;
+                            {/* Week Number Row */}
+                            <div className="flex">
+                                {MONTH_WEEKS[m].map(w => {
+                                    const isCurrentWeek = isCurrentYearDisplayed && w === currentWeekId;
+                                    return (
+                                        <div
+                                            key={w}
+                                            className={`flex-1 text-center text-[10px] py-1 border-r border-gray-50 transition-colors ${isCurrentWeek ? 'bg-blue-100 text-blue-700 font-bold' : 'text-gray-400'
+                                                }`}
+                                        >
+                                            {w}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* 2. Goals List */}
+                <div className="min-w-max">
+                    {goals.map((goal, gIdx) => {
+                        const categoryBgColor = goal.category === 'Health' ? 'bg-teal-600' :
+                            goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                goal.category === 'Family' ? 'bg-indigo-500' :
+                                    goal.category === 'Leisure' ? 'bg-pink-500' :
+                                        goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500';
+
+                        const isOwner = currentUserId === goal.userId;
+                        const canEdit = !readOnly && isOwner;
+
+                        return (
+                            <div key={goal.id} className="bg-white border-b-2 border-gray-100">
+                                {/* Revised Vision Band: Full Width Color, Sticky Content */}
+                                <div className={`w-full h-[52px] ${categoryBgColor} flex items-center`}>
+                                    <div className={`sticky left-0 z-20 w-[400px] px-3 flex items-center justify-between ${categoryBgColor}`}>
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            <button
+                                                onClick={() => toggleGoal(goal.id)}
+                                                className="text-white/80 hover:text-white transition-colors shrink-0"
+                                                title={collapsedGoals.has(goal.id) ? "Expand goal" : "Collapse goal"}
+                                            >
+                                                <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
+                                            </button>
+                                            <span className="text-white font-bold text-xs uppercase tracking-wide shrink-0">{goal.category}</span>
+                                            <span className="text-white font-bold text-lg truncate max-w-[200px]" title={goal.title}>{goal.title}</span>
+                                        </div>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-white/70 text-xs">by {goal.userName}</span>
+                                            {canEdit && <span className="text-xs text-white/60">(Edit)</span>}
+                                            {goal.visibility === 'TRIBE' && <Users size={14} className="text-white/80" />}
+                                            {goal.visibility === 'PUBLIC' && <Globe size={14} className="text-white/80" />}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Goal Rows (Flex Container) */}
+                                <div className="flex flex-col">
+                                    {goal.rows.map((row) => {
+                                        // Visibility Logic
+                                        const isOKR = 'type' in row;
+                                        const isKPI = isOKR && (row as MetricRow).type === 'KPI';
+                                        const isActionRow = !isOKR && !isKPI;
+
+                                        // Hide OKRs/KPIs if goal collapsed
+                                        if (collapsedGoals.has(goal.id)) return null;
+
+                                        // Hide KPIs if parent OKR collapsed
+                                        if (isKPI) {
+                                            const currentKPIIndex = goal.rows.indexOf(row);
+                                            let parentOKR = null;
+                                            for (let i = currentKPIIndex - 1; i >= 0; i--) {
+                                                const r = goal.rows[i];
+                                                if ('type' in r && (r as MetricRow).type === 'OKR') {
+                                                    parentOKR = r;
+                                                    break;
+                                                }
+                                            }
+                                            if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
+                                                return null;
                                             }
                                         }
-                                        if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
-                                            return null;
+
+                                        // Row Height Logic
+                                        let heightClass = 'h-[45px]';
+                                        if (isActionRow) {
+                                            const actionRow = row as ActionRow;
+                                            const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
+                                                actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
+                                            ));
+                                            const maxTasks = Math.max(0, ...actionCounts);
+                                            const dynamicHeight = Math.max(80, maxTasks * 24 + 20);
+                                            heightClass = `h-[${dynamicHeight}px]`;
                                         }
-                                    }
 
-                                    return (
-                                        <div key={metricRow.id} className=\"mb-2\">
-                                    {
-                                        isOKR && (
-                                            <div className=\"flex items-center gap-2 py-2 border-b border-gray-100\">
-                                                < button
-                                        onClick = {() => toggleOKR(metricRow.id)
-                                    }
-                                    className =\"text-gray-400 hover:text-blue-600\"
-                                        >
-                                        <ChevronRight className={`transition-transform ${!isCollapsed ? 'rotate-90' : ''}`} size={16} />
-                                                        </button >
-                                        <span className=\"font-bold text-gray-700 text-sm\">OKR #{idx + 1}</span>
-                                            < span className =\"text-sm text-gray-600\">{metricRow.label}</span>
-                                                    </div >
-                                                )
-                            }
-                            {
-                                !isOKR && (
-                                    <div className=\"pl-8 py-1\">
-                                        < span className =\"text-xs text-gray-500 italic\">• {metricRow.label}</span>
-                                                    </div >
-                                                )
-    }
-                                            </div >
-                                        );
-})}
+                                        return (
+                                            <div key={row.id} className={`flex ${heightClass} border-b border-gray-50 last:border-0 group`}>
+                                                {/* Left Sticky Label Column */}
+                                                <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 p-3 flex items-center gap-2">
+                                                    {isOKR && !isKPI && (
+                                                        <button
+                                                            onClick={() => toggleOKR(row.id)}
+                                                            className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
+                                                        >
+                                                            <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
+                                                        </button>
+                                                    )}
 
-{/* Action Plan */ }
-{
-    goal.rows.filter(r => !('type' in r)).map(row => {
-        const actionRow = row as ActionRow;
-        return (
-            <div key={actionRow.id} className=\"mt-4 pt-4 border-t border-gray-200\">
-                < div className =\"font-bold text-sm text-gray-700 mb-2\">{actionRow.label}</div>
-                    < div className =\"space-y-1\">
-        {
-            actionRow.actions.slice(0, 5).map(action => (
-                <div key={action.id} className=\"text-xs text-gray-600 flex items-center gap-2\">
-            < span className = {`w-2 h-2 rounded-full ${action.status === 'DONE' ? 'bg-green-500' : 'bg-gray-300'}`} />
-        { action.title }
-                                                        </div >
-                                                    ))
-}
-{
-    actionRow.actions.length > 5 && (
-        <div className=\"text-xs text-gray-400\">+{actionRow.actions.length - 5} more</div>
-                                                    )
-}
-                                                </div >
-                                            </div >
+                                                    <div className={`flex-1 text-xs whitespace-normal break-words leading-tight ${isKPI ? 'pl-6 text-gray-500 italic' : 'font-bold text-gray-700'} ${isActionRow ? 'pl-6 text-gray-500 font-bold' : ''}`}>
+                                                        {isKPI && <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mr-2" />}
+                                                        {row.label}
+                                                    </div>
+
+                                                    <div className="text-[10px] font-bold text-gray-300 bg-gray-50 px-1 rounded ml-2">
+                                                        {isOKR ? (isKPI ? 'KPI' : 'OKR') : 'Act'}
+                                                    </div>
+                                                </div>
+
+                                                {/* Data Columns */}
+                                                {MONTHS.map(m => {
+                                                    const key = `${currentYear}-${m}`;
+
+                                                    return (
+                                                        <div key={key} className="w-[16rem] shrink-0 border-r border-gray-200 flex items-center justify-center p-1 relative">
+                                                            {isOKR ? (
+                                                                // Metric Cell
+                                                                (() => {
+                                                                    const metricRow = row as MetricRow;
+                                                                    const monthlyData = metricRow.monthlyData || [];
+                                                                    const data = monthlyData.find(d => d.monthId === m && d.year === currentYear) || { monthId: m, year: currentYear, target: null, actual: null };
+
+                                                                    const targetCellId = `${goal.id}-${row.id}-${m}-target`;
+                                                                    const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
+                                                                    const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
+                                                                    const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
+
+                                                                    const hasResult = data.actual !== null;
+                                                                    const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
+
+                                                                    const cardClass = isKPI
+                                                                        ? "bg-white border border-dashed border-gray-100"
+                                                                        : (hasResult ? (isSuccess ? 'bg-green-500' : 'bg-red-500') : 'bg-gray-50');
+
+                                                                    const textClass = isKPI
+                                                                        ? (hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300")
+                                                                        : (hasResult ? "text-white" : "text-gray-300");
+
+                                                                    return (
+                                                                        <div className={`w-full h-3/4 rounded-md flex items-center justify-center ${cardClass} relative group/cell`}>
+                                                                            <span className={`${textClass} font-bold text-lg`}>{data.actual ?? '-'}</span>
+                                                                            <span className="absolute bottom-1 right-2 text-[8px] text-gray-400 opacity-70">/ {data.target}</span>
+                                                                            {data.comment && <div className="absolute top-1 right-1 text-[8px]">💬</div>}
+
+                                                                            {/* Edit Overlay */}
+                                                                            {canEdit && (
+                                                                                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-10 rounded-md border border-gray-200 shadow-sm" onClick={(e) => e.stopPropagation()}>
+                                                                                    <div className="flex flex-col gap-1 w-full p-1">
+                                                                                        <div className="flex items-center gap-1 justify-center">
+                                                                                            {/* Target Input */}
+                                                                                            <input
+                                                                                                className="w-1/2 p-0.5 text-center text-[10px] bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:text-blue-600 focus:ring-blue-500 text-gray-400"
+                                                                                                value={currentTargetVal}
+                                                                                                onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })}
+                                                                                                onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })}
+                                                                                                onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)}
+                                                                                                placeholder="T"
+                                                                                                title="Target"
+                                                                                            />
+                                                                                            {/* Actual Input */}
+                                                                                            <input
+                                                                                                className="w-1/2 p-0.5 text-center font-bold text-xs bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:text-blue-600 focus:ring-blue-500 text-gray-900"
+                                                                                                value={currentActualVal}
+                                                                                                onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })}
+                                                                                                onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })}
+                                                                                                onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)}
+                                                                                                placeholder="A"
+                                                                                                title="Actual"
+                                                                                            />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    );
+                                                                })()
+                                                            ) : (
+                                                                // Action Row Cell
+                                                                <div className="flex w-full h-full gap-0.5">
+                                                                    {MONTH_WEEKS[m].map(w => {
+                                                                        const actionRow = row as ActionRow;
+                                                                        const weekActions = actionRow.actions.filter(a => a.weekId === w && a.year === currentYear);
+
+                                                                        return (
+                                                                            <div key={w} className="flex-1 border-r border-gray-50 last:border-0 bg-gray-50/20 p-1 flex flex-col gap-1 items-center justify-start overflow-hidden">
+                                                                                {weekActions.map(action => (
+                                                                                    <button
+                                                                                        key={action.id}
+                                                                                        className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all ${action.status === 'DONE'
+                                                                                                ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
+                                                                                            } ${canEdit ? 'cursor-pointer' : 'cursor-default'}`}
+                                                                                        title={action.title}
+                                                                                        onClick={() => canEdit && handleUpdateActionStatus(goal.id, action.id)}
+                                                                                    >
+                                                                                        {action.title}
+                                                                                    </button>
+                                                                                ))}
+                                                                            </div>
+                                                                        );
+                                                                    })}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
                                         );
                                     })}
-                                </div >
-                            )}
-                        </div >
-                    );
-                })}
-            </div >
+                                </div>
+                            </div>
+                        );
+                    })}
 
-{
-    goals.length === 0 && (
-        <div className=\"text-center py-12 text-gray-400\">
-        <Users size = { 48 } className =\"mx-auto mb-4 opacity-50\" />
-        <p className =\"font-bold\">No shared goals yet</p>
-        <p className =\"text-sm\">Members can share their goals by setting visibility to \"Share with Tribe\" in their Obeya</p>
+                    {goals.length === 0 && (
+                        <div className="p-12 text-center text-gray-400">
+                            <Users size={48} className="mx-auto mb-4 opacity-30" />
+                            <p className="font-bold">No shared goals found</p>
+                            <p className="text-sm mt-2">Members can share goals from their Obeya.</p>
+                        </div>
+                    )}
                 </div>
-            )}
-        </div >
+            </div>
+        </div>
     );
 }
