@@ -72,7 +72,7 @@ type MetricRow = {
     sharedTribeIds?: string[]; // Granular sharing
 };
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
-type GoalCategory = { id: string; category: string; title: string; isShared?: boolean; rows: (MetricRow | ActionRow)[]; };
+type GoalCategory = { id: string; category: string; title: string; isShared?: boolean; visibility?: 'PRIVATE' | 'TRIBE' | 'PUBLIC'; rows: (MetricRow | ActionRow)[]; };
 
 const generateMonthlyTargets = (start: number, end: number, startYear: number, startMonth: number, endYear: number, endMonth: number) => {
     const data: MonthlyData[] = [];
