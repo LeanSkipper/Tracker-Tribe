@@ -245,8 +245,8 @@ export default function TribeDetailsPage() {
 
     // Check if current user is a member or creator
     const isCreator = tribe.creatorId === currentUserId;
-    const isMember = isCreator || tribe.members.some(m => m.id === currentUserId);
-    const isAdmin = isCreator || tribe.members.some(m => m.id === currentUserId && m.role === 'ADMIN');
+    const isMember = isCreator || tribe.members.some(m => m.userId === currentUserId);
+    const isAdmin = isCreator || tribe.members.some(m => m.userId === currentUserId && m.role === 'ADMIN');
 
     // --- UNIFIED TRIBE VIEW (For Members AND Guests) ---
     return (
