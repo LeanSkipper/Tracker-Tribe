@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { calculateGlobalScore } from "@/lib/gamification";
 
 export async function GET(
     req: Request,
@@ -76,16 +77,13 @@ export async function GET(
         }
 
         // Calculate Global Score (consistent with other views)
-        const gritPercent = (user.grit / 100) || 0.1;
-        const rankingXP = user.experience || 1; // Schema uses experience for total? Or currentXP? 
-        // In api/peers/route.ts we used: peer.experience. 
-        // In profile/page.tsx we used: profile.currentXP (mapped to xp const) and profile.experience if available?
-        // Let's stick to 'experience' for consistency with Leaderboard API, or verify which one holds the total.
-        // Schema: experience Int @default(0), currentXP Int @default(0). 
-        // Usually experience = total lifetime, currentXP = progress to next level.
-        // Leaderboard used 'experience'.
-        const rankingRep = user.reputationScore || 1;
-        const rankingScore = Math.round(user.level * gritPercent * rankingXP * rankingRep);
+        // Calculate Global Score (consistent with other views)
+        const rankingScore = calculateGlobalScore({
+            level: user.level,
+            grit: user.grit,
+            currentXP: user.currentXP,
+            reputationScore: user.reputationScore
+        });
 
         // Calculate Reputation Breakdown
         const reviews = await prisma.reputationReview.findMany({

@@ -190,7 +190,7 @@ export default function PublicProfilePage() {
                                         <Star className="text-green-600" size={20} />
                                         <span className="font-bold text-slate-700">XP</span>
                                     </div>
-                                    <div className="text-2xl font-black text-green-700">{profile.experience || 0}</div>
+                                    <div className="text-2xl font-black text-green-700">{profile.currentXP || 0}</div>
                                 </div>
                                 <div className="bg-yellow-50 p-4 rounded-xl">
                                     <div className="flex items-center gap-2 mb-2">
