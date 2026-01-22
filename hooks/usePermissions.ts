@@ -31,23 +31,16 @@ export function usePermissions(): UserPermissions | null {
     useEffect(() => {
         async function fetchPermissions() {
             try {
-                // TODO: Replace with actual API call to get user permissions
-                // For now, return default permissions for testing
-                const mockPermissions: UserPermissions = {
-                    canAccessGPS: true,
-                    canJoinTribes: false,
-                    canCreateTribes: false,
-                    canViewPeerGPS: false,
-                    canMonetizeTribe: false,
-                    userProfile: 'SOFT',
-                    subscriptionStatus: 'TRIAL',
-                    reputationScore: 0,
-                    trialDaysRemaining: 60,
-                    isInGracePeriod: false,
-                    isInTrial: true,
-                };
+                const response = await fetch('/api/user/permissions');
 
-                setPermissions(mockPermissions);
+                if (!response.ok) {
+                    console.error('Failed to fetch permissions:', response.status);
+                    setPermissions(null);
+                    return;
+                }
+
+                const data = await response.json();
+                setPermissions(data);
             } catch (error) {
                 console.error('Failed to fetch permissions:', error);
                 setPermissions(null);
