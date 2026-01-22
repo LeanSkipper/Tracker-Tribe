@@ -1686,11 +1686,12 @@ export default function ObeyaPage() {
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {goal.rows.map((row, rIdx) => {
-                                                        // Hide all rows if goal is collapsed (Excel-style)
-                                                        if (collapsedGoals.has(goal.id)) return null;
-
                                                         const isOKR = 'type' in row;
                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
+                                                        const isActionRow = !isOKR && !isKPI;
+
+                                                        // Hide OKRs/KPIs if goal is collapsed, but keep action rows visible for pit stops
+                                                        if (collapsedGoals.has(goal.id) && !isActionRow) return null;
 
                                                         // Determine exact height
                                                         let heightClass = 'h-[45px]';
@@ -1773,10 +1774,12 @@ export default function ObeyaPage() {
                                             <div className="flex-1 flex flex-col min-w-0">
                                                 {goal.rows.map((row, rIdx) => {
                                                     // Hide all rows if goal is collapsed (Excel-style)
-                                                    if (collapsedGoals.has(goal.id)) return null;
-
                                                     const isOKR = 'type' in row;
                                                     const isKPI = isOKR && (row as MetricRow).type === 'KPI';
+                                                    const isActionRow = !isOKR && !isKPI;
+
+                                                    // Hide OKRs/KPIs if goal is collapsed, but keep action rows visible for pit stops
+                                                    if (collapsedGoals.has(goal.id) && !isActionRow) return null;
 
                                                     // Sync Height
                                                     let heightClass = 'h-[45px]';
@@ -1793,6 +1796,23 @@ export default function ObeyaPage() {
                                                     if (viewMode === 'tactical' && !isOKR) return null;
                                                     if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
                                                     if ((viewMode as string) === 'task' && isOKR) return null;
+
+                                                    // Hide KPIs if their parent OKR is collapsed
+                                                    if (isKPI) {
+                                                        // Find the parent OKR (the last OKR before this KPI)
+                                                        const currentKPIIndex = goal.rows.indexOf(row);
+                                                        let parentOKR = null;
+                                                        for (let i = currentKPIIndex - 1; i >= 0; i--) {
+                                                            const r = goal.rows[i];
+                                                            if ('type' in r && r.type === 'OKR') {
+                                                                parentOKR = r;
+                                                                break;
+                                                            }
+                                                        }
+                                                        if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
+                                                            return null; // Hide this KPI
+                                                        }
+                                                    }
 
                                                     return (
                                                         <div key={row.id} className={`flex ${heightClass}`}>
