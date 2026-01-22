@@ -110,7 +110,7 @@ export default function SharedObeyaTracker({
 
                 // Find or create monthly data
                 const existingDataIndex = r.monthlyData.findIndex(d => d.monthId === monthId && d.year === currentYear);
-                let newMonthlyData = [...r.monthlyData];
+                const newMonthlyData = [...r.monthlyData];
 
                 if (existingDataIndex >= 0) {
                     newMonthlyData[existingDataIndex] = {
@@ -367,7 +367,8 @@ export default function SharedObeyaTracker({
                                                 const isActionRow = !isOKR && !isKPI;
 
                                                 // Hide OKRs/KPIs if goal collapsed
-                                                if (collapsedGoals.has(goal.id)) return null;
+                                                // MODIFICATION: Keep Action Rows visible even if goal is collapsed
+                                                if (collapsedGoals.has(goal.id) && (isOKR || isKPI)) return null;
 
                                                 // Hide KPIs if parent OKR collapsed
                                                 if (isKPI) {
@@ -500,8 +501,8 @@ export default function SharedObeyaTracker({
                                                                                             <button
                                                                                                 key={action.id}
                                                                                                 className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all ${action.status === 'DONE'
-                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
-                                                                                                        : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
+                                                                                                    ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                    : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
                                                                                                     } ${canEdit ? 'cursor-pointer' : 'cursor-default'}`}
                                                                                                 title={action.title}
                                                                                                 onClick={() => canEdit && handleUpdateActionStatus(goal.id, action.id)}
