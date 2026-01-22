@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 // Mock function to getting current user ID - replace with actual auth logic later
 // For now, we'll try to get it from headers or use a hardcoded fallback for testing if no auth is set up
 import { getSession } from '@/lib/auth';
+import { calculateGlobalScore } from "@/lib/gamification";
 
 export async function GET(req: Request) {
     try {
@@ -70,14 +71,18 @@ export async function GET(req: Request) {
         const rankingPeers = await prisma.user.findMany({
             where: { id: { not: userId } },
             select: {
-                id: true, name: true, avatarUrl: true, level: true, grit: true, experience: true, reputationScore: true
+                id: true, name: true, avatarUrl: true, level: true, grit: true, experience: true, currentXP: true, reputationScore: true
             },
             take: 50, // Limit for ranking calculation
         });
 
         const ranked = rankingPeers.map(peer => {
-            const gritPercent = peer.grit / 100;
-            const score = Math.round(peer.level * (gritPercent || 0.1) * (peer.experience || 1) * (peer.reputationScore || 1));
+            const score = calculateGlobalScore({
+                level: peer.level,
+                grit: peer.grit,
+                currentXP: peer.currentXP,
+                reputationScore: peer.reputationScore
+            });
             return {
                 ...peer,
                 rankingScore: score
@@ -96,6 +101,7 @@ export async function GET(req: Request) {
                 level: true,
                 grit: true,            // Added
                 experience: true,      // Added
+                currentXP: true,         // Added
                 reputationScore: true, // Added
                 // Matchmaking fields
                 professionalRole: true,
@@ -112,8 +118,12 @@ export async function GET(req: Request) {
         });
 
         const peersWithScore = peers.map(peer => {
-            const gritPercent = peer.grit / 100;
-            const score = Math.round(peer.level * (gritPercent || 0.1) * (peer.experience || 1) * (peer.reputationScore || 1));
+            const score = calculateGlobalScore({
+                level: peer.level,
+                grit: peer.grit,
+                currentXP: peer.currentXP,
+                reputationScore: peer.reputationScore
+            });
             return {
                 ...peer,
                 rankingScore: score

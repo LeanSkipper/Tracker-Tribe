@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { calculateGlobalScore } from "@/lib/gamification";
 
 export const runtime = "nodejs";
 
@@ -32,7 +33,9 @@ export async function GET(
                                 avatarUrl: true,
                                 level: true,
                                 grit: true,
-                                experience: true,      // Added
+
+                                experience: true,      // Keep for legacy
+                                currentXP: true,       // Added for accurate scoring
                                 reputationScore: true, // Added
                                 goals: {
                                     where: { visibility: 'TRIBE' },
@@ -58,11 +61,13 @@ export async function GET(
         // Transform members to flatten user details for frontend convenience
         // Frontend expects member.name, member.grit, etc.
         const transformedMembers = tribe.members.map(member => {
-            // Calculate Global Score
-            const gritPercent = (member.user.grit / 100) || 0.1;
-            const rankingXP = member.user.experience || 1;
-            const rankingRep = member.user.reputationScore || 1;
-            const rankingScore = Math.round(member.user.level * gritPercent * rankingXP * rankingRep);
+            // Calculate Global Score (Standardized)
+            const rankingScore = calculateGlobalScore({
+                level: member.user.level,
+                grit: member.user.grit,
+                currentXP: member.user.currentXP,
+                reputationScore: member.user.reputationScore
+            });
 
             return {
                 ...member.user, // Spread user details (name, avatar, grit, etc.)

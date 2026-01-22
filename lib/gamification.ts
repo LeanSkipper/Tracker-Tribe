@@ -44,6 +44,18 @@ export function calculateGrit(positive: number, negative: number): number {
 }
 
 /**
+ * consistently calculates the Global Score (Ranking Score)
+ * Formula: Level * (Grit%) * XP * Reputation
+ * Matches Profile Logic
+ */
+export function calculateGlobalScore(user: { level: number, grit: number, currentXP: number, reputationScore: number }) {
+    const gritPercent = (user.grit / 100) || 0.1;
+    const rankingXP = user.currentXP || 1;
+    const rankingRep = user.reputationScore || 1;
+    return Math.round(user.level * gritPercent * rankingXP * rankingRep);
+}
+
+/**
  * Awards XP to a user and handles levelling and grit updates.
  * Usage: await awardXP('user-id', 'TASK_COMPLETED');
  */
