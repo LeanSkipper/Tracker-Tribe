@@ -792,6 +792,31 @@ export default function ObeyaPage() {
 
     const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
 
+    // Collapse state for OKRs
+    const [collapsedOKRs, setCollapsedOKRs] = useState<Set<string>>(new Set());
+
+    const toggleOKR = (okrId: string) => {
+        setCollapsedOKRs(prev => {
+            const next = new Set(prev);
+            if (next.has(okrId)) next.delete(okrId);
+            else next.add(okrId);
+            return next;
+        });
+    };
+
+    const toggleExpandAll = () => {
+        if (collapsedOKRs.size === 0) {
+            // Collapse all OKRs
+            const allOKRIds = goals.flatMap(g =>
+                g.rows.filter(r => 'type' in r && r.type === 'OKR').map(r => r.id)
+            );
+            setCollapsedOKRs(new Set(allOKRIds));
+        } else {
+            // Expand all
+            setCollapsedOKRs(new Set());
+        }
+    };
+
     useEffect(() => {
         const fetchGoals = async () => {
             try {
@@ -1291,6 +1316,14 @@ export default function ObeyaPage() {
                         <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategy: High-level roadmap">Strategy</button>
                         <button onClick={() => setViewMode('chart')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'chart' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Chart: Visual analytics"><BarChart2 size={14} className="inline mr-1" />Chart</button>
                     </div>
+                    <button
+                        onClick={toggleExpandAll}
+                        className="px-3 py-2 rounded-md text-xs font-bold bg-white shadow-sm text-gray-600 hover:text-blue-600 border border-gray-200 transition-colors flex items-center gap-1"
+                        title={collapsedOKRs.size === 0 ? "Collapse all OKRs" : "Expand all OKRs"}
+                    >
+                        <Layout size={14} />
+                        {collapsedOKRs.size === 0 ? 'Collapse All' : 'Expand All'}
+                    </button>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
