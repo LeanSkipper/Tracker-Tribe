@@ -22,12 +22,34 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
     return acc;
 }, {} as Record<string, string[]>);
 
-// Helper to get day range for a week
+// Helper to calculate week number with Sunday as first day of week
+const getWeekNumber = (date: Date): number => {
+    const year = date.getFullYear();
+    const startOfYear = new Date(year, 0, 1);
+    const dayOfWeek = startOfYear.getDay(); // 0 = Sunday, 1 = Monday, etc.
+
+    // Calculate days since start of year
+    const daysSinceStart = Math.floor((date.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Adjust for Sunday start: if Jan 1 is not Sunday, add offset to align to Sunday
+    const adjustedDays = daysSinceStart + dayOfWeek;
+
+    return Math.floor(adjustedDays / 7) + 1;
+};
+
+// Helper to get day range for a week (Sunday-based)
 const getWeekDayRange = (weekId: string, year: number): string => {
     const weekNum = parseInt(weekId.replace('W', ''));
-    const daysToWeekStart = (weekNum - 1) * 7;
-    const weekStart = new Date(year, 0, 1 + daysToWeekStart);
-    const weekEnd = new Date(year, 0, 1 + daysToWeekStart + 6);
+    const startOfYear = new Date(year, 0, 1);
+    const dayOfWeek = startOfYear.getDay();
+
+    // Calculate the first Sunday of the year (or Jan 1 if it's Sunday)
+    const firstSunday = dayOfWeek === 0 ? startOfYear : new Date(year, 0, 1 + (7 - dayOfWeek));
+
+    // Calculate week start (Sunday) and end (Saturday)
+    const daysFromFirstSunday = (weekNum - 1) * 7;
+    const weekStart = new Date(firstSunday.getTime() + daysFromFirstSunday * 24 * 60 * 60 * 1000);
+    const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
 
     const formatDay = (date: Date) => `${date.getDate()}`;
     return `${formatDay(weekStart)}-${formatDay(weekEnd)}`;
@@ -100,9 +122,7 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
 
     // Get current week actions
     const now = new Date();
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-    const globalWeekNum = Math.floor(daysSinceStart / 7) + 1;
+    const globalWeekNum = getWeekNumber(now);
 
     // Time Window State (Center of the 3-week view)
     const [weekOffset, setWeekOffset] = useState(0);
@@ -808,9 +828,7 @@ export default function ObeyaPage() {
                             (o.actions || []).map((a: any) => {
                                 // Convert weekDate back to weekId
                                 const weekDate = new Date(a.weekDate);
-                                const startOfYear = new Date(weekDate.getFullYear(), 0, 1);
-                                const daysSinceStart = Math.floor((weekDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-                                const weekNum = Math.floor(daysSinceStart / 7) + 1;
+                                const weekNum = getWeekNumber(weekDate);
 
                                 return {
                                     id: a.id,
@@ -918,9 +936,7 @@ export default function ObeyaPage() {
                     const allActions = (g.okrs || []).flatMap((o: any) =>
                         (o.actions || []).map((a: any) => {
                             const weekDate = new Date(a.weekDate);
-                            const startOfYear = new Date(weekDate.getFullYear(), 0, 1);
-                            const daysSinceStart = Math.floor((weekDate.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-                            const weekNum = Math.floor(daysSinceStart / 7) + 1;
+                            const weekNum = getWeekNumber(weekDate);
                             return {
                                 id: a.id,
                                 weekId: `W${weekNum}`,
@@ -1102,9 +1118,7 @@ export default function ObeyaPage() {
 
         // Get current week
         const now = new Date();
-        const startOfYear = new Date(now.getFullYear(), 0, 1);
-        const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-        const currentWeek = Math.floor(daysSinceStart / 7) + 1;
+        const currentWeek = getWeekNumber(now);
         const weekId = `W${currentWeek}`;
 
         await handleAddAction(weekId, goalId, title);
@@ -1525,11 +1539,9 @@ export default function ObeyaPage() {
                                         {viewMode === 'strategic' && <span className="text-[9px] text-gray-400 font-normal">{y}</span>}
                                     </div>
                                     {viewMode === 'operational' && (() => {
-                                        // Calculate current week
+                                        // Calculate current week (Sunday-based)
                                         const now = new Date();
-                                        const startOfYear = new Date(now.getFullYear(), 0, 1);
-                                        const daysSinceStart = Math.floor((now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
-                                        const currentWeekNum = Math.floor(daysSinceStart / 7) + 1;
+                                        const currentWeekNum = getWeekNumber(now);
                                         const currentWeekId = `W${currentWeekNum}`;
                                         const isCurrentYear = y === now.getFullYear();
 
@@ -1543,8 +1555,8 @@ export default function ObeyaPage() {
                                                             <div
                                                                 key={`${w}-days`}
                                                                 className={`flex-1 text-center text-[9px] py-0.5 border-r border-gray-50 font-medium transition-colors ${isCurrentWeek
-                                                                        ? 'bg-blue-100 text-blue-700'
-                                                                        : 'text-gray-400'
+                                                                    ? 'bg-blue-100 text-blue-700'
+                                                                    : 'text-gray-400'
                                                                     }`}
                                                             >
                                                                 {getWeekDayRange(w, y)}
@@ -1561,8 +1573,8 @@ export default function ObeyaPage() {
                                                             <div
                                                                 key={w}
                                                                 className={`flex-1 text-center text-[10px] py-1 border-r border-gray-50 flex flex-col items-center gap-1 transition-colors ${isCurrentWeek
-                                                                        ? 'bg-blue-100 text-blue-700 font-bold'
-                                                                        : 'text-gray-400'
+                                                                    ? 'bg-blue-100 text-blue-700 font-bold'
+                                                                    : 'text-gray-400'
                                                                     }`}
                                                             >
                                                                 <span>{w}</span>
