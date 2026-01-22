@@ -1683,6 +1683,24 @@ export default function ObeyaPage() {
                                                         if (viewMode === 'strategic' && (isKPI || !isOKR)) return null;
                                                         if ((viewMode as string) === 'task' && isOKR) return null;
 
+                                                        // Hide KPIs if their parent OKR is collapsed
+                                                        if (isKPI) {
+                                                            // Find the parent OKR (the last OKR before this KPI)
+                                                            const okrRows = goal.rows.filter(r => 'type' in r && r.type === 'OKR');
+                                                            const currentKPIIndex = goal.rows.indexOf(row);
+                                                            let parentOKR = null;
+                                                            for (let i = currentKPIIndex - 1; i >= 0; i--) {
+                                                                const r = goal.rows[i];
+                                                                if ('type' in r && r.type === 'OKR') {
+                                                                    parentOKR = r;
+                                                                    break;
+                                                                }
+                                                            }
+                                                            if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
+                                                                return null; // Hide this KPI
+                                                            }
+                                                        }
+
                                                         // Count OKR rows to decide logic if needed (e.g. strict ordering)
                                                         const okrRowsCount = goal.rows.filter(r => 'type' in r).length;
 
