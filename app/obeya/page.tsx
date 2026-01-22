@@ -1826,9 +1826,7 @@ export default function ObeyaPage() {
                                                                             >
                                                                                 <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
                                                                             </button>
-                                                                            <span className="text-blue-600 font-bold text-xs flex-shrink-0">
-                                                                                OKR #{goal.rows.filter(r => 'type' in r && r.type === 'OKR').indexOf(row) + 1}
-                                                                            </span>
+
                                                                         </>
                                                                     )}
                                                                     {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1 z-20"><Edit2 size={12} /></button>}
