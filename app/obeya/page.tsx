@@ -800,6 +800,16 @@ export default function ObeyaPage() {
         });
     };
 
+    // Mobile check: Collapse all on mount if screen is narrow
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            const allGoalIds = goals.map(g => g.id);
+            if (allGoalIds.length > 0) {
+                setCollapsedGoals(new Set(allGoalIds));
+            }
+        }
+    }, [goals]);
+
     useEffect(() => {
         const fetchGoals = async () => {
             try {
@@ -1267,6 +1277,12 @@ export default function ObeyaPage() {
             {/* Demo Data Banner for Guest Users */}
             {isGuest && <DemoDataBanner />}
 
+            {/* Landscape Alert for Mobile */}
+            <div className="md:hidden bg-blue-50 p-2 text-center text-xs text-blue-600 border-b border-blue-100 flex items-center justify-center gap-2">
+                <Layout size={14} />
+                <span>Rotate to landscape for better view</span>
+            </div>
+
             {isInspirationOpen && (
                 <InspirationModal
                     onClose={() => setIsInspirationOpen(false)}
@@ -1551,22 +1567,14 @@ export default function ObeyaPage() {
                         onAddTask={handleAddKanbanTask}
                     />
                 ) : (<>
-                    <div className="md:hidden p-4 space-y-4">
+                    <div className="md:hidden p-4">
                         <PitStopReminder onOpenPitStop={() => setIsPitStopOpen(true)} />
-                        {goals.map(goal => (
-                            <ObeyaMobileGoalCard
-                                key={goal.id}
-                                goal={goal}
-                                currentYear={currentYear}
-                                onUpdateStatus={(gid, cid, status) => handleUpdateActionStatus(gid, cid, status)}
-                                onAddAction={(gid, weekId) => setActiveWeekModal({ week: weekId, goalId: gid })}
-                            />
-                        ))}
+                        {/* Mobile Cards Replaced by Responsive Table below */}
                     </div>
 
-                    <div className="hidden md:inline-block min-w-full">
-                        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex">
-                            <div className="sticky left-0 w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
+                    <div className="min-w-full overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
+                            <div className="sticky left-0 w-[150px] md:w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
                             {(viewMode === 'strategic' ?
                                 Array.from({ length: 36 }, (_, i) => {
                                     const yearOffset = Math.floor(i / 12);
@@ -1651,91 +1659,101 @@ export default function ObeyaPage() {
                                     <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
 
-                                        {/* Horizontal Vision Band */}
-                                        <div className={`w-full p-3 flex items-center justify-between sticky left-0 z-20 ${goal.category === 'Health' ? 'bg-teal-600' :
+                                        {/* Horizontal Vision Band - Responsive */}
+                                        <div className={`w-full min-h-[52px] ${goal.category === 'Health' ? 'bg-teal-600' :
                                             goal.category === 'Wealth' ? 'bg-emerald-600' :
                                                 goal.category === 'Family' ? 'bg-indigo-500' :
                                                     goal.category === 'Leisure' ? 'bg-pink-500' :
                                                         goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
-                                            }`}>
-                                            <div className="flex items-center gap-3">
-                                                {/* Goal collapse button (Excel-style) */}
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        toggleGoal(goal.id);
-                                                    }}
-                                                    className="text-white/80 hover:text-white transition-colors"
-                                                    title={collapsedGoals.has(goal.id) ? "Expand goal" : "Collapse goal"}
-                                                >
-                                                    <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
-                                                </button>
-                                                <span className="text-white font-bold text-xs uppercase tracking-wide">{goal.category}</span>
-                                                <span className="text-white font-bold text-lg">{goal.title}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {/* Visibility Toggle */}
-                                                <div className="relative group">
+                                            } flex items-stretch`}>
+                                            <div className={`sticky left-0 z-20 w-[150px] md:w-[400px] px-3 py-2 flex items-center justify-between ${goal.category === 'Health' ? 'bg-teal-600' :
+                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                                    goal.category === 'Family' ? 'bg-indigo-500' :
+                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
+                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
+                                                }`}>
+                                                <div className="flex items-center gap-3 overflow-hidden">
+                                                    {/* Goal collapse button (Excel-style) */}
                                                     <button
-                                                        className="text-white/80 hover:text-white transition-colors p-1.5 rounded hover:bg-white/10"
-                                                        title="Share settings"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            toggleGoal(goal.id);
+                                                        }}
+                                                        className="text-white/80 hover:text-white transition-colors shrink-0"
+                                                        title={collapsedGoals.has(goal.id) ? "Expand goal" : "Collapse goal"}
                                                     >
-                                                        {goal.visibility === 'TRIBE' ? <Users size={16} /> :
-                                                            goal.visibility === 'PUBLIC' ? <Globe size={16} /> :
-                                                                <Circle size={16} />}
+                                                        <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
                                                     </button>
-                                                    {/* Dropdown */}
-                                                    <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-30">
-                                                        <button
-                                                            onClick={async () => {
-                                                                await fetch(`/api/goals/${goal.id}/visibility`, {
-                                                                    method: 'PATCH',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ visibility: 'PRIVATE' })
-                                                                });
-                                                                window.location.reload();
-                                                            }}
-                                                            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-                                                        >
-                                                            <Circle size={14} /> Private
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                await fetch(`/api/goals/${goal.id}/visibility`, {
-                                                                    method: 'PATCH',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ visibility: 'TRIBE' })
-                                                                });
-                                                                window.location.reload();
-                                                            }}
-                                                            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-                                                        >
-                                                            <Users size={14} /> Share with Tribe
-                                                        </button>
-                                                        <button
-                                                            onClick={async () => {
-                                                                await fetch(`/api/goals/${goal.id}/visibility`, {
-                                                                    method: 'PATCH',
-                                                                    headers: { 'Content-Type': 'application/json' },
-                                                                    body: JSON.stringify({ visibility: 'PUBLIC' })
-                                                                });
-                                                                window.location.reload();
-                                                            }}
-                                                            className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-                                                        >
-                                                            <Globe size={14} /> Public
-                                                        </button>
+
+                                                    <div className="flex flex-col">
+                                                        <span className="text-white font-bold text-xs uppercase tracking-wide opacity-80 shrink-0">{goal.category}</span>
+                                                        <span className="text-white font-bold text-sm md:text-lg leading-tight whitespace-normal break-words">{goal.title}</span>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
-                                                    <Edit2 size={16} />
-                                                </button>
+                                                <div className="flex items-center gap-2">
+                                                    {/* Visibility Toggle */}
+                                                    <div className="relative group">
+                                                        <button
+                                                            className="text-white/80 hover:text-white transition-colors p-1.5 rounded hover:bg-white/10"
+                                                            title="Share settings"
+                                                        >
+                                                            {goal.visibility === 'TRIBE' ? <Users size={16} /> :
+                                                                goal.visibility === 'PUBLIC' ? <Globe size={16} /> :
+                                                                    <Circle size={16} />}
+                                                        </button>
+                                                        {/* Dropdown */}
+                                                        <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-30">
+                                                            <button
+                                                                onClick={async () => {
+                                                                    await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                        method: 'PATCH',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ visibility: 'PRIVATE' })
+                                                                    });
+                                                                    window.location.reload();
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                                            >
+                                                                <Circle size={14} /> Private
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                        method: 'PATCH',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ visibility: 'TRIBE' })
+                                                                    });
+                                                                    window.location.reload();
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                                            >
+                                                                <Users size={14} /> Share with Tribe
+                                                            </button>
+                                                            <button
+                                                                onClick={async () => {
+                                                                    await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                        method: 'PATCH',
+                                                                        headers: { 'Content-Type': 'application/json' },
+                                                                        body: JSON.stringify({ visibility: 'PUBLIC' })
+                                                                    });
+                                                                    window.location.reload();
+                                                                }}
+                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+                                                            >
+                                                                <Globe size={14} /> Public
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
+                                                        <Edit2 size={16} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white">
                                             {/* 1. Left Sticky Column (Merged Vision + Labels) */}
-                                            <div className="sticky left-0 w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 shadow-sm">
+                                            <div className="sticky left-0 w-[150px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 shadow-sm overflow-x-auto no-scrollbar">
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {goal.rows.map((row, rIdx) => {
