@@ -1659,19 +1659,17 @@ export default function ObeyaPage() {
                                     <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
 
-                                        {/* Horizontal Vision Band - Responsive */}
-                                        <div className={`w-full min-h-[52px] ${goal.category === 'Health' ? 'bg-teal-600' :
-                                            goal.category === 'Wealth' ? 'bg-emerald-600' :
-                                                goal.category === 'Family' ? 'bg-indigo-500' :
-                                                    goal.category === 'Leisure' ? 'bg-pink-500' :
-                                                        goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
-                                            } flex items-stretch`}>
-                                            <div className={`sticky left-0 z-20 w-[150px] md:w-[400px] px-3 py-2 flex items-center justify-between ${goal.category === 'Health' ? 'bg-teal-600' :
+                                        {/* Horizontal Vision Band - Full Width Sticky */}
+                                        <div
+                                            className={`sticky left-0 z-40 min-h-[52px] ${goal.category === 'Health' ? 'bg-teal-600' :
                                                 goal.category === 'Wealth' ? 'bg-emerald-600' :
                                                     goal.category === 'Family' ? 'bg-indigo-500' :
                                                         goal.category === 'Leisure' ? 'bg-pink-500' :
                                                             goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
-                                                }`}>
+                                                } flex items-stretch shadow-md`}
+                                            style={{ width: '98vw', maxWidth: '100vw' }}
+                                        >
+                                            <div className="w-full px-3 py-2 flex items-center justify-between">
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     {/* Goal collapse button (Excel-style) */}
                                                     <button
@@ -1752,8 +1750,8 @@ export default function ObeyaPage() {
                                         </div>
 
                                         <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white">
-                                            {/* 1. Left Sticky Column (Merged Vision + Labels) */}
-                                            <div className="sticky left-0 w-[150px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 shadow-sm overflow-x-auto no-scrollbar">
+                                            {/* 1. Left Sticky Column - Higher Z-index for scroll */}
+                                            <div className="sticky left-0 w-[150px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-30 shadow-md overflow-x-auto no-scrollbar">
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {goal.rows.map((row, rIdx) => {
