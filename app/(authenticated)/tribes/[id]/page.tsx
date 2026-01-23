@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus, Lock, CreditCard, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus, Lock, CreditCard, AlertCircle, X } from 'lucide-react';
 import TribeCreationForm from '@/components/TribeCreationForm';
 import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 
