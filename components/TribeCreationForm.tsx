@@ -295,8 +295,9 @@ export default function TribeCreationForm({
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                 placeholder="e.g., SaaS Founders Mastermind"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-600"
                                 required
+                                disabled={readOnly}
                             />
                         </div>
 
@@ -421,7 +422,8 @@ export default function TribeCreationForm({
                                             type="checkbox"
                                             checked={formData.matchmaking[key].enabled}
                                             onChange={() => toggleCriteria(key)}
-                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                                            disabled={readOnly}
+                                            className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             id={`criteria-${key}`}
                                         />
                                         <label htmlFor={`criteria-${key}`} className="flex-1 font-bold text-gray-900 cursor-pointer select-none">
@@ -437,7 +439,7 @@ export default function TribeCreationForm({
                                                 placeholder={`Describe your ${criteriaLabels[key].toLowerCase()} requirements...`}
                                                 rows={2}
                                                 readOnly={readOnly}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none disabled:bg-gray-50"
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-600"
                                             />
                                         </div>
                                     )}
