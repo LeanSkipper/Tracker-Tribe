@@ -2,10 +2,84 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-// ... (previous imports)
-import { CreditCard, AlertCircle } from 'lucide-react'; // Add CreditCard icon
+import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus, Lock, CreditCard, AlertCircle } from 'lucide-react';
+import TribeCreationForm from '@/components/TribeCreationForm';
+import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 
-// ... (previous types)
+type Badge = {
+    id: string;
+    name: string;
+    iconName: string;
+};
+
+type Goal = {
+    id: string;
+    vision: string;
+    category?: string;
+    okrs?: any[];
+};
+
+type Member = {
+    id: string; // TribeMember ID
+    userId: string; // User ID
+    name: string;
+    avatarUrl?: string;
+    role: string;
+    customTitle?: string;
+    grit: number;
+    badges: Badge[];
+    goals: Goal[];
+    actionPlansCount: number;
+    attendanceRate: number;
+    signedSOPAt?: string;
+    isBanned?: boolean;
+};
+
+type Tribe = {
+    id: string;
+    name: string;
+    description?: string;
+    topic?: string;
+    meetingTime?: string;
+    creatorId?: string;
+    maxMembers: number;
+    standardProcedures?: string;
+    minLevel?: number;
+    minGrit?: number;
+    matchmakingCriteria?: string;
+    matchmakingSkills?: boolean;
+    matchmakingValues?: boolean;
+    matchmakingSocial?: boolean;
+    matchmakingIntent?: boolean;
+    isPaid?: boolean;
+    subscriptionPrice?: number;
+    subscriptionFrequency?: string;
+    members: Member[];
+};
+
+type ViewMode = 'operational' | 'tactical' | 'strategic' | 'task';
+
+const DEFAULT_SOP = `🛠 [Mastermind Name] Standard Operating Procedure (SOP)
+1. Tribe Identity & Purpose
+Purpose: [Define the core mission. Example: "To empower entrepreneurs through collective intelligence and accountability in real estate."] 
+Values & Principles:
+
+2. Logistics & Cadence
+Meeting Time: [Insert Day/Time/Timezone].
+Platform: [Insert Google Meet/Zoom/Bitrix link]. 
+Communication Hub: [Insert link to private WhatsApp/Discord/Tribe channel]. 
+
+3. Roles & Responsibilities
+The Facilitator (Admin): 
+The Tribe Member: 
+Time keeper
+Player
+
+4. The Rhythm (Meeting Agenda)
+5. Rules of Engagement & The "Grit" System
+6. Penalties & Moderation
+Strikes Policy: 
+Permanent Removal: `;
 
 export default function TribeDetailsPage() {
     const params = useParams();
@@ -16,9 +90,154 @@ export default function TribeDetailsPage() {
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [showPaymentModal, setShowPaymentModal] = useState(false); // New state
-    // ... (other existing states)
+    const [trackerMode, setTrackerMode] = useState<ViewMode>('operational');
+    const [error, setError] = useState<string | null>(null);
 
-    // ... (fetchTribeDetails and other effects remain the same)
+    // Admin Console State
+    const [adminTab, setAdminTab] = useState<'info' | 'sops' | 'members' | 'apps'>('info');
+    const [showEditModal, setShowEditModal] = useState(false); // New state for modal
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState<any>({});
+    const [applications, setApplications] = useState<any[]>([]);
+    const [saving, setSaving] = useState(false);
+    const [showSOPModal, setShowSOPModal] = useState(false);
+
+    const [isRestricted, setIsRestricted] = useState(false);
+    const [showLockModal, setShowLockModal] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/profile')
+            .then(res => res.json())
+            .then(user => {
+                const isActive = user.userProfile === 'HARD' ||
+                    user.subscriptionStatus === 'ACTIVE' ||
+                    (user.trialEndDate && new Date(user.trialEndDate) > new Date());
+
+                if (!isActive) {
+                    setIsRestricted(true);
+                    setShowLockModal(true);
+                }
+            });
+    }, []);
+
+    const fetchTribeDetails = useCallback(async () => {
+        try {
+            setError(null);
+            // Use the main endpoint which aligns with PUT and flattens member data correctly
+            const res = await fetch(`/api/tribes/${tribeId}`, { cache: 'no-store' });
+            if (res.ok) {
+                const data = await res.json();
+                setTribe(data.tribe);
+                setCurrentUserId(data.currentUserId);
+                setEditForm({
+                    name: data.tribe.name,
+                    description: data.tribe.description,
+                    meetingTime: data.tribe.meetingTime,
+                    topic: data.tribe.topic,
+                    standardProcedures: data.tribe.standardProcedures || DEFAULT_SOP,
+                    minLevel: data.tribe.minLevel,
+                    minGrit: data.tribe.minGrit,
+                    matchmakingCriteria: data.tribe.matchmakingCriteria,
+                    matchmakingSkills: data.tribe.matchmakingSkills,
+                    matchmakingValues: data.tribe.matchmakingValues,
+                    matchmakingSocial: data.tribe.matchmakingSocial,
+                    matchmakingIntent: data.tribe.matchmakingIntent
+                });
+
+                // Check for SOP signature (if member and not creator/admin)
+                // Note: We need to check the current user's membership details
+                // API returns member with flattened user details, but userId is the key connector
+                const currentMember = data.tribe.members.find((m: any) => m.id === data.currentUserId);
+
+                // Only show modal if:
+                // 1. Member exists
+                // 2. SOPs exist
+                // 3. Member hasn't signed
+                // 4. User is NOT the creator (creators implicitly agree)
+                if (currentMember && data.tribe.standardProcedures && !currentMember.signedSOPAt && data.tribe.creatorId !== data.currentUserId) {
+                    setShowSOPModal(true);
+                }
+
+                // If Admin, fetch applications
+                const isCreator = data.tribe.creatorId === data.currentUserId;
+                const isAdmin = isCreator || (currentMember?.role === 'ADMIN');
+
+
+                if (isAdmin) {
+                    const appRes = await fetch(`/api/tribes/${tribeId}/applications`);
+                    if (appRes.ok) {
+                        const appData = await appRes.json();
+                        setApplications(appData.applications || []);
+                    }
+                }
+            } else {
+                const errData = await res.json().catch(() => ({}));
+                setError(errData.details || errData.error || 'Failed to load tribe details');
+            }
+            setLoading(false);
+        } catch (err) {
+            console.error('Failed to fetch tribe details:', err);
+            setError(err instanceof Error ? err.message : 'Network error');
+            setLoading(false);
+        }
+    }, [tribeId]);
+
+    useEffect(() => {
+        if (tribeId) {
+            fetchTribeDetails();
+        }
+    }, [tribeId, fetchTribeDetails]);
+
+    const handleUpdateTribe = async () => {
+        setSaving(true);
+        try {
+            const res = await fetch(`/api/tribes/${tribeId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editForm)
+            });
+            if (res.ok) {
+                setIsEditing(false);
+                fetchTribeDetails();
+                alert('Tribe updated successfully!');
+            } else {
+                alert('Failed to update tribe');
+            }
+        } catch (e) {
+            alert('Error updating tribe');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleAppAction = async (appId: string, action: 'accept' | 'deny') => {
+        try {
+            const res = await fetch(`/api/tribes/${tribeId}/applications/${appId}/${action}`, {
+                method: 'POST'
+            });
+            if (res.ok) {
+                fetchTribeDetails(); // Refresh list and members
+            } else {
+                alert('Failed to process application');
+            }
+        } catch (e) {
+            alert('Error processing application');
+        }
+    };
+
+    const handleSignSOP = async () => {
+        try {
+            const res = await fetch(`/api/tribes/${tribeId}/sop/sign`, { method: 'POST' });
+            if (res.ok) {
+                setShowSOPModal(false);
+                fetchTribeDetails();
+            } else {
+                alert('Failed to sign SOP');
+            }
+        } catch (e) {
+            alert('Error signing SOP');
+        }
+    };
 
     const handleApply = async () => {
         if (tribe?.isPaid) {
@@ -45,10 +264,32 @@ export default function TribeDetailsPage() {
         } catch (e) { alert('Error applying'); }
     };
 
-    // ... (other handlers)
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50">
+                <div className="text-indigo-600 font-bold">Loading tribe details...</div>
+            </div>
+        );
+    }
 
-    if (loading) { /* ... */ }
-    if (!tribe) { /* ... */ }
+    if (!tribe) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-indigo-50 flex-col gap-4">
+                <div className="text-slate-600 text-xl font-bold">Tribe not found</div>
+                {error && (
+                    <div className="p-4 bg-red-50 text-red-600 rounded-lg max-w-lg text-center border border-red-100">
+                        Error details: {error}
+                    </div>
+                )}
+                <button
+                    onClick={() => router.push('/dashboard')}
+                    className="mt-4 px-6 py-2 bg-indigo-600 text-white rounded-full font-bold hover:bg-indigo-700 transition-colors"
+                >
+                    Return to Dashboard
+                </button>
+            </div>
+        );
+    }
 
     const isCreator = tribe.creatorId === currentUserId;
     const isMember = isCreator || tribe.members.some(m => m.userId === currentUserId);
