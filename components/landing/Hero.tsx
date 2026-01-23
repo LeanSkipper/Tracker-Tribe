@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 
 export default function Hero() {
@@ -10,7 +9,7 @@ export default function Hero() {
                 {/* Logo & Branding */}
                 <div className="mb-8 flex justify-center">
                     <div className="rounded-2xl bg-white/5 p-4 backdrop-blur-sm border border-white/10 shadow-2xl">
-                        <Image
+                        <img
                             src="/tnt-logo.jpg"
                             alt="TNT Logo"
                             width={120}
