@@ -657,3 +657,15 @@ model ScoreHistory {
 
   @@index([userId, createdAt])
 }
+
+model VisitorLog {
+  id        String   @id @default(cuid())
+  visitorId String?  // Optional, if we can track returning visitors via cookie
+  source    String?  // UTM Source or Referrer
+  path      String   // Path captured (e.g. /)
+  stage     String   @default("TOFU") // TOFU, MIFU, BOFU
+  
+  metadata  String?  // JSON for extra data (screen size, device, etc)
+  
+  createdAt DateTime @default(now())
+}
