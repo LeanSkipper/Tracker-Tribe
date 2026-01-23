@@ -1,6 +1,6 @@
 'use client';
 
-// import VisitorTracker from '@/components/VisitorTracker';
+import VisitorTracker from '@/components/VisitorTracker';
 import Hero from '@/components/landing/Hero';
 import PainPoints from '@/components/landing/PainPoints';
 import Solution from '@/components/landing/Solution';
@@ -12,7 +12,7 @@ import CtaFooter from '@/components/landing/CtaFooter';
 export default function Home() {
   return (
     <main className="min-h-screen bg-slate-900">
-      {/* <VisitorTracker /> */}
+      <VisitorTracker />
       <Hero />
       <SocialProof />
       <PainPoints />

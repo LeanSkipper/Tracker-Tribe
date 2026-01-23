@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import Navbar from "@/components/Navbar";
-import TrialBanner from "@/components/TrialBanner";
+import { Inter } from "next/font/google"; // If font issues persist, remove optimization or check usage
 import Providers from "./Providers";
 import "./globals.css";
 
+// If Inter font fails in Vercel, we can try removing "subsets" or using formatted import
+// For now, this usually works.
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -21,8 +21,6 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <Providers>
-          {/* <Navbar /> */}
-          {/* <TrialBanner /> */}
           {children}
         </Providers>
       </body>
