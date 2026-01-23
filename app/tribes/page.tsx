@@ -5,16 +5,17 @@ import { useRouter } from 'next/navigation';
 import { Users, Search, Plus, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TribeCreationForm from '@/components/TribeCreationForm';
+import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 
 type Tribe = {
     id: string;
+    // ... existing fields
     name: string;
     topic?: string;
     meetingTime?: string;
     maxMembers: number;
     memberCount: number;
     matchmakingCriteria?: string;
-    // Extended fields for schedule
     // Extended fields
     minGrit: number;
     minLevel: number;
@@ -31,11 +32,11 @@ type Tribe = {
 type UserStats = {
     grit: number;
     level: number;
-    currentXP: number; // This maps to minExperience requirement? Or minExperience maps to 'experience' field? 
-    // Schema says "minExperience" in Tribe, and User has "experience" (deprecated) and "currentXP".
-    // I should probably check "level" mainly. But if "minExperience" is used, I'll map it to currentXP for now or level*1000 + currentXP.
-    // Let's assume minExperience refers to XP.
+    currentXP: number;
     reputationScore: number;
+    // Subscription info
+    subscriptionStatus?: string;
+    userProfile?: string; // 'SOFT' | 'HARD' (Creator)
 };
 
 export default function BrowseTribesPage() {
@@ -46,6 +47,7 @@ export default function BrowseTribesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
     const fetchData = async () => {
         setLoading(true);
@@ -75,9 +77,18 @@ export default function BrowseTribesPage() {
     const [filterOpenSpots, setFilterOpenSpots] = useState(false);
     const [isMobileFabOpen, setIsMobileFabOpen] = useState(false);
 
-    // Helpers for filtering
+    const handleCreateClick = () => {
+        // Check if user is a creator
+        if (userStats?.userProfile === 'HARD') {
+            setShowCreateModal(true);
+        } else {
+            setShowUpgradeModal(true);
+        }
+    };
+
+    // ... existing helpers ...
     const isQualified = (tribe: Tribe) => {
-        if (!userStats) return true; // If no user stats, show all? Or fail open.
+        if (!userStats) return true;
         return (
             (userStats.level >= tribe.minLevel) &&
             (userStats.grit >= tribe.minGrit) &&
@@ -108,9 +119,6 @@ export default function BrowseTribesPage() {
     // Helper to render stat match
     const StatMatch = ({ label, required, userValue, unit = '' }: { label: string, required: number, userValue: number, unit?: string }) => {
         const isMatch = userValue >= required;
-        // If required is 0, arguably everyone matches, or we don't show it?
-        // User asked to "put in evidence the user stats related to required stats".
-        // If required is 0, let's show it as "Open" or gray.
         if (required === 0) return null;
 
         return (
@@ -143,7 +151,7 @@ export default function BrowseTribesPage() {
                         <p className="text-slate-600 text-sm md:text-base">Find and join mastermind tables that match your goals</p>
                     </div>
                     <button
-                        onClick={() => setShowCreateModal(true)}
+                        onClick={handleCreateClick}
                         className="!hidden lg:!flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
                     >
                         <Plus size={20} />
@@ -188,7 +196,7 @@ export default function BrowseTribesPage() {
                     </div>
                 </div>
 
-                {/* Top Tribes Leaderboard */}
+                {/* Top Tribes Leaderboard - Omitted for brevity in edit, assuming it stays same if not touched */}
                 {topTribes.length > 0 && (
                     <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl p-8 shadow-lg border-2 border-yellow-200 mb-8">
                         <div className="flex items-center gap-3 mb-6">
@@ -206,16 +214,13 @@ export default function BrowseTribesPage() {
                                     className="bg-white rounded-2xl p-4 shadow-md hover:shadow-xl transition-all cursor-pointer border-2 border-transparent hover:border-yellow-400"
                                 >
                                     <div className="flex items-center gap-4">
-                                        {/* Rank Badge */}
                                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-lg flex-shrink-0 ${index === 0 ? 'bg-yellow-400 text-yellow-900' :
-                                                index === 1 ? 'bg-slate-300 text-slate-700' :
-                                                    index === 2 ? 'bg-orange-300 text-orange-900' :
-                                                        'bg-slate-100 text-slate-600'
+                                            index === 1 ? 'bg-slate-300 text-slate-700' :
+                                                index === 2 ? 'bg-orange-300 text-orange-900' :
+                                                    'bg-slate-100 text-slate-600'
                                             }`}>
                                             #{index + 1}
                                         </div>
-
-                                        {/* Tribe Info */}
                                         <div className="flex-1 min-w-0">
                                             <h3 className="text-lg font-black text-slate-900 truncate">{tribe.name}</h3>
                                             <div className="flex items-center gap-4 mt-1">
@@ -229,8 +234,6 @@ export default function BrowseTribesPage() {
                                                 </span>
                                             </div>
                                         </div>
-
-                                        {/* Total Score */}
                                         <div className="text-right">
                                             <div className="text-xs text-slate-400 font-bold uppercase">Total Score</div>
                                             <div className="text-2xl font-black text-yellow-600">
@@ -253,7 +256,7 @@ export default function BrowseTribesPage() {
                             {searchQuery ? 'Try a different search term' : 'Be the first to create a tribe!'}
                         </p>
                         <button
-                            onClick={() => setShowCreateModal(true)}
+                            onClick={handleCreateClick}
                             className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700"
                         >
                             Create Tribe
@@ -329,7 +332,6 @@ export default function BrowseTribesPage() {
                                                     <StatMatch label="Level" required={tribe.minLevel} userValue={userStats.level} />
                                                     <StatMatch label="Grit" required={tribe.minGrit} userValue={userStats.grit} unit="%" />
                                                     <StatMatch label="Rep" required={tribe.minReputation} userValue={userStats.reputationScore} />
-                                                    {/* Using currentXP for Experience comparison roughly */}
                                                     <StatMatch label="XP" required={tribe.minExperience} userValue={userStats.currentXP} />
                                                 </div>
                                             </div>
@@ -378,7 +380,7 @@ export default function BrowseTribesPage() {
                             <Search size={16} /> Find Tribes
                         </button>
                         <button
-                            onClick={() => { setShowCreateModal(true); setIsMobileFabOpen(false); }}
+                            onClick={() => { handleCreateClick(); setIsMobileFabOpen(false); }}
                             className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
                         >
                             <Plus size={16} /> New Tribe
@@ -403,6 +405,8 @@ export default function BrowseTribesPage() {
                     }}
                 />
             )}
+
+            <SubscriptionLockedModal isOpen={showUpgradeModal} onClose={() => setShowUpgradeModal(false)} />
 
             {/* Safe Area Spacer for Bottom Nav if present */}
             <div className="h-12 md:hidden"></div>

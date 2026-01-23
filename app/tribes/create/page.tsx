@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Users } from 'lucide-react';
+import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 
 export default function CreateTribePage() {
     const router = useRouter();
@@ -12,6 +13,29 @@ export default function CreateTribePage() {
     const [maxMembers, setMaxMembers] = useState(10);
     const [matchmakingCriteria, setMatchmakingCriteria] = useState('');
     const [loading, setLoading] = useState(false);
+
+    // Auth check
+    const [checkingAuth, setCheckingAuth] = useState(true);
+    const [isRestricted, setIsRestricted] = useState(false);
+
+    useEffect(() => {
+        const checkAccess = async () => {
+            try {
+                const res = await fetch('/api/profile');
+                if (res.ok) {
+                    const user = await res.json();
+                    if (user.userProfile !== 'HARD') {
+                        setIsRestricted(true);
+                    }
+                }
+            } catch (err) {
+                console.error("Auth check failed", err);
+            } finally {
+                setCheckingAuth(false);
+            }
+        };
+        checkAccess();
+    }, []);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -43,6 +67,22 @@ export default function CreateTribePage() {
             setLoading(false);
         }
     };
+
+    if (checkingAuth) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-indigo-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
+
+    if (isRestricted) {
+        return (
+            <div className="min-h-screen bg-indigo-50 p-8">
+                <SubscriptionLockedModal isOpen={true} onClose={() => router.push('/tribes')} />
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
