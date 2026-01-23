@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: Request) {
     try {
         console.log('Stripe Key Loaded:', !!process.env.STRIPE_SECRET_KEY, 'Length:', process.env.STRIPE_SECRET_KEY?.length);
-        const { priceId, planType, userId, userEmail } = await req.json();
+        const { priceId, planType, userId, userEmail, customAmount } = await req.json();
 
         if ((!priceId && !planType) || !userId || !userEmail) {
             return NextResponse.json(
@@ -16,15 +16,50 @@ export async function POST(req: Request) {
             );
         }
 
+        let lineItem;
         let finalPriceId = priceId;
-        if (planType === 'MONTHLY') {
-            finalPriceId = process.env.STRIPE_PRICE_ID_MONTHLY;
-        } else if (planType === 'YEARLY') {
-            finalPriceId = process.env.STRIPE_PRICE_ID_YEARLY;
-        }
+        const metadata: any = { userId };
+        const subscriptionMetadata: any = { userId };
 
-        if (!finalPriceId) {
-            return NextResponse.json({ error: "Invalid price configuration" }, { status: 500 });
+        if (planType === 'CREATOR') {
+            if (!customAmount || customAmount < 200) {
+                return NextResponse.json({ error: "Invalid custom amount" }, { status: 400 });
+            }
+
+            // Dynamic price creation for Creator Plan
+            lineItem = {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Lapis Creator (Early Adopter)',
+                        description: '1 Year Access as Creator & Sponsor. Includes Tribe Leadership, Monetization & Priority Support.',
+                    },
+                    unit_amount: Math.round(customAmount * 100), // cents
+                    recurring: { interval: 'year' as const },
+                },
+                quantity: 1,
+            };
+
+            // Add profile upgrade metadata
+            metadata.userProfile = 'HARD';
+            subscriptionMetadata.userProfile = 'HARD';
+
+        } else {
+            // Standard Plans
+            if (planType === 'MONTHLY') {
+                finalPriceId = process.env.STRIPE_PRICE_ID_MONTHLY;
+            } else if (planType === 'YEARLY') {
+                finalPriceId = process.env.STRIPE_PRICE_ID_YEARLY;
+            }
+
+            if (!finalPriceId) {
+                return NextResponse.json({ error: "Invalid price configuration" }, { status: 500 });
+            }
+
+            lineItem = {
+                price: finalPriceId,
+                quantity: 1,
+            };
         }
 
         const user = await prisma.user.findUnique({
@@ -56,32 +91,31 @@ export async function POST(req: Request) {
         }
 
         // Create Checkout Session
+        // @ts-ignore - Stripe types might be strict about line_items structure
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
-            line_items: [
-                {
-                    price: finalPriceId,
-                    quantity: 1,
-                },
-            ],
+            line_items: [lineItem], // Use the constructed lineItem
             mode: 'subscription',
-            success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/dashboard?success=true`,
-            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/upgrade?canceled=true`,
-            metadata: {
-                userId: userId,
-            },
+            payment_method_types: ['card'], // Explicitly enable card payments
+            success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/obeya?success=true&upgraded=true`, // Redirect directly to Obeya
+            cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/onboarding/creator-offer?canceled=true`,
+            metadata: metadata,
             subscription_data: {
-                metadata: {
-                    userId: userId
-                }
+                metadata: subscriptionMetadata
             }
         });
 
         return NextResponse.json({ url: session.url });
-    } catch (error) {
-        console.error("Stripe Checkout Error:", error);
+    } catch (error: any) {
+        console.error("Stripe Checkout Error (Detailed):", {
+            message: error.message,
+            type: error.type,
+            code: error.code,
+            param: error.param,
+            stack: error.stack
+        });
         return NextResponse.json(
-            { error: "Internal Server Error" },
+            { error: error.message || "Internal Server Error" },
             { status: 500 }
         );
     }

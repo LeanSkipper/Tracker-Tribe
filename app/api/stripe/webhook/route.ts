@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { sendCreatorWelcomeEmail } from "@/lib/email";
 import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
@@ -48,15 +49,34 @@ export async function POST(req: Request) {
                 // Get subscription details to know end date
                 const subscription = await stripe.subscriptions.retrieve(subscriptionId) as any;
 
+                // Check for profile upgrade in metadata
+                const upgradeProfile = session.metadata?.userProfile;
+
+                const updateData: any = {
+                    stripeSubscriptionId: subscriptionId,
+                    subscriptionStatus: "ACTIVE",
+                    subscriptionStartDate: new Date(subscription.current_period_start * 1000),
+                    subscriptionEndDate: new Date(subscription.current_period_end * 1000),
+                };
+
+                // If this was a Creator upgrade, apply the profile change
+                if (upgradeProfile === 'HARD') {
+                    updateData.userProfile = 'HARD';
+                    updateData.subscriptionPlan = 'HARD_ANNUAL';
+
+                    // Send Welcome Email
+                    if (session.customer_details?.email) {
+                        // detached promise to not block webhook response
+                        sendCreatorWelcomeEmail(
+                            session.customer_details.email,
+                            session.customer_details.name || 'Creator'
+                        ).catch(e => console.error('Failed to send creator email:', e));
+                    }
+                }
+
                 await prisma.user.update({
                     where: { id: userId },
-                    data: {
-                        stripeSubscriptionId: subscriptionId,
-                        subscriptionStatus: "ACTIVE",
-                        subscriptionStartDate: new Date(subscription.current_period_start * 1000),
-                        subscriptionEndDate: new Date(subscription.current_period_end * 1000),
-                        // We could map the price ID to a plan enum here if needed
-                    }
+                    data: updateData
                 });
                 break;
             }

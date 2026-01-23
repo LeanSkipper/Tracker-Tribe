@@ -1,125 +1,60 @@
 'use client';
 
-import { usePermissions } from '@/hooks/usePermissions';
-import { getTrialDaysRemaining, getGraceDaysRemaining } from '@/lib/permissions';
-import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { Sparkles } from 'lucide-react';
 
-/**
- * Banner component to show trial or grace period status
- */
 export default function TrialBanner() {
-    const permissions = usePermissions();
-    const [dismissed, setDismissed] = useState(false);
+    const { data: session, status } = useSession();
+    const pathname = usePathname();
+    const router = useRouter();
+    const [spotsLeft, setSpotsLeft] = useState<number | null>(null);
 
-    if (!permissions || dismissed) {
-        return null;
-    }
+    // Don't show on auth pages or landing page
+    if (pathname?.startsWith('/auth/') || pathname === '/') return null;
 
-    const { isInTrial, isInGracePeriod, trialDaysRemaining, graceDaysRemaining, subscriptionStatus } = permissions;
+    // Don't show if user is already a creator (HARD profile)
+    // @ts-ignore - userProfile might not be typed in session yet
+    if (session?.user?.userProfile === 'HARD') return null;
 
-    // Don't show banner if user has active subscription
-    if (subscriptionStatus === 'ACTIVE') {
-        return null;
-    }
+    useEffect(() => {
+        // Fetch remaining spots
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('/api/grand-slam-stats');
+                if (res.ok) {
+                    const data = await res.json();
+                    setSpotsLeft(data.remainingSpots);
+                }
+            } catch (e) {
+                console.error('Failed to fetch stats', e);
+            }
+        };
+        fetchStats();
+    }, []);
 
-    // Show trial banner
-    if (isInTrial && trialDaysRemaining !== undefined) {
-        return (
-            <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-3 shadow-lg">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="text-2xl">⏰</span>
-                        <div>
-                            <p className="font-semibold">
-                                Free Trial: {trialDaysRemaining} days remaining
-                            </p>
-                            <p className="text-sm text-blue-100">
-                                Upgrade to continue accessing GPS features after your trial ends
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => window.location.href = '/onboarding/upgrade'}
-                            className="px-4 py-2 bg-white text-blue-600 rounded-lg font-semibold hover:bg-blue-50 transition-all"
-                        >
-                            Upgrade Now
-                        </button>
-                        <button
-                            onClick={() => setDismissed(true)}
-                            className="text-white hover:text-blue-100 transition-colors"
-                            aria-label="Dismiss"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
+    return (
+        <div
+            onClick={() => router.push('/onboarding/upgrade')}
+            className="w-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white text-sm py-2 px-4 flex items-center justify-center gap-3 cursor-pointer hover:opacity-95 transition-opacity relative overflow-hidden"
+        >
+            {/* Animated background effect */}
+            <div className="absolute inset-0 bg-white/10 animate-pulse" />
+
+            <div className="flex items-center gap-2 font-bold relative z-10 animate-bounce-subtle">
+                <Sparkles size={16} className="text-yellow-300 animate-spin-slow" />
+                <span className="uppercase tracking-wide text-yellow-300">Grand Slam Offer:</span>
+                <span>
+                    {spotsLeft !== null
+                        ? `${spotsLeft} spots available`
+                        : 'Limited spots available'
+                    } or until Feb 28th!
+                </span>
+                <span className="underline decoration-yellow-300 decoration-2 underline-offset-2 ml-1">
+                    Claim Creator Status 🚀
+                </span>
             </div>
-        );
-    }
-
-    // Show grace period banner
-    if (isInGracePeriod && graceDaysRemaining !== undefined) {
-        return (
-            <div className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-3 shadow-lg">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="text-2xl">⚠️</span>
-                        <div>
-                            <p className="font-semibold">
-                                Grace Period: {graceDaysRemaining} days remaining
-                            </p>
-                            <p className="text-sm text-orange-100">
-                                Your trial has ended. Subscribe now to avoid losing access (20% surcharge applies during grace period)
-                            </p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                        <button
-                            onClick={() => window.location.href = '/onboarding/upgrade'}
-                            className="px-4 py-2 bg-white text-orange-600 rounded-lg font-semibold hover:bg-orange-50 transition-all"
-                        >
-                            Subscribe Now
-                        </button>
-                        <button
-                            onClick={() => setDismissed(true)}
-                            className="text-white hover:text-orange-100 transition-colors"
-                            aria-label="Dismiss"
-                        >
-                            ✕
-                        </button>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    // Show expired banner
-    if (subscriptionStatus === 'EXPIRED' || subscriptionStatus === 'CANCELLED') {
-        return (
-            <div className="bg-red-600 text-white px-4 py-3 shadow-lg">
-                <div className="max-w-7xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <span className="text-2xl">🔒</span>
-                        <div>
-                            <p className="font-semibold">
-                                Subscription {subscriptionStatus === 'EXPIRED' ? 'Expired' : 'Cancelled'}
-                            </p>
-                            <p className="text-sm text-red-100">
-                                Reactivate your subscription to regain access to all features
-                            </p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => window.location.href = '/onboarding/upgrade'}
-                        className="px-4 py-2 bg-white text-red-600 rounded-lg font-semibold hover:bg-red-50 transition-all"
-                    >
-                        Reactivate
-                    </button>
-                </div>
-            </div>
-        );
-    }
-
-    return null;
+        </div>
+    );
 }

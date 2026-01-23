@@ -65,3 +65,69 @@ export const WelcomeEmailTemplate = (name: string) => `
 </body>
 </html>
 `;
+
+export const CreatorWelcomeEmailTemplate = (name: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to the Creator Circle</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #fff; background-color: #000; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Inter', sans-serif; }
+        .header { background: linear-gradient(to right, #EAB308, #F97316); color: black; padding: 30px 20px; text-align: center; border-radius: 12px 12px 0 0; }
+        .content { background-color: #18181b; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #27272a; border-top: none; }
+        .button { display: inline-block; background: linear-gradient(to right, #EAB308, #F97316); color: #000 !important; padding: 16px 32px; text-decoration: none !important; border-radius: 12px; font-weight: 900; margin: 20px 0; text-align: center; width: 80%; }
+        .button.secondary { background: #27272a; color: #fff !important; border: 1px solid #3f3f46; }
+        .benefit-box { background-color: #27272a; border-left: 4px solid #EAB308; padding: 20px; margin: 25px 0; border-radius: 4px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #71717a; }
+        .links { margin: 25px 0; text-align: center; }
+        h1 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -0.05em; }
+        h3 { color: #EAB308; margin-top: 0; }
+        li { margin-bottom: 10px; color: #d4d4d8; }
+        p { color: #d4d4d8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>WELCOME TO THE<br/>CREATOR CIRCLE 👑</h1>
+        </div>
+        <div class="content">
+            <p>Hi ${name || 'Lead'},</p>
+            <p>You didn't just join a platform. You stepped up to lead. By securing your spot as an <strong>Early Adopter Creator</strong>, you've unlocked the highest tier of access.</p>
+            
+            <div class="benefit-box">
+                <h3>⚡ Your Creator Privileges</h3>
+                <ul style="list-style: none; padding-left: 0;">
+                    <li>👑 <strong>Tribe Leadership:</strong> Create and host your own Tribes.</li>
+                    <li>💰 <strong>Monetization:</strong> (Coming Soon) Turn your leadership into income.</li>
+                    <li>🚀 <strong>Priority Status:</strong> Max XP boosts and direct support access.</li>
+                    <li>🔒 <strong>Grand Slam Rate:</strong> You locked in this price for life.</li>
+                </ul>
+            </div>
+
+            <p><strong>Your Mission Strategy:</strong></p>
+            <ol style="color: #a1a1aa; padding-left: 20px;">
+                <li><strong>Set Your Profile:</strong> Complete your bio so others follow you.</li>
+                <li><strong>Start Your Tribe:</strong> Define the mission and invite your first members.</li>
+                <li><strong>Lead by Example:</strong> Post your weekly Pit Stops.</li>
+            </ol>
+
+            <div class="links">
+                <a href="https://tracker-tribe.vercel.app/obeya" class="button">🚀 Launch Dashboard</a>
+                <br/><br/>
+                <a href="https://tracker-tribe.vercel.app/obeya" class="button secondary">📱 Mobile App (PWA)</a>
+            </div>
+            
+            <p style="font-size: 14px; color: #52525b; text-align: center;">
+                <em>Mobile Tip: Open in Safari/Chrome > Share > "Add to Home Screen" for the full app experience.</em>
+            </p>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Lapis Platform. Rise to the top.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
