@@ -4,23 +4,23 @@ export default function HowItWorks() {
     const steps = [
         {
             icon: <Compass size={28} className="text-emerald-400" />,
-            title: "1. Define Strategy",
-            description: "Clarify your ultimate vision. Know exactly where you are going before you start running."
+            title: "1. Build Your Strategy",
+            description: "Put your vision. Know exactly where you are going before you start running."
         },
         {
             icon: <ClipboardList size={28} className="text-blue-400" />,
-            title: "2. Build The Plan",
-            description: "Break the vision down into quarterly targets (OKRs) and simple weekly actions."
+            title: "2. Build Your Plan",
+            description: "Break it down into quarterly OKRs and weekly actions."
         },
         {
             icon: <Zap size={28} className="text-amber-400" />,
             title: "3. Execute & Win",
-            description: "Track progress. Earn XP for consistency. Watch your results compound daily."
+            description: "Track your progress, earn XP for consistency, and watch your business compound."
         },
         {
             icon: <Users size={28} className="text-purple-400" />,
-            title: "4. Join The Tribe",
-            description: "Get matched with a squad. Leverage shared commitment to accelerate faster."
+            title: "4. Join A Tribe",
+            description: "Get matched with a squad, accelerate, leverage your engagement and commitment."
         }
     ];
 
