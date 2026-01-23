@@ -258,9 +258,8 @@ export default function TribeDetailsPage() {
                 body: JSON.stringify({ message: "I'd like to join!" }) // You might want to allow a custom message later
             });
             if (res.ok) {
-                alert('Application sent successfully!');
-                setShowPaymentModal(false);
-                setIsPending(true);
+                // Redirect to success explanation page
+                router.push('/tribes/application-success');
             } else {
                 const data = await res.json().catch(() => ({}));
                 alert(data.error || 'Failed to send application.');
@@ -344,8 +343,8 @@ export default function TribeDetailsPage() {
                                     onClick={isPending ? undefined : handleApply}
                                     disabled={isPending}
                                     className={`px-6 py-3 font-bold rounded-full shadow-lg transition-all text-sm flex items-center gap-2 ${isPending
-                                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'
-                                            : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700'
+                                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'
+                                        : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700'
                                         }`}
                                 >
                                     {isPending ? (

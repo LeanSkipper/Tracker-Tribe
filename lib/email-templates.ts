@@ -131,3 +131,108 @@ export const CreatorWelcomeEmailTemplate = (name: string) => `
 </body>
 </html>
 `;
+
+export const TribeApplicationAdminEmail = (adminName: string, applicantName: string, tribeName: string, profileLink: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>New Tribe Application</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Inter', sans-serif; }
+        .header { background-color: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e4e4e7; border-top: none; }
+        .button { display: inline-block; background-color: #4F46E5; color: #ffffff !important; padding: 14px 28px; text-decoration: none !important; border-radius: 12px; font-weight: bold; margin: 10px 0; }
+        .alert-box { background-color: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 14px; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #71717a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>New Application! 📬</h1>
+        </div>
+        <div class="content">
+            <p>Hi ${adminName},</p>
+            <p><strong>${applicantName}</strong> has applied to join your tribe <strong>"${tribeName}"</strong>.</p>
+            
+            <p>Please review their profile, stats, and badges to decide if they are a good fit for your group.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="${profileLink}" class="button">View Applicant Profile</a>
+            </div>
+
+            <div class="alert-box">
+                <strong>⏳ SLA Reminder:</strong> You have <strong>15 days</strong> to accept or deny this application before it expires or affects your response rating.
+            </div>
+
+            <p>Recommended Steps:</p>
+            <ul>
+                <li>Review their "Grit" score and consistency.</li>
+                <li>Check their badges and past achievements.</li>
+                <li>Share this profile with your existing members for consensus.</li>
+            </ul>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Lapis Platform. Manage your tribe.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
+export const TribeApplicationUserConfirmationEmail = (userName: string, tribeName: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Application Received</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Inter', sans-serif; }
+        .header { background-color: #10B981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e4e4e7; border-top: none; }
+        .timeline { margin: 20px 0; padding-left: 20px; border-left: 2px solid #e5e7eb; }
+        .timeline-item { position: relative; padding-bottom: 20px; padding-left: 20px; }
+        .timeline-item::before { content: ''; position: absolute; left: -9px; top: 0; width: 16px; height: 16px; border-radius: 50%; background: #e5e7eb; border: 2px solid white; }
+        .timeline-item.active::before { background: #10B981; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #71717a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Application Sent! ✅</h1>
+        </div>
+        <div class="content">
+            <p>Hi ${userName},</p>
+            <p>Your application to join <strong>"${tribeName}"</strong> has been successfully submitted to the Tribe Admin.</p>
+            
+            <h3>What happens next?</h3>
+            <div class="timeline">
+                <div class="timeline-item active">
+                    <strong>Application Received</strong><br/>
+                    <span style="color: #666; font-size: 14px;">We've notified the admin.</span>
+                </div>
+                <div class="timeline-item">
+                    <strong>Admin Review</strong><br/>
+                    <span style="color: #666; font-size: 14px;">The admin reviews your profile (Stats, Grit, Badges).</span>
+                </div>
+                <div class="timeline-item">
+                    <strong>Decision</strong><br/>
+                    <span style="color: #666; font-size: 14px;">You'll receive an email with the decision within <strong>15 days</strong>.</span>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin-top: 30px; color: #6b7280; font-size: 14px;">
+                While you wait, keep your stats up to impress the admin!
+            </p>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} Lapis Platform.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;

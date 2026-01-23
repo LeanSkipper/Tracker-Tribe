@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, unauthorizedResponse } from "@/lib/auth";
+import { sendTribeApplicationEmails } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -18,6 +19,12 @@ export async function POST(
         if (!user) {
             return unauthorizedResponse();
         }
+
+        // Fetch user email details (need full user object for email)
+        const dbUser = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: { email: true, name: true } // Assuming email is on User model. Auth adapter might handle it differently but usually it's there.
+        });
 
         // Check if already a member
         const existingMember = await prisma.tribeMember.findUnique({
@@ -46,6 +53,20 @@ export async function POST(
             return NextResponse.json({ error: "Application already pending" }, { status: 400 });
         }
 
+        // Fetch tribe with creator email
+        const tribe = await prisma.tribe.findUnique({
+            where: { id: tribeId },
+            include: {
+                creator: {
+                    select: { email: true, name: true }
+                }
+            }
+        });
+
+        if (!tribe) {
+            return NextResponse.json({ error: "Tribe not found" }, { status: 404 });
+        }
+
         // Create application
         const application = await prisma.tribeApplication.create({
             data: {
@@ -55,6 +76,19 @@ export async function POST(
                 status: "PENDING"
             }
         });
+
+        // Send Emails (Async - don't block response if it fails, but nice to await)
+        if (dbUser?.email && tribe.creator.email) {
+            await sendTribeApplicationEmails({
+                adminEmail: tribe.creator.email,
+                adminName: tribe.creator.name || 'Tribe Admin',
+                userEmail: dbUser.email,
+                userName: dbUser.name || 'User',
+                tribeName: tribe.name,
+                tribeId: tribe.id,
+                userProfileLink: `${process.env.NEXTAUTH_URL || 'https://tracker-tribe.vercel.app'}/profile/${user.id}`
+            });
+        }
 
         return NextResponse.json(application);
     } catch (error) {
