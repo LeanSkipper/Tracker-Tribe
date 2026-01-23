@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Users, Target, ArrowLeft, CheckCircle2, Lock, Unlock, Link, Video, Play, ExternalLink, Edit2, TrendingUp } from 'lucide-react';
 import SharedObeyaTracker from '@/components/SharedObeyaTracker';
+import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 
 import TribeScoreChart from '@/components/TribeScoreChart';
@@ -22,6 +23,24 @@ export default function SessionPage() {
     const [meetingLink, setMeetingLink] = useState('');
     const [isEditingLink, setIsEditingLink] = useState(false);
     const [savingLink, setSavingLink] = useState(false);
+
+    const [isRestricted, setIsRestricted] = useState(false);
+    const [showLockModal, setShowLockModal] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/profile')
+            .then(res => res.json())
+            .then(user => {
+                const isActive = user.userProfile === 'HARD' ||
+                    user.subscriptionStatus === 'ACTIVE' ||
+                    (user.trialEndDate && new Date(user.trialEndDate) > new Date());
+
+                if (!isActive) {
+                    setIsRestricted(true);
+                    setShowLockModal(true);
+                }
+            });
+    }, []);
 
     const fetchSessionData = async () => {
         try {
@@ -291,10 +310,9 @@ export default function SessionPage() {
             <PitStopModal
                 isOpen={isPitStopOpen}
                 onClose={() => setIsPitStopOpen(false)}
-                onComplete={() => {
-                    // Start 5 min timer or refresh session data?
-                }}
+                onComplete={() => setIsPitStopOpen(false)}
             />
+            <SubscriptionLockedModal isOpen={showLockModal} onClose={() => router.push('/dashboard')} />
         </div>
     );
 }

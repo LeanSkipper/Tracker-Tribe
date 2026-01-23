@@ -55,6 +55,10 @@ export async function GET() {
     }
 }
 
+import { isRestricted, LIMITS, UserSubscriptionData } from "@/lib/subscription";
+
+// ... existing imports
+
 export async function POST(req: Request) {
     try {
         const data = await req.json();
@@ -71,7 +75,69 @@ export async function POST(req: Request) {
             }, { status: 401 });
         }
 
-        // Check GPS access permission
+        // Fetch full profile for subscription check
+        const profile = await prisma.user.findUnique({
+            where: { id: user.id },
+            select: {
+                userProfile: true,
+                subscriptionStatus: true,
+                trialEndDate: true
+            }
+        });
+
+        if (isRestricted(profile as UserSubscriptionData)) {
+            const { id, rows } = data;
+            const isNewGoal = !id || id === 'NEW' || !id.startsWith('c');
+
+            // 1. Goal Limit Check (Max 3)
+            if (isNewGoal) {
+                const goalCount = await prisma.goal.count({ where: { userId: user.id } });
+                if (goalCount >= LIMITS.GOALS) {
+                    return NextResponse.json({
+                        error: "Goal limit reached",
+                        message: `Your free plan is limited to ${LIMITS.GOALS} goals. Upgrade to add more.`
+                    }, { status: 403 });
+                }
+            }
+
+            // 2. KPI Limit Check (Max 9)
+            // Simplified check: Count KPIs in the current payload. 
+            // Ideally we count total user KPIs, but that's expensive.
+            // Let's count existing + new in this payload ?? Or just total in DB?
+            // "9 KPIs max" -> Total across ALL goals. 
+
+            // Let's fetch total current KPIs
+            const kpiCount = await prisma.oKR.count({
+                where: {
+                    goal: { userId: user.id },
+                    type: 'KPI'
+                }
+            });
+
+            // Count new KPIs in this request
+            // const newKpisInRequest = rows?.filter((r: any) => r.type === 'KPI' && (!r.id || r.id.startsWith('new') || r.id.startsWith('kpi-'))).length || 0;
+            // Actually, if we are just UPDATING an existing one it's fine.
+            // But if we are adding new ones...
+
+            // Re-evaluating logic: If current total >= 9, prevent creating NEW KPIs.
+            // Existing KPIs can be updated.
+
+            if (rows) {
+                const newKpisRequest = rows.filter((r: any) =>
+                    r.type === 'KPI' &&
+                    (!r.id || r.id.startsWith('new') || r.id.startsWith('kpi-') || r.id.length < 10)
+                ).length;
+
+                if (kpiCount + newKpisRequest > LIMITS.KPIS) {
+                    return NextResponse.json({
+                        error: "KPI limit reached",
+                        message: `Your free plan is limited to ${LIMITS.KPIS} KPIs. Upgrade to add more.`
+                    }, { status: 403 });
+                }
+            }
+        }
+
+        // Check GPS access permission (Permission logic might be redundant with restriction logic, keeping both for now)
         const permission = await checkPermission(user, 'gps');
 
         if (!permission.allowed) {

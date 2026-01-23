@@ -4,7 +4,8 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle, Share2, Globe } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle, Share2, Globe, Lock } from 'lucide-react';
+import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
 import PitStopViewModal from '@/components/PitStop/PitStopViewModal';
@@ -772,6 +773,31 @@ function ObeyaContent() {
         }
     }, [searchParams]);
 
+    const [isRestricted, setIsRestricted] = useState(false);
+    const [showLockModal, setShowLockModal] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/profile')
+            .then(res => res.json())
+            .then(user => {
+                if (user.error) return;
+                // Client-side restriction check (mirrors lib/subscription)
+                const isActive = user.userProfile === 'HARD' ||
+                    user.subscriptionStatus === 'ACTIVE' ||
+                    (user.trialEndDate && new Date(user.trialEndDate) > new Date());
+                setIsRestricted(!isActive);
+            })
+            .catch(err => console.error("Failed to check subscription", err));
+    }, []);
+
+    const handleCreateGoal = () => {
+        if (isRestricted && goals.length >= 3) {
+            setShowLockModal(true);
+            return;
+        }
+        setIsInspirationOpen(true);
+    };
+
     const [currentYear, setCurrentYear] = useState(2026);
     const [viewMode, setViewMode] = useState<ObeyaViewMode>('operational');
     const [isLoaded, setIsLoaded] = useState(false);
@@ -1121,6 +1147,7 @@ function ObeyaContent() {
     };
 
     const handleAddAction = async (week: string, goalId: string, title: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
         if (!title.trim()) return;
 
         // Update local state
@@ -1152,6 +1179,7 @@ function ObeyaContent() {
     };
 
     const handleAddKanbanTask = async (goalId: string, title: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
         if (!title.trim()) return;
 
         // Get current week
@@ -1163,6 +1191,7 @@ function ObeyaContent() {
     };
 
     const handleUpdateActionStatus = async (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => {
+        if (isRestricted) { setShowLockModal(true); return; }
         setGoals(prev => {
             const next = prev.map(g => {
                 if (g.id !== goalId) return g;
@@ -1181,6 +1210,7 @@ function ObeyaContent() {
     };
 
     const handleUpdateActionTitle = async (goalId: string, cardId: string, newTitle: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
         setGoals(prev => {
             const next = prev.map(g => {
                 if (g.id !== goalId) return g;
@@ -1198,6 +1228,7 @@ function ObeyaContent() {
     };
 
     const handleMoveAction = async (goalId: string, actionId: string, targetWeekId: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
         setGoals(prev => {
             const next = prev.map(g => {
                 if (g.id !== goalId) return g;
@@ -1215,6 +1246,7 @@ function ObeyaContent() {
     };
 
     const handleAddActionToCurrentWeek = async (goalId: string, rowId: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
         const title = window.prompt("Enter task title:");
         if (!title) return;
         const now = new Date();
@@ -1367,7 +1399,11 @@ function ObeyaContent() {
                         <button onClick={() => setViewMode('operational')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'operational' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Execution: Full weekly details">Execution</button>
                         <button onClick={() => setViewMode('tactical')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'tactical' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Planning: OKRs + KPIs">Planning</button>
                         <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategy: High-level roadmap">Strategy</button>
-                        <button onClick={() => setViewMode('chart')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'chart' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Chart: Visual analytics"><BarChart2 size={14} className="inline mr-1" />Chart</button>
+                        <button onClick={() => isRestricted ? setShowLockModal(true) : setViewMode('chart')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'chart' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'} flex items-center gap-1`} title="Chart: Visual analytics">
+                            <BarChart2 size={14} />
+                            Chart
+                            {isRestricted && <Lock size={10} className="text-amber-500" />}
+                        </button>
                     </div>
                     <button
                         onClick={toggleExpandAll}
@@ -1380,14 +1416,14 @@ function ObeyaContent() {
                 </div>
                 <div className="flex items-center gap-3">
                     <button
-                        onClick={() => setIsPitStopOpen(true)}
+                        onClick={() => isRestricted ? setShowLockModal(true) : setIsPitStopOpen(true)}
                         className={`
                             px-4 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 transition-all hover:scale-105
                             ${pitStopStatus === 'overdue'
                                 ? 'bg-red-600 text-white shadow-red-200 hover:bg-red-700 animate-pulse'
                                 : pitStopStatus === 'warning'
                                     ? 'bg-amber-500 text-white shadow-amber-200 hover:bg-amber-600'
-                                    : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'
+                                    : isRestricted ? 'bg-gray-100 text-gray-400 shadow-none cursor-not-allowed' : 'bg-blue-600 text-white shadow-blue-200 hover:bg-blue-700'
                             }
                         `}
                     >
@@ -1397,12 +1433,14 @@ function ObeyaContent() {
                             <><AlertTriangle size={20} /> OVERDUE (-5 XP)</>
                         ) : pitStopStatus === 'warning' ? (
                             <><Clock size={20} /> DUE TOMORROW</>
+                        ) : isRestricted ? (
+                            <><Lock size={20} /> LOCKED</>
                         ) : (
                             <><Clock size={20} /> PIT STOP ({pitStopDaysLeft} DAYS)</>
                         )}
                     </button>
                     <button
-                        onClick={() => setIsInspirationOpen(true)}
+                        onClick={handleCreateGoal}
                         className="bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-blue-800 transition-all hover:scale-105"
                     >
                         <Plus size={22} /> GOAL
@@ -2163,19 +2201,27 @@ function ObeyaContent() {
                 {isMobileFabOpen && (
                     <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
                         <button
-                            onClick={() => { setIsInspirationOpen(true); setIsMobileFabOpen(false); }}
+                            onClick={() => { handleCreateGoal(); setIsMobileFabOpen(false); }}
                             className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
                         >
                             <Plus size={16} /> New Goal
                         </button>
                         <button
-                            onClick={() => { setIsPitStopOpen(true); setIsMobileFabOpen(false); }}
+                            onClick={() => {
+                                if (isRestricted) setShowLockModal(true);
+                                else setIsPitStopOpen(true);
+                                setIsMobileFabOpen(false);
+                            }}
                             className="bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
                         >
                             <Clock size={16} /> Pit Stop
                         </button>
                         <button
-                            onClick={() => { setIsCoachOpen(true); setIsMobileFabOpen(false); }}
+                            onClick={() => {
+                                if (isRestricted) setShowLockModal(true);
+                                else setIsCoachOpen(true);
+                                setIsMobileFabOpen(false);
+                            }}
                             className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
                         >
                             <Sparkles size={16} /> Coach
@@ -2190,9 +2236,12 @@ function ObeyaContent() {
                 </button>
             </div>
 
-            <Coach goals={goals} className="hidden md:flex" isOpen={isCoachOpen} onOpenChange={setIsCoachOpen} />
+            <div onClick={() => isRestricted && setShowLockModal(true)} className="contents">
+                <Coach goals={goals} className="hidden md:flex" isOpen={isRestricted ? false : isCoachOpen} onOpenChange={isRestricted ? () => setShowLockModal(true) : setIsCoachOpen} />
+            </div>
 
             <WelcomeCreatorModal isOpen={showWelcomeModal} onClose={() => setShowWelcomeModal(false)} />
+            <SubscriptionLockedModal isOpen={showLockModal} onClose={() => setShowLockModal(false)} />
         </div>
     );
 }

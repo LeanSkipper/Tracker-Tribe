@@ -1,4 +1,5 @@
-import { prisma } from '@/lib/prisma'; // Assuming global prisma client exists here, or I will adapt import
+import { prisma } from '@/lib/prisma';
+import { isRestricted, UserSubscriptionData } from '@/lib/subscription';
 
 // XP Values
 export const XP_TABLE = {
@@ -73,11 +74,21 @@ export async function awardXP(userId: string, action: XPAction) {
                 level: true,
                 lifetimePositiveXP: true,
                 lifetimeNegativeXP: true,
-                reputationScore: true
+                reputationScore: true,
+                // Subscription fields for check
+                userProfile: true,
+                subscriptionStatus: true,
+                trialEndDate: true
             }
         });
 
         if (!user) throw new Error('User not found');
+
+        // FROZEN SCORE CHECK
+        if (isRestricted(user as unknown as UserSubscriptionData)) {
+            // User is restricted (expired trial), do not update stats.
+            return { success: false, reason: 'RESTRICTED' };
+        }
 
         // Calculate new values
         let newCurrentXP = user.currentXP + xpAmount;

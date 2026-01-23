@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, Clock, Target, TrendingUp, Save, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Users, Clock, Target, TrendingUp, Save, X, ChevronDown, ChevronUp, Lock, Calculator, HelpCircle, DollarSign } from 'lucide-react';
+import TribeMonetizationTermsModal from './TribeMonetizationTermsModal';
+import { useRouter } from 'next/navigation';
 
 interface MatchmakingCriteria {
     ageRange: { enabled: boolean; description: string };
@@ -43,6 +45,7 @@ interface TribeCreationFormProps {
     initialData?: any; // Accepting existing tribe data for editing
     isModal?: boolean; // Default true
     readOnly?: boolean; // Default false
+    canMonetize?: boolean; // New prop
 }
 
 // Helper to parse existing matchmaking fields to form structure
@@ -67,9 +70,12 @@ export default function TribeCreationForm({
     onSuccess,
     initialData,
     isModal = true,
-    readOnly = false
+    readOnly = false,
+    canMonetize = false
 }: TribeCreationFormProps) {
     const isEditing = !!initialData;
+    const router = useRouter();
+    const [showTermsModal, setShowTermsModal] = useState(false);
 
     const [formData, setFormData] = useState<TribeFormData>({
         name: initialData?.name || '',
@@ -580,25 +586,38 @@ export default function TribeCreationForm({
                         </div>
 
                         {formData.isPaid && (
-                            <div className="bg-green-50 p-4 rounded-xl space-y-4 border border-green-100">
+                            <div className="bg-green-50 p-4 rounded-xl space-y-6 border border-green-100">
+                                {/* Price Slider */}
                                 <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-2">Price Amount ($)</label>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-sm font-bold text-gray-700">
+                                            Price per member <span className="text-gray-500 font-normal">(extra to subscription)</span>
+                                        </label>
+                                        <span className="text-xl font-black text-green-700">
+                                            ${formData.subscriptionPrice}
+                                        </span>
+                                    </div>
                                     <input
-                                        type="number"
-                                        min="0.01"
-                                        step="0.01"
-                                        value={formData.subscriptionPrice || ''}
+                                        type="range"
+                                        min="5"
+                                        max="500"
+                                        step="5"
+                                        value={formData.subscriptionPrice || 0}
                                         onChange={(e) => setFormData({ ...formData, subscriptionPrice: parseFloat(e.target.value) })}
                                         disabled={readOnly}
-                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none disabled:bg-gray-50"
-                                        placeholder="0.00"
+                                        className="w-full h-2 bg-green-200 rounded-lg appearance-none cursor-pointer accent-green-600"
                                     />
+                                    <div className="flex justify-between text-xs text-gray-400 mt-1 font-bold">
+                                        <span>$5</span>
+                                        <span>$500+</span>
+                                    </div>
                                 </div>
 
+                                {/* Billing Frequency */}
                                 <div>
                                     <label className="block text-sm font-bold text-gray-700 mb-2">Billing Frequency</label>
                                     <div className="grid grid-cols-2 gap-3">
-                                        {(['weekly', 'monthly', 'yearly', 'lifetime'] as const).map((freq) => (
+                                        {(['monthly', 'yearly'] as const).map((freq) => (
                                             <button
                                                 key={freq}
                                                 type="button"
@@ -615,8 +634,39 @@ export default function TribeCreationForm({
                                     </div>
                                 </div>
 
-                                <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-sm text-yellow-800">
-                                    <strong>Note:</strong> Platform commission applies. You will receive the majority of the revenue. (Coming Soon)
+                                {/* Revenue Calculator */}
+                                <div className="bg-white p-4 rounded-xl border border-green-200 shadow-sm">
+                                    <h4 className="font-bold text-gray-800 flex items-center gap-2 mb-3">
+                                        <Calculator size={16} className="text-green-600" />
+                                        Estimated Monthly Revenue
+                                    </h4>
+
+                                    <div className="space-y-2 text-sm">
+                                        <div className="flex justify-between text-gray-600">
+                                            <span>Gross Revenue ({formData.maxMembers} members x ${formData.subscriptionPrice})</span>
+                                            <span>${(formData.maxMembers * (formData.subscriptionPrice || 0)).toFixed(2)}</span>
+                                        </div>
+                                        <div className="flex justify-between text-gray-500">
+                                            <span>Platform Fee (30%)</span>
+                                            <span>-${((formData.maxMembers * (formData.subscriptionPrice || 0)) * 0.30).toFixed(2)}</span>
+                                        </div>
+                                        <div className="border-t border-gray-100 pt-2 flex justify-between font-black text-lg text-green-700">
+                                            <span>Net Potential:</span>
+                                            <span>${((formData.maxMembers * (formData.subscriptionPrice || 0)) * 0.70).toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Terms Link */}
+                                <div className="flex justify-center">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowTermsModal(true)}
+                                        className="text-sm font-bold text-green-700 hover:text-green-800 underline flex items-center gap-1"
+                                    >
+                                        <HelpCircle size={14} />
+                                        See commission terms & rules
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -706,6 +756,8 @@ export default function TribeCreationForm({
                     )}
                 </div>
             </div>
+
+            <TribeMonetizationTermsModal isOpen={showTermsModal} onClose={() => setShowTermsModal(false)} />
         </div>
     );
 }

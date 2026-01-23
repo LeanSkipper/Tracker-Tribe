@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus } from 'lucide-react';
+import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus, Lock } from 'lucide-react';
 import TribeCreationForm from '@/components/TribeCreationForm';
+import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 
 type Badge = {
     id: string;
@@ -96,6 +97,24 @@ export default function TribeDetailsPage() {
     const [applications, setApplications] = useState<any[]>([]);
     const [saving, setSaving] = useState(false);
     const [showSOPModal, setShowSOPModal] = useState(false);
+
+    const [isRestricted, setIsRestricted] = useState(false);
+    const [showLockModal, setShowLockModal] = useState(false);
+
+    useEffect(() => {
+        fetch('/api/profile')
+            .then(res => res.json())
+            .then(user => {
+                const isActive = user.userProfile === 'HARD' ||
+                    user.subscriptionStatus === 'ACTIVE' ||
+                    (user.trialEndDate && new Date(user.trialEndDate) > new Date());
+
+                if (!isActive) {
+                    setIsRestricted(true);
+                    setShowLockModal(true);
+                }
+            });
+    }, []);
 
     const fetchTribeDetails = useCallback(async () => {
         try {
@@ -655,6 +674,8 @@ export default function TribeDetailsPage() {
                     }}
                 />
             )}
+
+            <SubscriptionLockedModal isOpen={showLockModal} onClose={() => router.push('/dashboard')} />
 
         </div >
     );

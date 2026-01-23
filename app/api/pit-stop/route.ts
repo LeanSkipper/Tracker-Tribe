@@ -42,6 +42,10 @@ export async function GET(req: NextRequest) {
     }
 }
 
+import { isRestricted, UserSubscriptionData } from "@/lib/subscription";
+
+// ... existing imports
+
 // POST: Create a new Pit Stop Entry
 export async function POST(req: NextRequest) {
     const session = await getServerSession(authOptions);
@@ -52,9 +56,21 @@ export async function POST(req: NextRequest) {
     try {
         const user = await prisma.user.findUnique({
             where: { email: session.user.email },
+            include: {  // Need minimal fields for check
+                // Including subscription fields implied if we select all or use mapping. 
+                // Default findUnique returns all scalar fields which includes userProfile, subscriptionStatus, trialEndDate.
+            }
         });
 
         if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
+
+        // RESTRICTION CHECK
+        if (isRestricted(user as unknown as UserSubscriptionData)) {
+            return NextResponse.json({
+                error: 'Feature Locked',
+                message: 'Pit Stops are only available on the Creator plan.'
+            }, { status: 403 });
+        }
 
         const body = await req.json();
         const { mood, win, winImageUrl, lesson, duration } = body;
