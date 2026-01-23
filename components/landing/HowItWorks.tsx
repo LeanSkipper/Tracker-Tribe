@@ -1,47 +1,60 @@
-import { ArrowRight, ClipboardCheck, Users, Trophy } from 'lucide-react';
+import { Compass, ClipboardList, Zap, Users } from 'lucide-react';
 
 export default function HowItWorks() {
     const steps = [
         {
-            icon: <ClipboardCheck size={32} />,
-            title: "Build Your Plan",
-            description: "Set your yearly vision and break it down into quarterly OKRs and weekly actions."
+            icon: <Compass size={28} className="text-emerald-400" />,
+            title: "1. Define Strategy",
+            description: "Clarify your ultimate vision. Know exactly where you are going before you start running."
         },
         {
-            icon: <Users size={32} />,
-            title: "Join A Tribe",
-            description: "Get matched with a squad of peer entrepreneurs. Weekly check-ins keep you honest."
+            icon: <ClipboardList size={28} className="text-blue-400" />,
+            title: "2. Build The Plan",
+            description: "Break the vision down into quarterly targets (OKRs) and simple weekly actions."
         },
         {
-            icon: <Trophy size={32} />,
-            title: "Execute & Win",
-            description: "Track your progress, earn XP for consistency, and watch your business compound."
+            icon: <Zap size={28} className="text-amber-400" />,
+            title: "3. Execute & Win",
+            description: "Track progress. Earn XP for consistency. Watch your results compound daily."
+        },
+        {
+            icon: <Users size={28} className="text-purple-400" />,
+            title: "4. Join The Tribe",
+            description: "Get matched with a squad. Leverage shared commitment to accelerate faster."
         }
     ];
 
     return (
-        <section className="bg-slate-900 py-24 text-white">
-            <div className="container mx-auto px-4">
-                <div className="mb-16 text-center">
-                    <h2 className="mb-4 text-3xl font-black md:text-5xl">
-                        The Plan To <span className="text-blue-500">Victory</span>
+        <section className="bg-slate-950 py-32 text-white overflow-hidden relative">
+            {/* Background Elements */}
+            <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-800 to-transparent"></div>
+            <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-800 to-transparent"></div>
+
+            <div className="container mx-auto px-4 relative z-10">
+                <div className="mb-20 text-center max-w-2xl mx-auto">
+                    <span className="text-blue-500 font-bold tracking-wider text-sm uppercase mb-4 block">The Framework</span>
+                    <h2 className="mb-6 text-4xl font-black md:text-5xl leading-tight">
+                        The Blueprint For <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Domination</span>
                     </h2>
-                    <p className="text-slate-400">Three simple steps to regain control and accelerate.</p>
+                    <p className="text-slate-400 text-lg">
+                        Complexity relies on chaos. We rely on a simple, 4-step cycle to guarantee momentum.
+                    </p>
                 </div>
 
-                <div className="grid gap-8 md:grid-cols-3">
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                     {steps.map((step, index) => (
-                        <div key={index} className="relative flex flex-col items-center text-center">
-                            {/* Connector Line (Desktop) */}
-                            {index < steps.length - 1 && (
-                                <div className="absolute top-8 left-1/2 hidden h-0.5 w-full -translate-y-1/2 translate-x-1/2 bg-slate-700 md:block"></div>
-                            )}
+                        <div key={index} className="group relative p-8 rounded-3xl bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-blue-900/20">
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl"></div>
 
-                            <div className="relative mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-900/50">
-                                {step.icon}
+                            <div className="relative z-10">
+                                <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-800 shadow-inner group-hover:scale-110 transition-transform duration-300">
+                                    {step.icon}
+                                </div>
+                                <h3 className="mb-3 text-xl font-bold text-white group-hover:text-blue-400 transition-colors">{step.title}</h3>
+                                <p className="text-slate-400 leading-relaxed text-sm">
+                                    {step.description}
+                                </p>
                             </div>
-                            <h3 className="mb-3 text-xl font-bold">{step.title}</h3>
-                            <p className="max-w-xs text-slate-400">{step.description}</p>
                         </div>
                     ))}
                 </div>
