@@ -77,12 +77,26 @@ export async function GET(
             };
         });
 
+        // Check for pending application if user is logged in
+        let isPending = false;
+        if (session) {
+            const pendingApp = await prisma.tribeApplication.findFirst({
+                where: {
+                    userId: session.id,
+                    tribeId: tribeId,
+                    status: 'PENDING'
+                }
+            });
+            isPending = !!pendingApp;
+        }
+
         return NextResponse.json({
             tribe: {
                 ...tribe,
                 members: transformedMembers
             },
-            currentUserId: session?.id || ''
+            currentUserId: session?.id || '',
+            isPending
         });
     } catch (error) {
         console.error("GET Tribe Error:", error);

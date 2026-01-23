@@ -89,7 +89,8 @@ export default function TribeDetailsPage() {
     const [tribe, setTribe] = useState<Tribe | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string>('');
-    const [showPaymentModal, setShowPaymentModal] = useState(false); // New state
+    const [isPending, setIsPending] = useState(false); // New state
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [trackerMode, setTrackerMode] = useState<ViewMode>('operational');
     const [error, setError] = useState<string | null>(null);
 
@@ -129,6 +130,7 @@ export default function TribeDetailsPage() {
                 const data = await res.json();
                 setTribe(data.tribe);
                 setCurrentUserId(data.currentUserId);
+                setIsPending(data.isPending || false); // Set pending status
                 setEditForm({
                     name: data.tribe.name,
                     description: data.tribe.description,
@@ -258,8 +260,10 @@ export default function TribeDetailsPage() {
             if (res.ok) {
                 alert('Application sent successfully!');
                 setShowPaymentModal(false);
+                setIsPending(true);
             } else {
-                alert('Failed to send application.');
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || 'Failed to send application.');
             }
         } catch (e) { alert('Error applying'); }
     };
@@ -337,11 +341,24 @@ export default function TribeDetailsPage() {
 
                             {!isMember && (
                                 <button
-                                    onClick={handleApply}
-                                    className="px-6 py-3 bg-indigo-600 text-white font-bold rounded-full shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all text-sm flex items-center gap-2"
+                                    onClick={isPending ? undefined : handleApply}
+                                    disabled={isPending}
+                                    className={`px-6 py-3 font-bold rounded-full shadow-lg transition-all text-sm flex items-center gap-2 ${isPending
+                                            ? 'bg-slate-200 text-slate-500 cursor-not-allowed shadow-none'
+                                            : 'bg-indigo-600 text-white shadow-indigo-200 hover:bg-indigo-700'
+                                        }`}
                                 >
-                                    <UserPlus size={18} />
-                                    {tribe.isPaid ? 'Apply to Join ($)' : 'Apply to Join'}
+                                    {isPending ? (
+                                        <>
+                                            <CheckCircle2 size={18} />
+                                            Application Sent
+                                        </>
+                                    ) : (
+                                        <>
+                                            <UserPlus size={18} />
+                                            {tribe.isPaid ? 'Apply to Join ($)' : 'Apply to Join'}
+                                        </>
+                                    )}
                                 </button>
                             )}
                         </div>
