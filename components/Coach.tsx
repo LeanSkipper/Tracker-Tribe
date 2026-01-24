@@ -49,6 +49,26 @@ export default function Coach({ goals, className = '', isOpen: controlledIsOpen,
         scrollToBottom();
     }, [messages, isOpen]);
 
+    // Tutorial State
+    const [tutorialStep, setTutorialStep] = useState(0); // 0 = idle, 1 = intro, 2 = goal, 3 = pitstop, 4 = tribe
+
+    useEffect(() => {
+        // Check if first visit
+        const hasSeen = localStorage.getItem('lapis_tutorial_completed');
+        if (!hasSeen && !isControlled) {
+            setTimeout(() => {
+                setInternalIsOpen(true);
+                setTutorialStep(1);
+                setMessages(prev => [...prev, {
+                    id: 'tut-intro',
+                    sender: 'coach',
+                    text: "👋 Welcome to Lapis! I'm your Personal Growth Architect. \n\nI'll help you build your system in 3 simple steps. Ready?",
+                    options: ["Let's Start!", "Skip Tutorial"]
+                }]);
+            }, 1500);
+        }
+    }, []);
+
     // Simple Rule-Based "AI"
     const processResponse = (userInput: string) => {
         setIsTyping(true);
@@ -58,7 +78,63 @@ export default function Coach({ goals, className = '', isOpen: controlledIsOpen,
             let responseText = "I'm focusing on your request...";
             let options: string[] | undefined = undefined;
 
-            if (lowerInput.includes('new goal') || lowerInput.includes('create')) {
+            // --- TUTORIAL LOGIC ---
+            if (tutorialStep > 0) {
+                if (lowerInput.includes('skip')) {
+                    setTutorialStep(0);
+                    localStorage.setItem('lapis_tutorial_completed', 'true');
+                    responseText = "No problem! I'm here whenever you need me. Just ask.";
+                } else if (tutorialStep === 1) {
+                    // Moving to Step 2: Goal
+                    setTutorialStep(2);
+                    responseText = "**Step 1: The Goal**\n\nA system needs a target. I see your goal list is " + (goals.length > 0 ? "already started!" : "empty.");
+                    if (goals.length > 0) {
+                        responseText += " \n\nGreat job! You have defined " + goals.length + " goal(s). \n\nReady for the next step?";
+                        options = ["Next Step"];
+                    } else {
+                        responseText += " \n\nClick the **+ GOAL** button in the top right to define your first Vision. \n\n(Tell me 'Done' when you're back!)";
+                        options = ["Done", "I'll do it later"];
+                    }
+                } else if (tutorialStep === 2) {
+                    if (lowerInput.includes('later')) {
+                        responseText = "Okay, but remember: A ship without a destination is just drifting. Moving on...";
+                    }
+                    // Moving to Step 3: Pit Stop
+                    setTutorialStep(3);
+                    responseText = "**Step 2: The Pit Stop**\n\nExecution is nothing without reflection. The 'Pit Stop' is your weekly ritual to review progress.\n\nHave you checked the **Pit Stop button** (top right) today?";
+                    options = ["Yes, checked it", "What is it?"];
+                } else if (tutorialStep === 3) {
+                    if (lowerInput.includes('what')) {
+                        responseText = "It's a guided 5-step weekly review to celebrate wins and learn from mistakes. It awards you XP and keeps your streak alive! ⚡";
+                    }
+                    // Moving to Step 4: Tribe
+                    setTutorialStep(4);
+                    setTimeout(() => {
+                        setMessages(prev => [...prev, {
+                            id: Date.now().toString(),
+                            sender: 'coach',
+                            text: "**Step 3: The Tribe**\n\nDon't walk the path alone. Joining a Tribe increases success rate by 95%.\n\nExplore the Tribes to find your accountability partners.",
+                            options: ["Browse Tribes", "Finish Tutorial"]
+                        }]);
+                        setIsTyping(false);
+                    }, 2000); // Small delay for flow
+                    return;
+                } else if (tutorialStep === 4) {
+                    if (lowerInput.includes('browse')) {
+                        window.location.href = '/tribes';
+                        return;
+                    }
+                    setTutorialStep(0);
+                    localStorage.setItem('lapis_tutorial_completed', 'true');
+                    responseText = "🎉 **You are ready!** \n\nRemember: \n1. Set Goals \n2. Do Weekly Pit Stops \n3. Engage with your Tribe.\n\nI'll be here if you need advice!";
+                }
+            }
+            // --- STANDARD LOGIC ---
+            else if (lowerInput.includes('tutorial') || lowerInput.includes('start')) {
+                setTutorialStep(1);
+                responseText = "Restarting the beginner tutorial! \n\nI'll help you build your system in 3 simple steps. Ready?";
+                options = ["Let's Start!", "Skip"];
+            } else if (lowerInput.includes('new goal') || lowerInput.includes('create')) {
                 responseText = "Great! Let's turn your story into a structured strategy. What is the 'Vision' or big dream you want to achieve? (e.g., 'Become an Ironman', 'Financial Freedom')";
             } else if (lowerInput.includes('ironman') || lowerInput.includes('financial') || lowerInput.includes('health')) {
                 responseText = "That's a powerful vision. Now, let's break it down. What is the ONE main result metric (OKR) that proves you achieved this? (e.g., 'Race Time', 'Net Worth')";
@@ -86,7 +162,8 @@ export default function Coach({ goals, className = '', isOpen: controlledIsOpen,
             } else if (lowerInput.includes('problem') || lowerInput.includes('solve')) {
                 responseText = "For structured problem solving, I recommend the 8D approach or PDCA. \n\n1. **Plan**: Define the gap.\n2. **Do**: Execute a countermeasure.\n3. **Check**: Measure effect.\n4. **Act**: Standardize.\n\nWhich stage are you stuck in?";
             } else {
-                responseText = "I'm listening. How does this align with your long-term Vision in the 'GPS'? Remember, systems drive behavior.";
+                responseText = "I'm listening. How does this align with your long-term Vision in the 'GPS'? Remember, systems drive behavior. \n\n(Type 'Tutorial' to restart the guide)";
+                options = ["Tutorial", "New Goal", "Problem Solving"];
             }
 
             setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'coach', text: responseText, options }]);
