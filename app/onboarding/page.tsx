@@ -2,228 +2,195 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, TrendingUp, Award, Target, Star, Zap, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Target, Map, Zap, Trophy, ArrowRight, ArrowRightCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const onboardingSteps = [
+const philosophySteps = [
     {
-        icon: Users,
+        icon: Target,
         color: 'indigo',
-        title: 'Connect with Peers',
-        description: 'Build your network',
-        benefits: [
-            'Discover like-minded individuals with similar goals',
-            'View GPS goals of peers to get inspired',
-            'Join tribes for accountability and support',
-            'Get matched with peers based on your interests'
-        ],
-        tip: 'The more connections you make, the more motivated you stay!'
+        title: 'Strategic Vision',
+        subtitle: 'The "Why"',
+        description: 'Define clearly where you want to go. Without a destination, you are just wandering.',
+        points: [
+            'Crystal clear objectives',
+            'Aligned with your true purpose',
+            'Ambitious yet achievable milestones'
+        ]
     },
     {
-        icon: TrendingUp,
+        icon: Map,
         color: 'purple',
-        title: 'Level Up Your Profile',
-        description: 'Become more attractive',
-        benefits: [
-            'Complete goals to increase your level',
-            'Higher levels unlock access to more peer GPS views',
-            'Build reliability score by hitting your targets',
-            'Showcase your achievements with badges'
-        ],
-        tip: 'Peers with higher levels and reliability get more connection requests!'
+        title: 'Planification',
+        subtitle: 'The "How"',
+        description: 'Turn your vision into a concrete roadmap. Hope is not a strategy.',
+        points: [
+            'Break down big goals into steps',
+            'Identify potential obstacles',
+            'Set clear timelines and deadlines'
+        ]
     },
     {
-        icon: Award,
+        icon: Zap,
         color: 'yellow',
-        title: 'Ranking System',
-        description: 'How it works',
-        levels: [
-            { level: 1, name: 'Starter', requirement: '0-100 XP', access: 'View Level 1 peers' },
-            { level: 2, name: 'Explorer', requirement: '100-500 XP', access: 'View Level 1-2 peers' },
-            { level: 3, name: 'Achiever', requirement: '500-1500 XP', access: 'View Level 1-3 peers' },
-            { level: 4, name: 'Master', requirement: '1500-5000 XP', access: 'View Level 1-4 peers' },
-            { level: 5, name: 'Legend', requirement: '5000+ XP', access: 'View all peers' },
-        ],
-        tip: 'Earn XP by completing goals, maintaining streaks, and helping tribe members!'
+        title: 'Execution',
+        subtitle: 'The "What"',
+        description: 'Deep work and focused action. This is where the magic happens.',
+        points: [
+            'Focus on high-impact tasks',
+            'Maintain consistency and discipline',
+            'Adapt quickly to feedback'
+        ]
     },
     {
-        icon: Star,
-        color: 'green',
-        title: 'Build Your Reputation',
-        description: 'Stand out from the crowd',
-        benefits: [
-            'Complete your profile with bio and skills',
-            'Set ambitious but achievable goals',
-            'Maintain high reliability (hit your targets)',
-            'Engage with your tribe regularly',
-            'Share your progress and celebrate wins'
-        ],
-        tip: 'A complete profile with high reliability gets 5x more connection requests!'
+        icon: Trophy,
+        color: 'emerald',
+        title: 'Results & Transformation',
+        subtitle: 'The "Outcome"',
+        description: 'Measure what matters. Celebrate wins and learn from setbacks.',
+        points: [
+            'Track your progress systematically',
+            'Review and refine your approach',
+            'Become the person who achieves the goal'
+        ]
     }
 ];
 
-export default function PaidOnboardingPage() {
+export default function OnboardingIntroPage() {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(0);
-    const step = onboardingSteps[currentStep];
-    const Icon = step.icon;
-
-    const colorClasses = {
-        indigo: { bg: 'bg-indigo-100', text: 'text-indigo-600', border: 'border-indigo-200', gradient: 'from-indigo-500 to-purple-500' },
-        purple: { bg: 'bg-purple-100', text: 'text-purple-600', border: 'border-purple-200', gradient: 'from-purple-500 to-pink-500' },
-        yellow: { bg: 'bg-yellow-100', text: 'text-yellow-600', border: 'border-yellow-200', gradient: 'from-yellow-500 to-orange-500' },
-        green: { bg: 'bg-green-100', text: 'text-green-600', border: 'border-green-200', gradient: 'from-green-500 to-emerald-500' },
-    };
-
-    const colors = colorClasses[step.color as keyof typeof colorClasses];
 
     const handleNext = () => {
-        if (currentStep < onboardingSteps.length - 1) {
+        if (currentStep < philosophySteps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
-            router.push('/profile'); // Complete your profile
+            router.push('/onboarding/select-template');
         }
     };
 
     const handleSkip = () => {
-        router.push('/profile'); // Skip to profile
+        router.push('/onboarding/select-template');
+    };
+
+    const step = philosophySteps[currentStep];
+    const Icon = step.icon;
+
+    // Premium styling config
+    const getGradient = (color: string) => {
+        switch (color) {
+            case 'indigo': return 'from-indigo-600 to-blue-600';
+            case 'purple': return 'from-purple-600 to-indigo-600';
+            case 'yellow': return 'from-amber-500 to-orange-500';
+            case 'emerald': return 'from-emerald-500 to-teal-500';
+            default: return 'from-gray-600 to-gray-800';
+        }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 flex items-center justify-center p-4">
-            <div className="max-w-4xl w-full">
-                {/* Progress */}
-                <div className="mb-8">
-                    <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-bold text-gray-500">Welcome Guide</span>
-                        <span className="text-sm text-gray-500">{currentStep + 1} of {onboardingSteps.length}</span>
-                    </div>
-                    <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                            className={`h-full bg-gradient-to-r ${colors.gradient} transition-all duration-500`}
-                            style={{ width: `${((currentStep + 1) / onboardingSteps.length) * 100}%` }}
-                        />
-                    </div>
-                </div>
+        <div className="min-h-screen bg-slate-50 flex flex-col relative overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-slate-100 to-transparent -z-10" />
+            <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] opacity-5 rounded-full blur-3xl bg-gradient-to-r ${getGradient(step.color)} transition-all duration-700`} />
 
-                {/* Content Card */}
-                <motion.div
-                    key={currentStep}
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-white rounded-3xl shadow-2xl border-2 border-gray-100 overflow-hidden"
-                >
-                    {/* Header */}
-                    <div className={`${colors.bg} p-8 border-b-2 ${colors.border}`}>
-                        <div className="flex items-center gap-4 mb-3">
-                            <div className={`w-16 h-16 ${colors.bg} rounded-2xl flex items-center justify-center border-2 ${colors.border}`}>
-                                <Icon size={32} className={colors.text} />
-                            </div>
-                            <div>
-                                <h2 className="text-3xl font-black text-gray-900">{step.title}</h2>
-                                <p className="text-gray-600 font-medium">{step.description}</p>
-                            </div>
-                        </div>
-                    </div>
+            {/* Main Content */}
+            <main className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+                <div className="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
 
-                    {/* Body */}
-                    <div className="p-8">
-                        {/* Benefits or Levels */}
-                        {step.benefits && (
-                            <div className="space-y-4 mb-6">
-                                {step.benefits.map((benefit, idx) => (
-                                    <motion.div
-                                        key={idx}
-                                        initial={{ opacity: 0, x: -20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
-                                        className="flex items-start gap-3"
-                                    >
-                                        <CheckCircle2 size={24} className={`${colors.text} shrink-0 mt-0.5`} />
-                                        <p className="text-gray-700 text-lg">{benefit}</p>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-
-                        {step.levels && (
-                            <div className="space-y-3 mb-6">
-                                {step.levels.map((level, idx) => (
-                                    <motion.div
-                                        key={idx}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.1 }}
-                                        className="bg-gradient-to-r from-gray-50 to-white p-4 rounded-xl border border-gray-200 flex items-center gap-4"
-                                    >
-                                        <div className={`w-12 h-12 rounded-full bg-gradient-to-br ${colors.gradient} flex items-center justify-center text-white font-black text-lg`}>
-                                            {level.level}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="font-bold text-gray-900">{level.name}</div>
-                                            <div className="text-sm text-gray-600">{level.requirement}</div>
-                                        </div>
-                                        <div className="text-sm text-gray-500 italic">{level.access}</div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Tip */}
-                        <div className={`${colors.bg} ${colors.border} border-2 rounded-xl p-4 flex items-start gap-3`}>
-                            <Zap size={20} className={colors.text} />
-                            <div>
-                                <p className="font-bold text-gray-900 mb-1">Pro Tip</p>
-                                <p className="text-gray-700">{step.tip}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="p-8 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
-                        <button
-                            onClick={handleSkip}
-                            className="text-gray-500 hover:text-gray-700 font-bold underline"
+                    {/* Left: Interactive Visuals */}
+                    <div className="relative order-2 md:order-1">
+                        <motion.div
+                            key={currentStep}
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="relative z-10"
                         >
-                            Skip Guide
-                        </button>
+                            <div className="aspect-square max-w-md mx-auto bg-white rounded-[2.5rem] shadow-2xl shadow-slate-200/50 p-8 flex flex-col items-center justify-center text-center border border-slate-100">
+                                <div className={`w-24 h-24 mb-8 rounded-3xl bg-gradient-to-br ${getGradient(step.color)} flex items-center justify-center text-white shadow-lg`}>
+                                    <Icon size={48} strokeWidth={1.5} />
+                                </div>
+                                <h2 className="text-3xl font-black text-slate-900 mb-2">{step.title}</h2>
+                                <p className={`text-sm font-bold uppercase tracking-wider mb-6 text-${step.color}-600`}>{step.subtitle}</p>
+                                <p className="text-slate-600 text-lg leading-relaxed mb-8">
+                                    {step.description}
+                                </p>
+                                <ul className="text-left space-y-3 w-full bg-slate-50 p-6 rounded-2xl">
+                                    {step.points.map((point, idx) => (
+                                        <li key={idx} className="flex items-center gap-3 text-slate-700 font-medium">
+                                            <div className={`w-2 h-2 rounded-full bg-${step.color}-500`} />
+                                            {point}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </motion.div>
 
-                        <button
-                            onClick={handleNext}
-                            className={`px-8 py-3 bg-gradient-to-r ${colors.gradient} text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2`}
-                        >
-                            {currentStep < onboardingSteps.length - 1 ? (
-                                <>
-                                    Next
-                                    <ArrowRight size={20} />
-                                </>
-                            ) : (
-                                <>
-                                    Get Started
-                                    <Target size={20} />
-                                </>
+                        {/* Decorative blobs */}
+                        <div className="absolute top-10 -left-10 w-24 h-24 bg-indigo-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+                        <div className="absolute top-10 -right-10 w-24 h-24 bg-purple-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+                        <div className="absolute -bottom-8 left-20 w-24 h-24 bg-pink-100 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+                    </div>
+
+                    {/* Right: Navigation & Context */}
+                    <div className="order-1 md:order-2 space-y-8 md:pl-12">
+                        <div>
+                            <h1 className="text-4xl md:text-5xl font-black text-slate-900 leading-tight mb-4">
+                                The <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600">Road Less Stupid</span>
+                            </h1>
+                            <p className="text-xl text-slate-600">
+                                A proven system to achieve what matters most without the chaos.
+                            </p>
+                        </div>
+
+                        {/* Steps Indicator */}
+                        <div className="space-y-4">
+                            {philosophySteps.map((s, idx) => (
+                                <button
+                                    key={idx}
+                                    onClick={() => setCurrentStep(idx)}
+                                    className={`w-full text-left p-4 rounded-xl transition-all duration-300 flex items-center gap-4 group ${currentStep === idx
+                                            ? 'bg-white shadow-lg scale-105 border border-slate-100'
+                                            : 'hover:bg-white/50 opacity-60 hover:opacity-100'
+                                        }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold transition-colors ${currentStep === idx
+                                            ? `bg-gray-900 text-white`
+                                            : 'bg-slate-200 text-slate-500 group-hover:bg-slate-300'
+                                        }`}>
+                                        {idx + 1}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className={`font-bold ${currentStep === idx ? 'text-slate-900' : 'text-slate-500'}`}>
+                                            {s.title}
+                                        </div>
+                                    </div>
+                                    {currentStep === idx && <ArrowRightCircle className="text-gray-900" size={20} />}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-4 pt-4">
+                            <button
+                                onClick={handleNext}
+                                className="flex-1 bg-slate-900 text-white py-4 px-8 rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-xl shadow-slate-200"
+                            >
+                                {currentStep === philosophySteps.length - 1 ? 'Start NOW' : 'Next Step'}
+                                <ArrowRight size={20} />
+                            </button>
+
+                            {currentStep < philosophySteps.length - 1 && (
+                                <button
+                                    onClick={handleSkip}
+                                    className="px-6 py-4 rounded-2xl font-bold text-slate-500 hover:text-slate-900 transition-colors"
+                                >
+                                    Skip
+                                </button>
                             )}
-                        </button>
-                    </div>
-                </motion.div>
-
-                {/* Quick Stats Preview */}
-                <div className="mt-8 grid grid-cols-4 gap-4">
-                    {[
-                        { label: 'Your Level', value: '1', icon: TrendingUp },
-                        { label: 'Reliability', value: '0%', icon: Target },
-                        { label: 'Connections', value: '0', icon: Users },
-                        { label: 'Badges', value: '0', icon: Award },
-                    ].map((stat, idx) => (
-                        <div key={idx} className="bg-white rounded-xl p-4 text-center border border-gray-200">
-                            <stat.icon size={20} className="mx-auto mb-2 text-gray-400" />
-                            <div className="text-2xl font-black text-gray-900">{stat.value}</div>
-                            <div className="text-xs text-gray-500">{stat.label}</div>
                         </div>
-                    ))}
+                    </div>
                 </div>
-            </div>
+            </main>
         </div>
     );
 }

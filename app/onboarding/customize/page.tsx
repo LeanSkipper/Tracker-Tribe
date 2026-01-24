@@ -84,10 +84,11 @@ export default function CustomizeGoalPage() {
             });
 
             if (response.ok) {
+                const data = await response.json();
                 // Clear onboarding data
                 sessionStorage.removeItem('onboarding_template');
-                // Redirect to GPS view
-                router.push('/obeya');
+                // Redirect to First Action view with Goal ID
+                router.push(`/onboarding/first-action?goalId=${data.id}`);
             } else {
                 const error = await response.json();
                 alert(error.message || 'Failed to create goal');
@@ -106,7 +107,7 @@ export default function CustomizeGoalPage() {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-2 text-sm font-bold text-gray-500 mb-3">
-                        <span>Step 3 of 3</span>
+                        <span>Step 3 of 4</span>
                     </div>
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">
                         {template ? 'Customize Your Goal' : 'Create Your Goal'}
@@ -257,7 +258,7 @@ export default function CustomizeGoalPage() {
                             ) : (
                                 <>
                                     <Check size={20} />
-                                    Save & Start Tracking
+                                    Next: First Action
                                 </>
                             )}
                         </button>

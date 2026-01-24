@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle, Share2, Globe, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle, Share2, Globe, Lock, Zap } from 'lucide-react';
 import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
@@ -773,7 +773,17 @@ function ObeyaContent() {
             newParams.delete('success');
             window.history.replaceState(null, '', `/obeya?${newParams.toString()}`);
         }
+
+        // Pit Stop Tutorial Check
+        if (searchParams.get('tutorial') === 'pitstop') {
+            setShowPitStopTutorial(true);
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.delete('tutorial');
+            window.history.replaceState(null, '', `/obeya?${newParams.toString()}`);
+        }
     }, [searchParams]);
+
+    const [showPitStopTutorial, setShowPitStopTutorial] = useState(false);
 
     const [isRestricted, setIsRestricted] = useState(false);
     const [showLockModal, setShowLockModal] = useState(false);
@@ -1399,6 +1409,48 @@ function ObeyaContent() {
                 onClose={() => setActiveCommentModal(null)}
                 onSave={(comment) => handleSaveComment(activeCommentModal.goalId, activeCommentModal.rowId, activeCommentModal.monthData.monthId, activeCommentModal.monthData.year, comment)}
             />}
+
+            {activeCommentModal && <CommentModal
+                goalId={activeCommentModal.goalId}
+                rowId={activeCommentModal.rowId}
+                monthData={activeCommentModal.monthData}
+                onClose={() => setActiveCommentModal(null)}
+                onSave={(comment) => handleSaveComment(activeCommentModal.goalId, activeCommentModal.rowId, activeCommentModal.monthData.monthId, activeCommentModal.monthData.year, comment)}
+            />}
+
+            {showPitStopTutorial && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-purple-500" />
+                        <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-6 ring-4 ring-blue-100">
+                            <Clock size={40} className="text-blue-600" />
+                        </div>
+                        <h2 className="text-2xl font-black text-slate-900 mb-3">Welcome to the Arena!</h2>
+                        <p className="text-slate-600 mb-8 leading-relaxed">
+                            This is your Scoreboard. Your commitment is simple: <br />
+                            <strong className="text-slate-900">Hit the "Pit Stop" button once a week.</strong>
+                        </p>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    setShowPitStopTutorial(false);
+                                    setIsPitStopOpen(true);
+                                }}
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-200 transition-all flex items-center justify-center gap-2 transform hover:scale-[1.02]"
+                            >
+                                <Zap size={20} />
+                                Start My First Pit Stop
+                            </button>
+                            <button
+                                onClick={() => setShowPitStopTutorial(false)}
+                                className="w-full py-3 text-slate-400 font-bold hover:text-slate-600"
+                            >
+                                I'll explore first
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <header className="hidden md:flex bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 shadow-sm items-center justify-between shrink-0">
                 <div className="flex items-center gap-6">
