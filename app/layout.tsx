@@ -10,6 +10,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Tracker & Tribe LAPIS",
   description: "Goal tracking and mastermind community platform",
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
