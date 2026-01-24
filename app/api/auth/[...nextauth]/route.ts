@@ -41,7 +41,29 @@ export const authOptions: NextAuthOptions = {
                     name: user.name,
                 };
             }
-        })
+        }),
+        // Add Google Provider
+        // Note: Requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env
+        // And the new Redirect URI: https://www.tntlapis.com/api/auth/callback/google
+        {
+            id: 'google',
+            name: 'Google',
+            type: 'oauth',
+            wellKnown: 'https://accounts.google.com/.well-known/openid-configuration',
+            authorization: { params: { scope: 'openid email profile' } },
+            idToken: true,
+            checks: ['pkce', 'state'],
+            clientId: process.env.GOOGLE_CLIENT_ID || "",
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+            profile(profile) {
+                return {
+                    id: profile.sub,
+                    name: profile.name,
+                    email: profile.email,
+                    image: profile.picture,
+                };
+            },
+        }
     ],
     callbacks: {
         async signIn({ user }) {
