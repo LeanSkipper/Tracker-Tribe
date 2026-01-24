@@ -184,7 +184,7 @@ export default function UpgradePage() {
                     </div>
 
                     {/* CREATOR */}
-                    <div className="bg-gradient-to-b from-purple-900/40 to-zinc-900 border-2 border-purple-500 rounded-xl p-6 flex flex-col min-w-[280px] relative shadow-2xl shadow-purple-900/30 transform md:-translate-y-4 hover:scale-[1.02] transition-transform duration-300">
+                    <div className="bg-gradient-to-b from-purple-900/40 to-zinc-900 border-2 border-purple-500 rounded-xl p-6 flex flex-col min-w-[280px] relative shadow-2xl shadow-purple-900/30 hover:scale-[1.02] transition-transform duration-300">
                         <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap shadow-lg shadow-purple-500/50">
                             Grand Slam Offer
                         </div>
