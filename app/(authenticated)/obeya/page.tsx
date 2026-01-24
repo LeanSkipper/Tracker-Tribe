@@ -755,6 +755,7 @@ type ObeyaViewMode = 'operational' | 'tactical' | 'strategic' | 'task' | 'chart'
 
 import { useRouter, useSearchParams } from 'next/navigation';
 import WelcomeCreatorModal from '@/components/WelcomeCreatorModal';
+import { useViewMode } from '@/contexts/ViewModeContext';
 
 // ... existing imports
 
@@ -762,6 +763,7 @@ function ObeyaContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+    const { mode } = useViewMode();
 
     useEffect(() => {
         if (searchParams.get('upgraded') === 'true') {
@@ -854,6 +856,18 @@ function ObeyaContent() {
             }
         }
     }, [goals]);
+
+    // Beginner Mode: Collapse OKR/KPI sections by default
+    useEffect(() => {
+        if (mode === 'beginner' && goals.length > 0) {
+            const newCollapsed = new Set(collapsedSections);
+            goals.forEach(g => {
+                newCollapsed.add(`${g.id}-OKR`);
+                newCollapsed.add(`${g.id}-KPI`);
+            });
+            setCollapsedSections(newCollapsed);
+        }
+    }, [mode, goals.length]);
 
     useEffect(() => {
         const fetchGoals = async () => {
@@ -1389,30 +1403,29 @@ function ObeyaContent() {
             <header className="hidden md:flex bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30 shadow-sm items-center justify-between shrink-0">
                 <div className="flex items-center gap-6">
                     <h1 className="text-2xl font-bold text-[var(--primary)] flex items-center gap-2"><Target /> Goals GPS</h1>
-                    <div className="flex items-center gap-4 bg-white p-2 rounded-xl shadow-sm border border-gray-200">
-                        <button onClick={() => setCurrentYear(currentYear - 1)} className="p-1 hover:bg-gray-100 rounded-lg"><ChevronLeft size={20} /></button>
-                        <span className="text-xl font-bold text-[var(--primary)] min-w-[5rem] text-center">{currentYear}</span>
-                        <button onClick={() => setCurrentYear(currentYear + 1)} className="p-1 hover:bg-gray-100 rounded-lg"><ChevronRight size={20} /></button>
-                    </div>
-                    <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
-                        <button onClick={() => setViewMode('task')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'task' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="FUP: Weekly review and kanban">FUP</button>
-                        <button onClick={() => setViewMode('operational')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'operational' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Execution: Full weekly details">Execution</button>
-                        <button onClick={() => setViewMode('tactical')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'tactical' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Planning: OKRs + KPIs">Planning</button>
-                        <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategy: High-level roadmap">Strategy</button>
-                        <button onClick={() => isRestricted ? setShowLockModal(true) : setViewMode('chart')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'chart' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'} flex items-center gap-1`} title="Chart: Visual analytics">
-                            <BarChart2 size={14} />
-                            Chart
-                            {isRestricted && <Lock size={10} className="text-amber-500" />}
-                        </button>
-                    </div>
-                    <button
-                        onClick={toggleExpandAll}
-                        className="px-3 py-2 rounded-md text-xs font-bold bg-white shadow-sm text-gray-600 hover:text-blue-600 border border-gray-200 transition-colors flex items-center gap-1"
-                        title={collapsedOKRs.size === 0 ? "Collapse all OKRs" : "Expand all OKRs"}
-                    >
-                        <Layout size={14} />
-                        {collapsedOKRs.size === 0 ? 'Collapse All' : 'Expand All'}
-                    </button>
+                    {mode !== 'beginner' && (
+                        <>
+                            <div className="flex items-center bg-gray-100 rounded-lg p-1 gap-1">
+                                <button onClick={() => setViewMode('task')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'task' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="FUP: Weekly review and kanban">FUP</button>
+                                <button onClick={() => setViewMode('operational')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'operational' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Execution: Full weekly details">Execution</button>
+                                <button onClick={() => setViewMode('tactical')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'tactical' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Planning: OKRs + KPIs">Planning</button>
+                                <button onClick={() => setViewMode('strategic')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'strategic' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'}`} title="Strategy: High-level roadmap">Strategy</button>
+                                <button onClick={() => isRestricted ? setShowLockModal(true) : setViewMode('chart')} className={`px-3 py-2 rounded-md transition-all text-xs font-bold ${viewMode === 'chart' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-400 hover:text-gray-600'} flex items-center gap-1`} title="Chart: Visual analytics">
+                                    <BarChart2 size={14} />
+                                    Chart
+                                    {isRestricted && <Lock size={10} className="text-amber-500" />}
+                                </button>
+                            </div>
+                            <button
+                                onClick={toggleExpandAll}
+                                className="px-3 py-2 rounded-md text-xs font-bold bg-white shadow-sm text-gray-600 hover:text-blue-600 border border-gray-200 transition-colors flex items-center gap-1"
+                                title={collapsedOKRs.size === 0 ? "Collapse all OKRs" : "Expand all OKRs"}
+                            >
+                                <Layout size={14} />
+                                {collapsedOKRs.size === 0 ? 'Collapse All' : 'Expand All'}
+                            </button>
+                        </>
+                    )}
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -1439,12 +1452,14 @@ function ObeyaContent() {
                             <><Clock size={20} /> PIT STOP ({pitStopDaysLeft} DAYS)</>
                         )}
                     </button>
-                    <button
-                        onClick={handleCreateGoal}
-                        className="bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-blue-800 transition-all hover:scale-105"
-                    >
-                        <Plus size={22} /> GOAL
-                    </button>
+                    {mode !== 'beginner' && (
+                        <button
+                            onClick={handleCreateGoal}
+                            className="bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-blue-200 flex items-center gap-2 hover:bg-blue-800 transition-all hover:scale-105"
+                        >
+                            <Plus size={22} /> GOAL
+                        </button>
+                    )}
                 </div>
             </header>
 
@@ -2196,53 +2211,57 @@ function ObeyaContent() {
                 </>)}
             </main>
 
-            {/* Mobile Action FAB */}
-            <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
-                {isMobileFabOpen && (
-                    <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
-                        <button
-                            onClick={() => { handleCreateGoal(); setIsMobileFabOpen(false); }}
-                            className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                            <Plus size={16} /> New Goal
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (isRestricted) setShowLockModal(true);
-                                else setIsPitStopOpen(true);
-                                setIsMobileFabOpen(false);
-                            }}
-                            className="bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                            <Clock size={16} /> Pit Stop
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (isRestricted) setShowLockModal(true);
-                                else setIsCoachOpen(true);
-                                setIsMobileFabOpen(false);
-                            }}
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                            <Sparkles size={16} /> Coach
-                        </button>
-                    </div>
-                )}
-                <button
-                    onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
-                    className={`p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
-                >
-                    <Plus size={24} />
-                </button>
-            </div>
+            {/* Mobile Action FAB - Only show in Advanced Mode */}
+            {mode === 'advanced' && (
+                <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+                    {isMobileFabOpen && (
+                        <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
+                            <button
+                                onClick={() => { handleCreateGoal(); setIsMobileFabOpen(false); }}
+                                className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                            >
+                                <Plus size={16} /> New Goal
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (isRestricted) setShowLockModal(true);
+                                    else setIsPitStopOpen(true);
+                                    setIsMobileFabOpen(false);
+                                }}
+                                className="bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                            >
+                                <Clock size={16} /> Pit Stop
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (isRestricted) setShowLockModal(true);
+                                    else setIsCoachOpen(true);
+                                    setIsMobileFabOpen(false);
+                                }}
+                                className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                            >
+                                <Sparkles size={16} /> Coach
+                            </button>
+                        </div>
+                    )}
+                    <button
+                        onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
+                        className={`p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
+                    >
+                        <Plus size={24} />
+                    </button>
+                </div>
+            )}
 
             <div onClick={() => isRestricted && setShowLockModal(true)} className="contents">
-                <Coach goals={goals} className="hidden md:flex" isOpen={isRestricted ? false : isCoachOpen} onOpenChange={isRestricted ? () => setShowLockModal(true) : setIsCoachOpen} />
+                {mode === 'advanced' && (
+                    <Coach goals={goals} className="hidden md:flex" isOpen={isRestricted ? false : isCoachOpen} onOpenChange={isRestricted ? () => setShowLockModal(true) : setIsCoachOpen} />
+                )}
             </div>
 
             <WelcomeCreatorModal isOpen={showWelcomeModal} onClose={() => setShowWelcomeModal(false)} />
             <SubscriptionLockedModal isOpen={showLockModal} onClose={() => setShowLockModal(false)} />
-        </div>
+        </div >
     );
 }
 

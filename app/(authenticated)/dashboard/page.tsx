@@ -6,6 +6,7 @@ import EnhancedTribeCard from '@/components/EnhancedTribeCard';
 import { Users, Network, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TribeCreationForm from '@/components/TribeCreationForm';
+import { useViewMode } from '@/contexts/ViewModeContext';
 
 type Member = {
     id: string;
@@ -23,10 +24,17 @@ type Tribe = {
 
 export default function DashboardPage() {
     const router = useRouter();
+    const { mode } = useViewMode();
     const [tribes, setTribes] = useState<Tribe[]>([]);
     const [userStats, setUserStats] = useState<any>(null); // Quick type for now
     const [loading, setLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
+
+    useEffect(() => {
+        if (mode === 'beginner') {
+            router.push('/tribes');
+        }
+    }, [mode, router]);
 
     const fetchDashboardData = useCallback(async () => {
         try {
