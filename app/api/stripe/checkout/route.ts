@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
         if (planType === 'CREATOR') {
             if (!customAmount || customAmount < 200) {
-                return NextResponse.json({ error: "Invalid custom amount" }, { status: 400 });
+                return NextResponse.json({ error: "Invalid custom amount for Creator Plan (Min $200)" }, { status: 400 });
             }
 
             // Dynamic price creation for Creator Plan
@@ -32,7 +32,7 @@ export async function POST(req: Request) {
                     currency: 'usd',
                     product_data: {
                         name: 'Lapis Creator (Early Adopter)',
-                        description: '1 Year Access as Creator & Sponsor. Includes Tribe Leadership, Monetization & Priority Support.',
+                        description: '1 Year Access to Creator Privileges. Includes Tribe Leadership, Monetization & Priority Support.',
                     },
                     unit_amount: Math.round(customAmount * 100), // cents
                     recurring: { interval: 'year' as const },
@@ -44,6 +44,28 @@ export async function POST(req: Request) {
             metadata.userProfile = 'HARD';
             subscriptionMetadata.userProfile = 'HARD';
 
+        } else if (planType === 'ENGAGED') {
+            if (!customAmount || customAmount < 120) {
+                return NextResponse.json({ error: "Invalid custom amount for Engaged Plan (Min $120)" }, { status: 400 });
+            }
+
+            // Dynamic price creation for Engaged Plan
+            lineItem = {
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Lapis Engaged Member',
+                        description: '1 Year Access to Full Platform. Includes Unlimited Goals, Full GPS & Community Access.',
+                    },
+                    unit_amount: Math.round(customAmount * 100), // cents
+                    recurring: { interval: 'year' as const },
+                },
+                quantity: 1,
+            };
+
+            // Add profile upgrade metadata
+            metadata.userProfile = 'ENGAGED';
+            subscriptionMetadata.userProfile = 'ENGAGED';
         } else {
             // Standard Plans
             if (planType === 'MONTHLY') {
