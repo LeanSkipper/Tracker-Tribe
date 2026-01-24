@@ -18,7 +18,7 @@ export default function Navbar() {
             <nav className="sticky bottom-0 md:top-0 w-full bg-white border-t md:border-b border-gray-200 z-50 shadow-sm">
                 <div className="container mx-auto px-4 h-16 flex items-center justify-between">
                     <div className="hidden md:flex items-center gap-2 font-bold text-[var(--primary)] text-lg">
-                        <Feather /> Tracker & Tribe LAPIS
+                        <Feather /> TNT Platform
                     </div>
 
                     <div className="flex w-full md:w-auto justify-around md:gap-8">

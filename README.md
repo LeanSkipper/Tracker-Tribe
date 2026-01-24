@@ -1,4 +1,4 @@
-# 💎 Lapis Platform - Tracker & Tribe (Beta MVP)
+# 🧨 TNT Platform - Tracker & Tribe (Beta MVP)
 
 **Status:** Beta Release 🚀
 **Live URL:** [https://www.tntlapis.com](https://www.tntlapis.com)

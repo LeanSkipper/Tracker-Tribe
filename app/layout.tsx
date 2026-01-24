@@ -8,8 +8,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Tracker & Tribe LAPIS",
-  description: "Goal tracking and mastermind community platform",
+  title: "TNT Platform",
+  description: "Structure your goals, join a powerful tribe, and execute with discipline.",
   manifest: "/manifest.json",
 };
 

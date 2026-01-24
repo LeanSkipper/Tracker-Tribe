@@ -3,7 +3,7 @@ export const WelcomeEmailTemplate = (name: string) => `
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Welcome to Lapis Platform</title>
+    <title>Welcome to TNT Platform</title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Inter', sans-serif; }
@@ -23,7 +23,7 @@ export const WelcomeEmailTemplate = (name: string) => `
         </div>
         <div class="content">
             <p>Hi ${name || 'there'},</p>
-            <p>Welcome to <strong>Lapis Platform</strong>—your new command center for high-performance accountability and growth. We're thrilled to have you on board.</p>
+            <p>Welcome to <strong>TNT Platform</strong>—your new command center for high-performance accountability and growth. We're thrilled to have you on board.</p>
             
             <h3>What you can do here:</h3>
             <ul>
@@ -49,9 +49,9 @@ export const WelcomeEmailTemplate = (name: string) => `
             <p>Ready to get started? Access the platform wherever you are.</p>
             
             <div class="links">
-                <a href="https://tracker-tribe.vercel.app/obeya" class="button">Open Desktop App</a>
+                <a href="https://www.tntlapis.com/obeya" class="button">Open Desktop App</a>
                 <br/><br/>
-                <a href="https://tracker-tribe.vercel.app/obeya" class="button secondary">Download Mobile App (PWA)</a>
+                <a href="https://www.tntlapis.com/obeya" class="button secondary">Download Mobile App (PWA)</a>
             </div>
             
             <p style="font-size: 14px; color: #6b7280; text-align: center;">
@@ -59,7 +59,7 @@ export const WelcomeEmailTemplate = (name: string) => `
             </p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Lapis Platform. All rights reserved.</p>
+            <p>© ${new Date().getFullYear()} TNT Platform. All rights reserved.</p>
         </div>
     </div>
 </body>
@@ -115,9 +115,9 @@ export const CreatorWelcomeEmailTemplate = (name: string) => `
             </ol>
 
             <div class="links">
-                <a href="https://tracker-tribe.vercel.app/obeya" class="button">🚀 Launch Dashboard</a>
+                <a href="https://www.tntlapis.com/obeya" class="button">🚀 Launch Dashboard</a>
                 <br/><br/>
-                <a href="https://tracker-tribe.vercel.app/obeya" class="button secondary">📱 Mobile App (PWA)</a>
+                <a href="https://www.tntlapis.com/obeya" class="button secondary">📱 Mobile App (PWA)</a>
             </div>
             
             <p style="font-size: 14px; color: #52525b; text-align: center;">
@@ -125,7 +125,7 @@ export const CreatorWelcomeEmailTemplate = (name: string) => `
             </p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Lapis Platform. Rise to the top.</p>
+            <p>© ${new Date().getFullYear()} TNT Platform. Rise to the top.</p>
         </div>
     </div>
 </body>
@@ -175,7 +175,7 @@ export const TribeApplicationAdminEmail = (adminName: string, applicantName: str
             </ul>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Lapis Platform. Manage your tribe.</p>
+            <p>© ${new Date().getFullYear()} TNT Platform. Manage your tribe.</p>
         </div>
     </div>
 </body>
@@ -230,7 +230,7 @@ export const TribeApplicationUserConfirmationEmail = (userName: string, tribeNam
             </p>
         </div>
         <div class="footer">
-            <p>© ${new Date().getFullYear()} Lapis Platform.</p>
+            <p>© ${new Date().getFullYear()} TNT Platform.</p>
         </div>
     </div>
 </body>

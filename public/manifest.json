@@ -1,7 +1,7 @@
 {
-    "name": "Lapis Platform",
-    "short_name": "Lapis",
-    "description": "Tracker & Tribe - Structure your goals and execute with discipline.",
+    "name": "TNT Platform",
+    "short_name": "TNT",
+    "description": "Structure your goals, join a powerful tribe, and execute with discipline.",
     "start_url": "/",
     "display": "standalone",
     "background_color":="#0f172a",
