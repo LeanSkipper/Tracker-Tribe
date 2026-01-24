@@ -95,44 +95,10 @@ export default function UpgradePage() {
                 </div>
 
                 {/* Pricing Table */}
-                <div className="grid md:grid-cols-4 gap-4 overflow-x-auto pb-8">
-
-                    {/* VISITOR */}
-                    <div className="bg-zinc-900/50 border border-zinc-800 rounded-xl p-6 flex flex-col min-w-[280px]">
-                        <div className="mb-6">
-                            <h3 className="text-xl font-bold text-gray-400">Visitor</h3>
-                            <div className="text-3xl font-black mt-2 text-gray-500">Free</div>
-                            <div className="text-xs text-gray-500 mt-1 uppercase tracking-wide">Limited Access</div>
-                        </div>
-                        <ul className="space-y-4 mb-8 flex-1">
-                            <li className="flex items-start gap-2 text-sm text-gray-400">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
-                                <span>Free Trial (Limited)</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm text-gray-400">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
-                                <span>Up to 1 Goal (60 days)</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm text-gray-600">
-                                <X size={16} className="text-red-900 shrink-0 mt-0.5" />
-                                <span>Tracking & Analytics</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm text-gray-600">
-                                <X size={16} className="text-red-900 shrink-0 mt-0.5" />
-                                <span>Tribes & Community</span>
-                            </li>
-                            <li className="flex items-start gap-2 text-sm text-gray-600">
-                                <X size={16} className="text-red-900 shrink-0 mt-0.5" />
-                                <span>Monetization</span>
-                            </li>
-                        </ul>
-                        <button className="w-full py-3 border border-zinc-700 text-gray-400 rounded-lg font-bold text-sm cursor-not-allowed opacity-50">
-                            Current Tier
-                        </button>
-                    </div>
+                <div className="grid md:grid-cols-3 gap-6 overflow-x-auto pb-8 max-w-6xl mx-auto">
 
                     {/* STARTER */}
-                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 flex flex-col min-w-[280px] relative">
+                    <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-6 flex flex-col min-w-[280px] relative hover:border-blue-500/50 transition-colors duration-300">
                         <div className="mb-6">
                             <h3 className="text-xl font-bold text-white">Starter</h3>
                             <div className="text-3xl font-black mt-2 text-white">Trial</div>
@@ -140,15 +106,15 @@ export default function UpgradePage() {
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             <li className="flex items-start gap-2 text-sm text-gray-300">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-blue-500 shrink-0 mt-0.5" />
                                 <span>Free Trial (60 days)</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-gray-300">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-blue-500 shrink-0 mt-0.5" />
                                 <span>Up to 10 Goals</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-gray-500">
-                                <Info size={16} className="text-yellow-600 shrink-0 mt-0.5" />
+                                <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
                                 <span>Restricted Access (Basic GPS)</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-gray-600">
@@ -166,10 +132,10 @@ export default function UpgradePage() {
                     </div>
 
                     {/* ENGAGED */}
-                    <div className="bg-zinc-900 border-2 border-green-500/50 rounded-xl p-6 flex flex-col min-w-[280px] relative shadow-lg shadow-green-900/20">
-                        <div className="absolute top-0 inset-x-0 h-1 bg-green-500 mx-6 rounded-b-lg"></div>
+                    <div className="bg-zinc-900 border-2 border-amber-500/50 rounded-xl p-6 flex flex-col min-w-[280px] relative shadow-lg shadow-amber-900/20 hover:border-amber-500 transition-colors duration-300">
+                        <div className="absolute top-0 inset-x-0 h-1 bg-amber-500 mx-6 rounded-b-lg"></div>
                         <div className="mb-6">
-                            <h3 className="text-xl font-bold text-green-400 flex items-center gap-2">
+                            <h3 className="text-xl font-bold text-amber-400 flex items-center gap-2">
                                 <Zap size={18} fill="currentColor" /> Engaged
                             </h3>
                             <div className="mt-2 text-white">
@@ -179,27 +145,28 @@ export default function UpgradePage() {
                                     <input
                                         type="number"
                                         min="10"
+                                        step="2"
                                         aria-label="Engaged Plan Monthly Contribution"
                                         value={engagedPrice}
                                         onChange={(e) => setEngagedPrice(Math.max(10, parseInt(e.target.value) || 0))}
-                                        className="bg-transparent text-3xl font-black w-20 outline-none border-b border-green-500/50 focus:border-green-500 text-center"
+                                        className="bg-transparent text-3xl font-black w-24 outline-none border-b border-amber-500/50 focus:border-amber-500 text-center transition-colors"
                                     />
                                     <span className="text-sm font-medium text-gray-400">/mo</span>
                                 </div>
-                                <div className="text-xs text-green-400 mt-1">Billed ${engagedYearly}/year</div>
+                                <div className="text-xs text-amber-400 mt-1">Billed ${engagedYearly}/year</div>
                             </div>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-amber-500 shrink-0 mt-0.5" />
                                 <span>Unlimited Goals</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-amber-500 shrink-0 mt-0.5" />
                                 <span>Full GPS Tracking & Analytics</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-green-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-amber-500 shrink-0 mt-0.5" />
                                 <span>Full Access to Tribes</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-gray-500">
@@ -210,19 +177,19 @@ export default function UpgradePage() {
                         <button
                             onClick={() => handleSubscribe('ENGAGED')}
                             disabled={isActivating}
-                            className="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-green-900/40"
+                            className="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white rounded-lg font-bold text-sm transition-colors shadow-lg shadow-amber-900/40"
                         >
                             Select Engaged
                         </button>
                     </div>
 
                     {/* CREATOR */}
-                    <div className="bg-gradient-to-b from-yellow-900/20 to-zinc-900 border-2 border-yellow-500 rounded-xl p-6 flex flex-col min-w-[280px] relative shadow-2xl shadow-yellow-900/30 transform md:-translate-y-4">
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap">
+                    <div className="bg-gradient-to-b from-purple-900/40 to-zinc-900 border-2 border-purple-500 rounded-xl p-6 flex flex-col min-w-[280px] relative shadow-2xl shadow-purple-900/30 transform md:-translate-y-4 hover:scale-[1.02] transition-transform duration-300">
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-500 text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wide whitespace-nowrap shadow-lg shadow-purple-500/50">
                             Grand Slam Offer
                         </div>
                         <div className="mb-6 mt-2">
-                            <h3 className="text-xl font-bold text-yellow-400 flex items-center gap-2">
+                            <h3 className="text-xl font-bold text-purple-400 flex items-center gap-2">
                                 <Crown size={18} fill="currentColor" /> Creator
                             </h3>
                             <div className="mt-2 text-white">
@@ -232,38 +199,39 @@ export default function UpgradePage() {
                                     <input
                                         type="number"
                                         min="20"
+                                        step="5"
                                         aria-label="Creator Plan Monthly Contribution"
                                         value={creatorPrice}
                                         onChange={(e) => setCreatorPrice(Math.max(20, parseInt(e.target.value) || 0))}
-                                        className="bg-transparent text-3xl font-black w-20 outline-none border-b border-yellow-500/50 focus:border-yellow-500 text-center"
+                                        className="bg-transparent text-3xl font-black w-24 outline-none border-b border-purple-500/50 focus:border-purple-500 text-center transition-colors"
                                     />
                                     <span className="text-sm font-medium text-gray-400">/mo</span>
                                 </div>
-                                <div className="text-xs text-yellow-500 mt-1">Billed ${creatorYearly}/year</div>
+                                <div className="text-xs text-purple-400 mt-1">Billed ${creatorYearly}/year</div>
                             </div>
                         </div>
                         <ul className="space-y-4 mb-8 flex-1">
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-yellow-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-purple-400 shrink-0 mt-0.5" />
                                 <span>Everything in Engaged</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-yellow-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-purple-400 shrink-0 mt-0.5" />
                                 <span>Create, Host & Monetize Tribes</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-yellow-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-purple-400 shrink-0 mt-0.5" />
                                 <span>Priority Features Access</span>
                             </li>
                             <li className="flex items-start gap-2 text-sm text-white font-medium">
-                                <Check size={16} className="text-yellow-500 shrink-0 mt-0.5" />
+                                <Check size={16} className="text-purple-400 shrink-0 mt-0.5" />
                                 <span>Early Adopter Badge</span>
                             </li>
                         </ul>
                         <button
                             onClick={() => handleSubscribe('CREATOR')}
                             disabled={isActivating}
-                            className="w-full py-4 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-400 hover:to-orange-400 text-black rounded-lg font-black text-sm transition-all shadow-[0_0_20px_rgba(234,179,8,0.3)] hover:scale-[1.02]"
+                            className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-black text-sm transition-all shadow-[0_0_30px_rgba(168,85,247,0.4)] hover:shadow-[0_0_40px_rgba(168,85,247,0.6)]"
                         >
                             Become a Creator
                         </button>
