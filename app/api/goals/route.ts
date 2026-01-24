@@ -67,12 +67,42 @@ export async function POST(req: Request) {
         const user = await getSession();
 
         // Block guest users from saving
+        // Guest users: Allow fake save (Echo back data with fake IDs)
         if (!user) {
-            return NextResponse.json({
-                error: "Sign up to save your goals",
-                message: "You're in demo mode. Create a free account to save your progress and unlock all features.",
-                requiresAuth: true
-            }, { status: 401 });
+            console.log('[GPS POST] Guest user - Mocking save');
+            const { id, title, category, isShared, rows } = data;
+            const mockId = id && !id.startsWith('new') ? id : `guest-goal-${Date.now()}`;
+
+            // Construct mock response
+            const mockResponse = {
+                id: mockId,
+                vision: title,
+                status: "ACTIVE",
+                visibility: isShared ? "TRIBE" : "PRIVATE",
+                category: category || "Business/Career",
+                okrs: rows ? rows.filter((r: any) => r.type === 'OKR' || r.type === 'KPI').map((r: any, i: number) => ({
+                    id: r.id && !r.id.startsWith('new') ? r.id : `guest-okr-${Date.now()}-${i}`,
+                    goalId: mockId,
+                    metricName: r.label,
+                    type: r.type,
+                    targetValue: r.targetValue,
+                    currentValue: r.startValue,
+                    startYear: r.startYear || 2026,
+                    startMonth: r.startMonth || 0,
+                    deadlineYear: r.deadlineYear || 2026,
+                    deadlineMonth: r.deadlineMonth || 11,
+                    monthlyData: r.monthlyData || null, // Already parsed if coming from FE? No, usually raw object
+                    actions: rows.find((ar: any) => !ar.type && ar.actions)?.actions?.map((a: any, j: number) => ({
+                        id: a.id && !a.id.startsWith('act-') ? a.id : `guest-act-${Date.now()}-${j}`,
+                        description: a.title,
+                        status: a.status === 'DONE' ? 'DONE' : 'NOT_DONE',
+                        weekDate: new Date().toISOString(), // Simplified
+                        dueDate: new Date().toISOString()
+                    })) || []
+                })) : []
+            };
+
+            return NextResponse.json(mockResponse);
         }
 
         // Fetch full profile for subscription check
