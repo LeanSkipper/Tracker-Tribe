@@ -339,11 +339,7 @@ export async function POST(req: Request) {
                     // The Frontend usually sends the full list of actions for the goal.
 
                     if (actionRow.actions && Array.isArray(actionRow.actions)) {
-                        // Only create actions if we have at least one OKR
-                        if (!firstOkrId) {
-                            console.warn('Skipping action creation: no OKRs exist for this goal');
-                            continue;
-                        }
+                        // Create actions (even if no OKR exists, they will just be unlinked from an OKR)
 
                         for (const actionCard of actionRow.actions) {
                             // Map UI status to DB status
