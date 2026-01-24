@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💎 Lapis Platform - Tracker & Tribe (Beta MVP)
+
+**Status:** Beta Release 🚀
+**Live URL:** [https://www.tntlapis.com](https://www.tntlapis.com)
+
+## Overview
+
+Lapis Platform is an advanced accountability ecosystem designed to help high-performers structure their goals, join powerful tribes, and execute with relentless discipline. It combines OKR tracking, gamification, and peer accountability into a single platform.
+
+## Key Features
+
+### 🎯 Goal Tracking System (GPS)
+
+- **OKRs & KPIs**: Structure your vision with Objectives, Key Results, and Key Performance Indicators.
+- **Action Plans**: break down big goals into weekly actionable steps.
+- **Real-Time Tracking**: Visualize progress with dynamic charts.
+
+### 🤝 Tribe & Community
+
+- **Create & Join Tribes**: Form accountability groups around shared missions.
+- **Shared Goals**: Collaborate on collective objectives.
+- **Peer Accountability**: View member stats and keep each other on track.
+
+### 🏆 Gamification
+
+- **XP & Levels**: Earn experience for consistent action and engagement.
+- **Reputation Score**: Build trust within the community.
+- **Badges**: Unlock achievements for milestones.
+
+### 💰 Monetization (Grand Slam)
+
+- **Creator Tools**: Launch paid tribes and monetize your leadership.
+- **Subscription Management**: Integrated with Stripe for seamless payments.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Database**: PostgreSQL (Neon Tech) + Prisma ORM
+- **Auth**: NextAuth.js (Google, Credentials)
+- **Styling**: Tailwind CSS
+- **Payments**: Stripe
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+   ```bash
+   git clone https://github.com/LeanSkipper/Tracker-Tribe.git
+   ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Install dependencies**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Set up Environment Variables**
+   Create a `.env` file based on `.env.example` (ensure `DATABASE_URL`, `NEXTAUTH_SECRET`, `GOOGLE_CLIENT_ID`, `STRIPE_SECRET_KEY` are set).
 
-## Learn More
+4. **Run Database Migrations**
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npx prisma db push
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+5. **Start Development Server**
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Deployed on **Vercel**. Setup requires configuring Environment Variables in the Vercel Dashboard, including `NEXTAUTH_URL` set to `https://www.tntlapis.com`.
