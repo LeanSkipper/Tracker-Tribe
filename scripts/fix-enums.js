@@ -15,6 +15,14 @@ async function main() {
     };
 
     try {
+        // 0. Drop Defaults to avoid "cannot be cast automatically" errors during push
+        // We let Prisma recreate them later.
+        await run(`ALTER TABLE "User" ALTER COLUMN "userProfile" DROP DEFAULT`);
+        await run(`ALTER TABLE "User" ALTER COLUMN "subscriptionPlan" DROP DEFAULT`);
+        await run(`ALTER TABLE "Subscription" ALTER COLUMN "plan" DROP DEFAULT`);
+        // Note: Badges_Catalog.requiredForProfile is nullable and has no default usually, but we can check schema.
+        // Schema says: requiredForProfile UserProfile? (Optional, no default) - so no need to drop.
+
         // 1. Convert Enum Columns to TEXT
         // This allows us to update the values to strings that don't exist in the old enum
         await run(`ALTER TABLE "User" ALTER COLUMN "userProfile" TYPE text`);
