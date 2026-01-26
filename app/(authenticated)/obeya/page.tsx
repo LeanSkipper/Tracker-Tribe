@@ -1719,7 +1719,7 @@ function ObeyaContent() {
                         {/* Mobile Cards Replaced by Responsive Table below */}
                     </div>
 
-                    <div className="min-w-full overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div className="min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
                         <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
                             <div className="sticky left-0 w-[150px] md:w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
                             {(viewMode === 'strategic' ?
