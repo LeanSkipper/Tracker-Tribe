@@ -173,15 +173,24 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
                     {visibleWeeks.map(({ weekId, label, isCurrent, weekNum }) => {
                         const weekActions = actionRow?.actions.filter(a => a.weekId === weekId && a.year === currentYear) || [];
                         const isPast = weekNum < globalWeekNum;
+                        const isNext = weekNum === globalWeekNum + 1;
+                        const isEmpty = weekActions.length === 0;
+
+                        // Visual Cues Logic
+                        let containerClass = isCurrent
+                            ? 'bg-white border-indigo-200 shadow-md ring-1 ring-indigo-50'
+                            : 'bg-slate-100/50 border-slate-200';
+
+                        if (isPast && isEmpty) {
+                            containerClass = 'bg-red-50/40 border-slate-200'; // Subtle red for missed weeks
+                        } else if (isNext && isEmpty) {
+                            containerClass = 'bg-indigo-50/40 border-indigo-100'; // Subtle prompt for next week
+                        }
 
                         return (
                             <div
                                 key={weekId}
-                                className={`snap-center min-w-[85%] rounded-xl border p-3 flex flex-col gap-3 transition-colors
-                                    ${isCurrent
-                                        ? 'bg-white border-indigo-200 shadow-md ring-1 ring-indigo-50'
-                                        : 'bg-slate-100/50 border-slate-200'
-                                    }`}
+                                className={`snap-center min-w-[85%] rounded-xl border p-3 flex flex-col gap-3 transition-colors ${containerClass}`}
                             >
                                 {/* Column Header */}
                                 <div className="flex items-center justify-between border-b border-dashed border-slate-200 pb-2">
@@ -200,7 +209,13 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
                                 <div className="space-y-2 min-h-[60px]">
                                     {weekActions.length > 0 ? (
                                         weekActions.map(action => (
-                                            <div key={action.id} className="flex items-start gap-2.5 p-2 rounded-lg bg-white border border-slate-100 shadow-sm">
+                                            <div key={action.id} className={`flex items-start gap-2.5 p-2 rounded-lg border shadow-sm transition-all
+                                                ${action.status === 'DONE'
+                                                    ? 'bg-white border-slate-100'
+                                                    : (isPast // Unfinished in past
+                                                        ? 'bg-white border-amber-200 ring-1 ring-amber-100'
+                                                        : 'bg-white border-slate-100')
+                                                }`}>
                                                 <input
                                                     type="checkbox"
                                                     checked={action.status === 'DONE'}

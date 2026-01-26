@@ -548,15 +548,36 @@ export default function SharedObeyaTracker({
                                                                         })()
                                                                     ) : (
                                                                         // Action Row Cell
+                                                                        // Action Row Cell
                                                                         <div className="flex w-full h-full gap-0.5">
                                                                             {MONTH_WEEKS[m].map(w => {
                                                                                 const actionRow = row as ActionRow;
                                                                                 const weekActions = actionRow.actions.filter(a => a.weekId === w && a.year === currentYear);
 
+                                                                                // Logic for visual cues
+                                                                                const weekNum = parseInt(w.replace('W', ''));
+                                                                                const isPastWeek = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && weekNum < currentWeekNum);
+                                                                                const isNextWeek = currentYear === now.getFullYear() && weekNum === currentWeekNum + 1;
+                                                                                const isEmpty = weekActions.length === 0;
+
+                                                                                // Pit Stop Check (Mock for now, should ideally come from props/context if not available)
+                                                                                // Assuming global Pit Stop state might be passed down or we check date
+                                                                                // For now, highlighting next week empty cells if current week is Pit Stop week (usually W4/W8 etc)
+                                                                                // Or just generic "highlight next empty week" as a reminder
+                                                                                const isNextWeekReminder = isNextWeek && isEmpty;
+
+                                                                                // Background Color Logic
+                                                                                let bgClass = 'bg-gray-50/20';
+                                                                                if (isPastWeek && isEmpty) {
+                                                                                    bgClass = 'bg-red-50/50'; // Light red for Missed Opportunity
+                                                                                } else if (isNextWeekReminder) {
+                                                                                    bgClass = 'bg-indigo-50/60 ring-inset ring-2 ring-indigo-100/50'; // Encouragement for next week
+                                                                                }
+
                                                                                 return (
                                                                                     <div
                                                                                         key={w}
-                                                                                        className="flex-1 border-r border-gray-50 last:border-0 bg-gray-50/20 p-1 flex flex-col gap-1 items-center justify-start overflow-hidden transition-colors"
+                                                                                        className={`flex-1 border-r border-gray-50 last:border-0 ${bgClass} p-1 flex flex-col gap-1 items-center justify-start overflow-hidden transition-colors`}
                                                                                         onDragOver={(e) => {
                                                                                             e.preventDefault();
                                                                                             if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
@@ -576,9 +597,12 @@ export default function SharedObeyaTracker({
                                                                                         {weekActions.map(action => (
                                                                                             <div
                                                                                                 key={action.id}
-                                                                                                className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all ${action.status === 'DONE'
-                                                                                                    ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
-                                                                                                    : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300'
+                                                                                                className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all 
+                                                                                                    ${action.status === 'DONE'
+                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                        : ((isPastWeek && action.status !== 'DONE')
+                                                                                                            ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' // Yellow/Amber for Unfinished Past
+                                                                                                            : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300')
                                                                                                     } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                                                                                                 draggable={canEdit}
                                                                                                 onDragStart={(e) => {
