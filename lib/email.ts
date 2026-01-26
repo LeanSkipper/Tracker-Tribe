@@ -11,19 +11,25 @@ export async function sendWelcomeEmail(email: string, name: string) {
 
     const resend = new Resend(apiKey);
 
+    const fromEmail = process.env.EMAIL_FROM || 'Lapis Team <onboarding@resend.dev>';
+
     try {
-        const data = await resend.emails.send({
-            from: 'Lapis Team <onboarding@resend.dev>', // Update this with your verified domain later
+        const response = await resend.emails.send({
+            from: fromEmail,
             to: [email],
             subject: 'Welcome to Lapis Platform! 🚀',
             html: WelcomeEmailTemplate(name)
         });
 
-        console.log('[EMAIL] Welcome email sent:', data);
-        return data;
+        if (response.error) {
+            console.error('[EMAIL] Welcome email API error:', response.error);
+            return null;
+        }
+
+        console.log('[EMAIL] Welcome email sent successfully:', response.data);
+        return response;
     } catch (error) {
-        console.error('[EMAIL] Failed to send welcome email:', error);
-        // We don't throw here to avoid failing the signup process
+        console.error('[EMAIL] Failed to send welcome email:', JSON.stringify(error, null, 2));
         return null;
     }
 }
@@ -38,18 +44,25 @@ export async function sendCreatorWelcomeEmail(email: string, name: string) {
 
     const resend = new Resend(apiKey);
 
+    const fromEmail = process.env.EMAIL_FROM || 'Lapis Team <onboarding@resend.dev>';
+
     try {
-        const data = await resend.emails.send({
-            from: 'Lapis Team <onboarding@resend.dev>',
+        const response = await resend.emails.send({
+            from: fromEmail,
             to: [email],
             subject: '👑 Welcome to the Creator Circle',
             html: CreatorWelcomeEmailTemplate(name)
         });
 
-        console.log('[EMAIL] Creator email sent:', data);
-        return data;
+        if (response.error) {
+            console.error('[EMAIL] Creator email API error:', response.error);
+            return null;
+        }
+
+        console.log('[EMAIL] Creator email sent successfully:', response.data);
+        return response;
     } catch (error) {
-        console.error('[EMAIL] Failed to send creator email:', error);
+        console.error('[EMAIL] Failed to send creator email:', JSON.stringify(error, null, 2));
         return null;
     }
 }
@@ -62,7 +75,6 @@ export async function sendTribeApplicationEmails({
     userEmail,
     userName,
     tribeName,
-    tribeId,
     userProfileLink
 }: {
     adminEmail: string;
@@ -70,7 +82,6 @@ export async function sendTribeApplicationEmails({
     userEmail: string;
     userName: string;
     tribeName: string;
-    tribeId: string;
     userProfileLink: string;
 }) {
     const apiKey = process.env.RESEND_API_KEY;
@@ -83,34 +94,46 @@ export async function sendTribeApplicationEmails({
     const resend = new Resend(apiKey);
     const results = { admin: null, user: null };
 
+    const fromEmail = process.env.EMAIL_FROM || 'Lapis Tribe <notifications@resend.dev>';
+
     // 1. Notify Admin
     try {
-        const adminData = await resend.emails.send({
-            from: 'Lapis Tribe <notifications@resend.dev>',
+        const adminResponse = await resend.emails.send({
+            from: fromEmail,
             to: [adminEmail],
             subject: `New Application: ${userName} wants to join ${tribeName}`,
             html: TribeApplicationAdminEmail(adminName, userName, tribeName, userProfileLink)
         });
-        console.log('[EMAIL] Admin notification sent:', adminData);
-        // @ts-ignore
-        results.admin = adminData;
+
+        if (adminResponse.error) {
+            console.error('[EMAIL] Admin notification API error:', adminResponse.error);
+        } else {
+            console.log('[EMAIL] Admin notification sent successfully:', adminResponse.data);
+            // @ts-expect-error - resend types might be slightly off
+            results.admin = adminResponse;
+        }
     } catch (error) {
-        console.error('[EMAIL] Failed to send admin notification:', error);
+        console.error('[EMAIL] Failed to send admin notification:', JSON.stringify(error, null, 2));
     }
 
     // 2. Notify User (Confirmation)
     try {
-        const userData = await resend.emails.send({
-            from: 'Lapis Tribe <notifications@resend.dev>',
+        const userResponse = await resend.emails.send({
+            from: fromEmail,
             to: [userEmail],
             subject: `Application Received: ${tribeName}`,
             html: TribeApplicationUserConfirmationEmail(userName, tribeName)
         });
-        console.log('[EMAIL] User confirmation sent:', userData);
-        // @ts-ignore
-        results.user = userData;
+
+        if (userResponse.error) {
+            console.error('[EMAIL] User confirmation API error:', userResponse.error);
+        } else {
+            console.log('[EMAIL] User confirmation sent successfully:', userResponse.data);
+            // @ts-expect-error - resend types might be slightly off
+            results.user = userResponse;
+        }
     } catch (error) {
-        console.error('[EMAIL] Failed to send user confirmation:', error);
+        console.error('[EMAIL] Failed to send user confirmation:', JSON.stringify(error, null, 2));
     }
 
     return results;

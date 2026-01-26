@@ -2214,10 +2214,10 @@ function ObeyaContent() {
                                                                                                                     onDragStart={() => setDraggedTask({ goalId: goal.id, actionId: a.id, sourceWeek: w })}
                                                                                                                     onDragEnd={() => setDraggedTask(null)}
                                                                                                                     className={`p-2 rounded-lg border shadow-sm text-[10px] font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                                                                                                                            (isPastWeek && a.status !== 'DONE') ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' :
-                                                                                                                                a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
-                                                                                                                                    a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
-                                                                                                                                        'bg-white border-gray-200 text-gray-700'
+                                                                                                                        (isPastWeek) ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' :
+                                                                                                                            a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+                                                                                                                                a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                                                                                                                    'bg-white border-gray-200 text-gray-700'
                                                                                                                         }`}
                                                                                                                 >
                                                                                                                     <div className="flex items-start gap-1.5">

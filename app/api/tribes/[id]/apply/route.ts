@@ -78,15 +78,25 @@ export async function POST(
         });
 
         // Send Emails (Async - don't block response if it fails, but nice to await)
+        // Send Emails (Async - don't block response if it fails, but nice to await)
         if (dbUser?.email && tribe.creator.email) {
+            console.log('[API] Triggering tribe application emails for:', {
+                user: dbUser.email,
+                creator: tribe.creator.email,
+                tribe: tribe.name
+            });
             await sendTribeApplicationEmails({
                 adminEmail: tribe.creator.email,
                 adminName: tribe.creator.name || 'Tribe Admin',
                 userEmail: dbUser.email,
                 userName: dbUser.name || 'User',
                 tribeName: tribe.name,
-                tribeId: tribe.id,
                 userProfileLink: `${process.env.NEXTAUTH_URL || 'https://tracker-tribe.vercel.app'}/profile/${user.id}`
+            });
+        } else {
+            console.warn('[API] Skipping tribe application emails. Missing email(s):', {
+                userEmail: dbUser?.email,
+                creatorEmail: tribe.creator.email
             });
         }
 
