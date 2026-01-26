@@ -2171,10 +2171,25 @@ function ObeyaContent() {
                                                                                                 {MONTH_WEEKS[m].map(w => {
                                                                                                     const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
 
+                                                                                                    // Logic for visual cues
+                                                                                                    const now = new Date();
+                                                                                                    const currentWeekNum = getISOWeekNumber(now);
+                                                                                                    const weekNum = parseInt(w.replace('W', ''));
+                                                                                                    const isPastWeek = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && weekNum < currentWeekNum);
+                                                                                                    const isNextWeek = currentYear === now.getFullYear() && weekNum === currentWeekNum + 1;
+                                                                                                    const isEmpty = weekActions.length === 0;
+
+                                                                                                    let bgClass = 'bg-gray-50/30';
+                                                                                                    if (isPastWeek && isEmpty) {
+                                                                                                        bgClass = 'bg-red-50/50'; // Light red for Missed Opportunity
+                                                                                                    } else if (isNextWeek && isEmpty) {
+                                                                                                        bgClass = 'bg-indigo-50/60 ring-inset ring-2 ring-indigo-100/50'; // Encouragement for next week
+                                                                                                    }
+
                                                                                                     return (
                                                                                                         <div
                                                                                                             key={w}
-                                                                                                            className="flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 bg-gray-50/30 min-h-[80px] transition-colors"
+                                                                                                            className={`flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 min-h-[80px] transition-colors ${bgClass}`}
                                                                                                             onDragOver={(e) => {
                                                                                                                 e.preventDefault();
                                                                                                                 e.currentTarget.classList.add('bg-blue-100', 'border-blue-300');
@@ -2199,9 +2214,10 @@ function ObeyaContent() {
                                                                                                                     onDragStart={() => setDraggedTask({ goalId: goal.id, actionId: a.id, sourceWeek: w })}
                                                                                                                     onDragEnd={() => setDraggedTask(null)}
                                                                                                                     className={`p-2 rounded-lg border shadow-sm text-[10px] font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                                                                                                                        a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
-                                                                                                                            a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
-                                                                                                                                'bg-white border-gray-200 text-gray-700'
+                                                                                                                            (isPastWeek && a.status !== 'DONE') ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' :
+                                                                                                                                a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+                                                                                                                                    a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                                                                                                                        'bg-white border-gray-200 text-gray-700'
                                                                                                                         }`}
                                                                                                                 >
                                                                                                                     <div className="flex items-start gap-1.5">
