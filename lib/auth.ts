@@ -12,7 +12,7 @@ export interface SessionUser {
     id: string;
     email: string; // Email is required for session
     name: string | null;
-    userProfile: 'SOFT' | 'ENGAGED' | 'HARD';
+    userProfile: 'STARTER' | 'ENGAGED' | 'CREATOR';
     subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED';
     subscriptionPlan: string | null;
     trialStartDate: Date | null;
@@ -62,7 +62,7 @@ export async function getSession(): Promise<SessionUser | null> {
         id: user.id,
         email: user.email as string, // Guaranteed non-null by check above
         name: user.name,
-        userProfile: user.userProfile as 'SOFT' | 'ENGAGED' | 'HARD',
+        userProfile: user.userProfile as 'STARTER' | 'ENGAGED' | 'CREATOR',
         subscriptionStatus: user.subscriptionStatus as 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED',
         subscriptionPlan: user.subscriptionPlan,
         trialStartDate: user.trialStartDate,
@@ -105,7 +105,7 @@ export async function getUserWithPermissions(userId: string): Promise<SessionUse
         id: user.id,
         email: user.email as string, // Guaranteed non-null by check above
         name: user.name,
-        userProfile: user.userProfile as 'SOFT' | 'ENGAGED' | 'HARD',
+        userProfile: user.userProfile as 'STARTER' | 'ENGAGED' | 'CREATOR',
         subscriptionStatus: user.subscriptionStatus as 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED',
         subscriptionPlan: user.subscriptionPlan,
         trialStartDate: user.trialStartDate,

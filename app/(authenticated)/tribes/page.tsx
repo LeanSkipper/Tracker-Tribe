@@ -36,7 +36,7 @@ type UserStats = {
     reputationScore: number;
     // Subscription info
     subscriptionStatus?: string;
-    userProfile?: string; // 'SOFT' | 'HARD' (Creator)
+    userProfile?: string; // 'STARTER' | 'CREATOR' (Creator)
 };
 
 export default function BrowseTribesPage() {
@@ -79,7 +79,7 @@ export default function BrowseTribesPage() {
 
     const handleCreateClick = () => {
         // Check if user is a creator
-        if (userStats?.userProfile === 'HARD') {
+        if (userStats?.userProfile === 'CREATOR') {
             setShowCreateModal(true);
         } else {
             setShowUpgradeModal(true);

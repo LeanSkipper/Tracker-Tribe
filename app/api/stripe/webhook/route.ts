@@ -60,9 +60,9 @@ export async function POST(req: Request) {
                 };
 
                 // If this was a Creator upgrade, apply the profile change
-                if (upgradeProfile === 'HARD') {
-                    updateData.userProfile = 'HARD';
-                    updateData.subscriptionPlan = 'HARD_ANNUAL';
+                if (upgradeProfile === 'CREATOR') {
+                    updateData.userProfile = 'CREATOR';
+                    updateData.subscriptionPlan = 'CREATOR_ANNUAL';
 
                     // Send Welcome Email
                     if (session.customer_details?.email) {
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
                 await prisma.user.update({
                     where: { stripeSubscriptionId: subscriptionId },
                     data: {
-                        subscriptionStatus: "CANCELLED", // Or revert to FREE/SOFT
+                        subscriptionStatus: "CANCELLED", // Or revert to FREE/STARTER
                         // Keep end date so they have access until then? 
                         // Usually deleted means immediate or end of period passed.
                     }

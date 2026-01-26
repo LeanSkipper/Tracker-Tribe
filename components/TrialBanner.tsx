@@ -14,9 +14,9 @@ export default function TrialBanner() {
     // Don't show on auth pages or landing page
     if (pathname?.startsWith('/auth/') || pathname === '/') return null;
 
-    // Don't show if user is already a creator (HARD profile)
+    // Don't show if user is already a creator (CREATOR profile)
     // @ts-ignore - userProfile might not be typed in session yet
-    if (session?.user?.userProfile === 'HARD') return null;
+    if (session?.user?.userProfile === 'CREATOR') return null;
 
     useEffect(() => {
         // Fetch remaining spots

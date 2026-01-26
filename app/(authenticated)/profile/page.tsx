@@ -7,12 +7,15 @@ import { User as UserIcon, Mail, Lock, Save, X, CheckCircle, AlertCircle, Shield
 import MatchmakingProfile from '@/components/MatchmakingProfile';
 import ProfileCompletionBadge from '@/components/ProfileCompletionBadge';
 
+import CancelSubscriptionModal from '@/components/CancelSubscriptionModal';  // Import
+
 export default function ProfilePage() {
     const { data: session, status } = useSession();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showCancelModal, setShowCancelModal] = useState(false); // State
 
 
     // Form state
@@ -576,7 +579,17 @@ export default function ProfilePage() {
 
                 {/* 3. ACCOUNT INFORMATION - Now at the bottom */}
                 <div className="bg-white rounded-3xl shadow-xl p-8">
-                    <h2 className="text-xl font-black text-gray-900 mb-4">Account Information</h2>
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-black text-gray-900">Account Information</h2>
+                        {profile?.subscriptionStatus === 'ACTIVE' && (
+                            <button
+                                onClick={() => setShowCancelModal(true)}
+                                className="text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+                            >
+                                Cancel Subscription
+                            </button>
+                        )}
+                    </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                             <span className="text-gray-600">Subscription:</span>
@@ -598,9 +611,23 @@ export default function ProfilePage() {
                                 </span>
                             </div>
                         )}
+                        {profile?.subscriptionEndDate && (
+                            <div>
+                                <span className="text-gray-600">Renews/Expires:</span>
+                                <span className="ml-2 font-bold text-gray-900">
+                                    {new Date(profile.subscriptionEndDate).toLocaleDateString()}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
+
+            <CancelSubscriptionModal
+                isOpen={showCancelModal}
+                onClose={() => setShowCancelModal(false)}
+                currentPlanName={profile?.subscriptionPlan || 'Premium'}
+            />
         </div>
     );
 }

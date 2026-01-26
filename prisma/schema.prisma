@@ -36,9 +36,10 @@ enum MatchStatus {
 }
 
 enum UserProfile {
-  SOFT      // Free tier - 1 goal forever
-  ENGAGED   // Paid tier - Unlimited goals, can join tribes
-  HARD      // Creator tier - Can create & monetize tribes
+  STARTER      // Was SOFT (Free tier - now 10 goals)
+  ENGAGED      // Paid tier - Unlimited goals, can join tribes
+  CREATOR      // Was HARD (Creator tier - Can create & monetize tribes)
+  PREMIUM_CREATOR // For later
 }
 
 enum SubscriptionStatus {
@@ -52,12 +53,12 @@ enum SubscriptionStatus {
 }
 
 enum SubscriptionPlan {
-  SOFT_FREE          // Free forever - 1 goal
+  STARTER_FREE       // Was SOFT_FREE
   ENGAGED_TRIAL      // 60-day trial - unlimited goals
   ENGAGED_MONTHLY    // $25/month ($20 with trial discount)
   ENGAGED_ANNUAL     // $250/year ($200 with trial discount)
-  HARD_MONTHLY       // Creator tier (TBD)
-  HARD_ANNUAL        // Creator tier (TBD)
+  CREATOR_MONTHLY    // Was HARD_MONTHLY
+  CREATOR_ANNUAL     // Was HARD_ANNUAL
 }
 
 model User {
@@ -95,12 +96,12 @@ model User {
   totalCommissions Float @default(0)
 
   // User Profile System
-  userProfile       UserProfile @default(SOFT)
+  userProfile       UserProfile @default(STARTER)
   subscriptionStatus SubscriptionStatus @default(FREE)
-  subscriptionPlan  SubscriptionPlan @default(SOFT_FREE)
+  subscriptionPlan  SubscriptionPlan @default(STARTER_FREE)
   
   // Goal Limits
-  maxGoals          Int @default(1) // Free: 1, Trial/Paid: unlimited (-1)
+  maxGoals          Int @default(10) // Free: 10, Trial/Paid: unlimited (-1)
   
   // Trial & Subscription Dates
   trialStartDate    DateTime? // When trial started

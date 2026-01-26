@@ -30,10 +30,10 @@ export async function createGuestSession() {
             isGuest: true,
             name: 'Guest User',
             email: null, // Guest users don't have email initially
-            userProfile: UserProfile.SOFT,
+            userProfile: UserProfile.STARTER,
             subscriptionStatus: SubscriptionStatus.FREE,
-            subscriptionPlan: SubscriptionPlan.SOFT_FREE,
-            maxGoals: 1, // Guests can create 1 goal
+            subscriptionPlan: SubscriptionPlan.STARTER_FREE,
+            maxGoals: 10, // Guests can create 10 goals
             lastActiveAt: new Date(),
         },
     });

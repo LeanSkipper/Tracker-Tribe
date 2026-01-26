@@ -41,8 +41,8 @@ export async function POST(req: Request) {
             };
 
             // Add profile upgrade metadata
-            metadata.userProfile = 'HARD';
-            subscriptionMetadata.userProfile = 'HARD';
+            metadata.userProfile = 'CREATOR';
+            subscriptionMetadata.userProfile = 'CREATOR';
 
         } else if (planType === 'ENGAGED') {
             if (!customAmount || customAmount < 120) {

@@ -31,7 +31,7 @@ export default function SessionPage() {
         fetch('/api/profile')
             .then(res => res.json())
             .then(user => {
-                const isActive = user.userProfile === 'HARD' ||
+                const isActive = user.userProfile === 'CREATOR' ||
                     user.subscriptionStatus === 'ACTIVE' ||
                     (user.trialEndDate && new Date(user.trialEndDate) > new Date());
 

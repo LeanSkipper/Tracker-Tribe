@@ -14,7 +14,7 @@ export async function GET(req: Request) {
             return unauthorizedResponse('Please sign in to view peer GPS data');
         }
 
-        // Check if user can view peer GPS (ENGAGED or HARD subscription required)
+        // Check if user can view peer GPS (ENGAGED or CREATOR subscription required)
         const permission = await checkPermission(user, 'viewPeerGPS');
 
         if (!permission.allowed) {

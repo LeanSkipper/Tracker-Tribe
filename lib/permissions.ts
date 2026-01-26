@@ -2,9 +2,9 @@
  * Permissions & Access Control System
  * 
  * This module handles all permission checks for the three-tier user profile system:
- * - SOFT: Free tier with 3-month trial, GPS access only
+ * - STARTER: Free tier with 3-month trial, GPS access only
  * - ENGAGED: Paid tier, can join tribes and view peer GPS
- * - HARD: Creator tier, can create and monetize tribes
+ * - CREATOR: Creator tier, can create and monetize tribes
  */
 
 import { User, UserProfile, SubscriptionStatus } from '@prisma/client';
@@ -13,10 +13,13 @@ import { User, UserProfile, SubscriptionStatus } from '@prisma/client';
  * Check if user can access GPS (OBEYA) features
  * 
  * Rules:
- * - SOFT users: Only during trial or grace period (with 20% surcharge)
- * - ENGAGED/HARD users: Only with active subscription
+ * - STARTER users: Only during trial or grace period (with 20% surcharge)
+ * - ENGAGED/CREATOR users: Only with active subscription
  */
 export const canAccessGPS = (user: User): boolean => {
+    // CREATOR users always have access (bypass subscription check)
+    if (user.userProfile === 'CREATOR') return true;
+
     const now = new Date();
 
     console.log('[canAccessGPS] Checking access for user:', {
@@ -52,11 +55,14 @@ export const canAccessGPS = (user: User): boolean => {
  * Check if user can join tribes
  * 
  * Rules:
- * - Only ENGAGED and HARD users
+ * - Only ENGAGED and CREATOR users
  * - Must have active subscription
  */
 export const canJoinTribes = (user: User): boolean => {
-    return ['ENGAGED', 'HARD'].includes(user.userProfile) &&
+    // CREATOR users always have access
+    if (user.userProfile === 'CREATOR') return true;
+
+    return ['ENGAGED'].includes(user.userProfile) &&
         user.subscriptionStatus === 'ACTIVE';
 };
 
@@ -64,19 +70,21 @@ export const canJoinTribes = (user: User): boolean => {
  * Check if user can create tribes
  * 
  * Rules:
- * - Only HARD users
+ * - Only CREATOR users
  * - Must have active subscription
  */
 export const canCreateTribes = (user: User): boolean => {
-    return user.userProfile === 'HARD' &&
-        user.subscriptionStatus === 'ACTIVE';
+    // CREATOR users always have access
+    if (user.userProfile === 'CREATOR') return true;
+
+    return false; // Only creators can create
 };
 
 /**
  * Check if user can view another user's GPS
  * 
  * Rules:
- * - Only ENGAGED and HARD users
+ * - Only ENGAGED and CREATOR users
  * - Must have active subscription
  * - Must share a tribe or be matched peers
  * 
@@ -95,12 +103,12 @@ export const canViewPeerGPS = (user: User, peer?: User): boolean => {
  * Check if user can monetize tribes (set prices and earn revenue)
  * 
  * Rules:
- * - Only HARD users
+ * - Only CREATOR users
  * - Must have active subscription
- * - Note: HARD users can create free tribes (no commission)
+ * - Note: CREATOR users can create free tribes (no commission)
  */
 export const canMonetizeTribe = (user: User): boolean => {
-    return user.userProfile === 'HARD' &&
+    return user.userProfile === 'CREATOR' &&
         user.subscriptionStatus === 'ACTIVE';
 };
 
@@ -154,11 +162,11 @@ export const getGraceDaysRemaining = (user: User): number => {
  * Check if user can upgrade to a specific profile
  * 
  * Rules:
- * - Progressive upgrades allowed: SOFT → ENGAGED → HARD
- * - Can skip levels: SOFT → HARD directly
+ * - Progressive upgrades allowed: STARTER → ENGAGED → CREATOR
+ * - Can skip levels: STARTER → CREATOR directly
  */
 export const canUpgradeTo = (user: User, targetProfile: UserProfile): boolean => {
-    const profileOrder: UserProfile[] = ['SOFT', 'ENGAGED', 'HARD'];
+    const profileOrder: UserProfile[] = ['STARTER', 'ENGAGED', 'CREATOR'];
     const currentIndex = profileOrder.indexOf(user.userProfile);
     const targetIndex = profileOrder.indexOf(targetProfile);
 
@@ -171,9 +179,10 @@ export const canUpgradeTo = (user: User, targetProfile: UserProfile): boolean =>
  */
 export const getProfileDisplayName = (profile: UserProfile): string => {
     const names = {
-        SOFT: 'Explorer',
-        ENGAGED: 'Member',
-        HARD: 'Creator'
+        STARTER: 'Starter',
+        ENGAGED: 'Engaged',
+        CREATOR: 'Creator',
+        PREMIUM_CREATOR: 'Premium Creator'
     };
     return names[profile];
 };
@@ -244,11 +253,11 @@ export const canViewMasterminds = (user: User | null): boolean => {
  * Rules:
  * - Guests: Cannot create
  * - Trial users: Cannot create
- * - Subscribed users: Can create (HARD profile only)
+ * - Subscribed users: Can create (CREATOR profile only)
  */
 export const canCreateMasterminds = (user: User | null): boolean => {
     if (!user) return false;
-    return canCreateTribes(user); // Only HARD with active subscription
+    return canCreateTribes(user); // Only CREATOR with active subscription
 };
 
 /**

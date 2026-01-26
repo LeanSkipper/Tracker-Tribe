@@ -74,7 +74,7 @@ function DefaultUpgradePrompt({
 
     const getRequiredPlan = () => {
         if (feature === 'canCreateTribes' || feature === 'canMonetizeTribe') {
-            return 'HARD ($19/month)';
+            return 'CREATOR ($19/month)';
         }
         if (feature === 'canJoinTribes' || feature === 'canViewPeerGPS') {
             return 'ENGAGED ($9/month)';

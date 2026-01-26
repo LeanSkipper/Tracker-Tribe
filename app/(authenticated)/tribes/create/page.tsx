@@ -21,12 +21,12 @@ export default function CreateTribePage() {
 
                     // Allow creation access (handled by component or backend if really strict)
                     // But here we check mainly for monetization capability
-                    if (user.userProfile === 'HARD') {
+                    if (user.userProfile === 'CREATOR') {
                         setCanMonetize(true);
                     }
 
                     // If we want to restrict creation itself to PAID users only (uncomment if needed)
-                    if (user.userProfile === 'SOFT') {
+                    if (user.userProfile === 'STARTER') {
                         setIsRestricted(true);
                     }
                 }

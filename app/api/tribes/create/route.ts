@@ -19,7 +19,7 @@ export async function POST(req: Request) {
             return unauthorizedResponse('Please sign in to create tribes');
         }
 
-        // Check if user can create tribes (HARD subscription required)
+        // Check if user can create tribes (CREATOR subscription required)
         const permission = await checkPermission(user, 'createTribes');
 
         if (!permission.allowed) {

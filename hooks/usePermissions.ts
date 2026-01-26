@@ -11,7 +11,7 @@ export interface UserPermissions {
     canCreateTribes: boolean;
     canViewPeerGPS: boolean;
     canMonetizeTribe: boolean;
-    userProfile: 'SOFT' | 'ENGAGED' | 'HARD';
+    userProfile: 'STARTER' | 'ENGAGED' | 'CREATOR';
     subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'GRACE_PERIOD' | 'EXPIRED' | 'CANCELLED' | 'PAYMENT_FAILED';
     reputationScore: number;
     trialDaysRemaining?: number;

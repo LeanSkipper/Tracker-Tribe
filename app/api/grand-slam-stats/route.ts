@@ -8,10 +8,10 @@ export async function GET() {
     try {
         const MAX_SPOTS = 100;
 
-        // Count users with 'HARD' profile (Creators)
+        // Count users with 'CREATOR' profile (Creators)
         const creatorCount = await prisma.user.count({
             where: {
-                userProfile: 'HARD'
+                userProfile: 'CREATOR'
             }
         });
 

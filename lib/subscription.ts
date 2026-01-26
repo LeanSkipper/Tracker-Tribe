@@ -2,14 +2,14 @@
 export type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'EXPIRED' | 'CREATOR';
 
 export interface UserSubscriptionData {
-    userProfile: string | null;  // 'HARD' = Creator/Active, 'SOFT' = Free/Trial
+    userProfile: string | null;  // 'CREATOR' = Creator/Active, 'STARTER' = Free/Trial
     subscriptionStatus: string | null; // 'ACTIVE', 'TRIALING', 'bounced', etc.
     trialEndDate: Date | string | null;
 }
 
 export function getSubscriptionStatus(user: UserSubscriptionData): SubscriptionStatus {
-    // 1. Creator (HARD) is always valid/active
-    if (user.userProfile === 'HARD') return 'CREATOR';
+    // 1. Creator (CREATOR) is always valid/active
+    if (user.userProfile === 'CREATOR') return 'CREATOR';
 
     // 2. Check if explicit subscription is active
     if (user.subscriptionStatus === 'ACTIVE') return 'ACTIVE';

@@ -794,7 +794,7 @@ function ObeyaContent() {
             .then(user => {
                 if (user.error) return;
                 // Client-side restriction check (mirrors lib/subscription)
-                const isActive = user.userProfile === 'HARD' ||
+                const isActive = user.userProfile === 'CREATOR' ||
                     user.subscriptionStatus === 'ACTIVE' ||
                     (user.trialEndDate && new Date(user.trialEndDate) > new Date());
                 setIsRestricted(!isActive);

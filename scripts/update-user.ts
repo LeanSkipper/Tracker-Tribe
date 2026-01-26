@@ -20,7 +20,7 @@ async function updateUser() {
         const updated = await prisma.user.update({
             where: { id: user.id },
             data: {
-                userProfile: user.userProfile || 'SOFT',
+                userProfile: user.userProfile || 'STARTER',
                 subscriptionStatus: user.subscriptionStatus || 'TRIAL',
                 trialStartDate: user.trialStartDate || new Date(),
                 trialEndDate: user.trialEndDate || new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),

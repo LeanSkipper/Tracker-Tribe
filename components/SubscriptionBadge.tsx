@@ -44,12 +44,12 @@ export default function SubscriptionBadge() {
         }
 
         switch (userProfile) {
-            case 'SOFT':
+            case 'STARTER':
                 return {
                     bg: 'bg-green-100',
                     text: 'text-green-800',
                     border: 'border-green-300',
-                    label: 'Explorer',
+                    label: 'Starter',
                 };
             case 'ENGAGED':
                 return {
@@ -58,7 +58,7 @@ export default function SubscriptionBadge() {
                     border: 'border-blue-300',
                     label: 'Member',
                 };
-            case 'HARD':
+            case 'CREATOR':
                 return {
                     bg: 'bg-purple-100',
                     text: 'text-purple-800',
@@ -79,14 +79,14 @@ export default function SubscriptionBadge() {
 
     return (
         <button
-            onClick={() => window.location.href = '/settings/subscription'}
-            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border-2 ${style.bg} ${style.text} ${style.border} font-semibold text-sm hover:opacity-80 transition-opacity cursor-pointer`}
+            onClick={() => window.location.href = '/profile'}
+            className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm transition-all hover:scale-105 cursor-pointer ${style.bg} ${style.text} ${style.border}`}
             title="Click to manage subscription"
         >
             <span className="text-lg">
-                {userProfile === 'SOFT' && '🌱'}
+                {userProfile === 'STARTER' && '🌱'}
                 {userProfile === 'ENGAGED' && '💎'}
-                {userProfile === 'HARD' && '👑'}
+                {userProfile === 'CREATOR' && '👑'}
             </span>
             <span>{style.label}</span>
             {subscriptionStatus === 'ACTIVE' && <span className="text-xs">✓</span>}

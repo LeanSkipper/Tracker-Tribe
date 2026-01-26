@@ -17,7 +17,7 @@ export async function POST(req: Request) {
             return unauthorizedResponse('Please sign in to join tribes');
         }
 
-        // Check if user can join tribes (ENGAGED or HARD subscription required)
+        // Check if user can join tribes (ENGAGED or CREATOR subscription required)
         const permission = await checkPermission(user, 'joinTribes');
 
         if (!permission.allowed) {
