@@ -597,13 +597,12 @@ export default function SharedObeyaTracker({
                                                                                         {weekActions.map(action => (
                                                                                             <div
                                                                                                 key={action.id}
-                                                                                                className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all 
-                                                                                                    ${action.status === 'DONE'
-                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
-                                                                                                        : ((isPastWeek && action.status !== 'DONE')
-                                                                                                            ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' // Yellow/Amber for Unfinished Past
-                                                                                                            : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300')
-                                                                                                    } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+                                                                                                ${action.status === 'DONE'
+                                                                                                    ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                    : (isPastWeek
+                                                                                                        ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' // Yellow/Amber for Unfinished Past
+                                                                                                        : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300')
+                                                                                                } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
                                                                                                 draggable={canEdit}
                                                                                                 onDragStart={(e) => {
                                                                                                     if (canEdit) {
