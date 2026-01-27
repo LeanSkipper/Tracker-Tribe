@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { MessageSquare, Plus, BookOpen, Bot, X } from 'lucide-react';
+import { MessageSquare, Plus, BookOpen, Bot } from 'lucide-react';
 import { useViewMode } from '@/contexts/ViewModeContext';
 import Link from 'next/link';
 import FeedbackModal from './FeedbackModal';
 import Coach from './Coach';
 
 export default function FloatingActions() {
-    const { mode } = useViewMode();
+    const { } = useViewMode();
     const [isOpen, setIsOpen] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isCoachOpen, setIsCoachOpen] = useState(false);
@@ -75,17 +75,13 @@ export default function FloatingActions() {
                 We might need a modal wrapper for it if it's not designed to be modal. 
                 Assuming Coach is the Chat interface. */}
             {isCoachOpen && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-                    <div className="bg-white w-full max-w-lg h-[600px] rounded-2xl overflow-hidden relative shadow-2xl flex flex-col">
-                        <div className="p-4 bg-purple-600 text-white flex justify-between items-center">
-                            <h3 className="font-bold flex items-center gap-2"><Bot /> Lapis Coach</h3>
-                            <button onClick={() => setIsCoachOpen(false)}><X /></button>
-                        </div>
-                        <div className="flex-1 overflow-hidden relative">
-                            <Coach goals={[]} />
-                        </div>
-                    </div>
-                </div>
+                <Coach
+                    goals={[]}
+                    isOpen={true}
+                    onOpenChange={(open) => {
+                        if (!open) setIsCoachOpen(false);
+                    }}
+                />
             )}
         </>
     );
