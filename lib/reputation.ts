@@ -80,7 +80,7 @@ export const calculateProfileCompleteness = (
     if (user.bio && user.bio.trim().length > 0) completeness += 15;
     if (user.avatarUrl && user.avatarUrl.trim().length > 0) completeness += 10;
     if (user.lifeVision && user.lifeVision.trim().length > 0) completeness += 15;
-    if (user.skills && user.skills.trim().length > 0) completeness += 20;
+    if (user.skillMatrix && user.skillMatrix.trim().length > 0) completeness += 20;
     if (goalCount > 0) completeness += 15;
     if (badgeCount > 0) completeness += 15;
 

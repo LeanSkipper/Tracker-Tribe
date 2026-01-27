@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, Sparkles, AlertTriangle, Share2, Globe, Lock, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, AlertTriangle, Share2, Globe, Lock, Zap } from 'lucide-react';
 import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
@@ -72,12 +72,13 @@ const generateMonthlyTargets = (start: number, end: number, startYear: number, s
     return data;
 };
 
-const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, onUpdateMetric }: {
+const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, onUpdateMetric, onMoveAction }: {
     goal: GoalCategory,
     currentYear: number,
     onUpdateStatus: (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => void;
     onAddAction: (goalId: string, weekId: string) => void;
     onUpdateMetric: (goalId: string, rowId: string, monthId: string, field: 'actual' | 'target', value: string) => void;
+    onMoveAction: (goalId: string, actionId: string, targetWeekId: string) => void;
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const [areMetricsExpanded, setAreMetricsExpanded] = useState(false); // Collapsible Metrics
@@ -293,7 +294,7 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, o
                                 <div className="space-y-2 min-h-[60px]">
                                     {weekActions.length > 0 ? (
                                         weekActions.map(action => (
-                                            <div key={action.id} className={`flex items-start gap-2.5 p-2 rounded-lg border shadow-sm transition-all
+                                            <div key={action.id} className={`flex items-start gap-2.5 p-2 rounded-lg border shadow-sm transition-all group
                                                 ${action.status === 'DONE'
                                                     ? 'bg-white border-slate-100'
                                                     : (weekNum < globalWeekNum // Unfinished in past: Amber warning
@@ -307,9 +308,35 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, o
                                                     className={`mt-0.5 w-4 h-4 rounded border-slate-300 cursor-pointer ${isCurrent ? 'text-indigo-600 focus:ring-indigo-500' : 'text-slate-400 focus:ring-slate-400'
                                                         }`}
                                                 />
-                                                <span className={`text-xs leading-snug ${action.status === 'DONE' ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
+                                                <span className={`flex-1 text-xs leading-snug ${action.status === 'DONE' ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}`}>
                                                     {action.title}
                                                 </span>
+
+                                                {/* Mobile Move Arrows */}
+                                                <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onMoveAction(goal.id, action.id, `W${weekNum - 1}`);
+                                                        }}
+                                                        className="p-1 text-slate-300 hover:text-indigo-600 hover:bg-slate-100 rounded"
+                                                        title="Move to Previous Week"
+                                                        aria-label="Move to Previous Week"
+                                                    >
+                                                        <ChevronLeft size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onMoveAction(goal.id, action.id, `W${weekNum + 1}`);
+                                                        }}
+                                                        className="p-1 text-slate-300 hover:text-indigo-600 hover:bg-slate-100 rounded"
+                                                        title="Move to Next Week"
+                                                        aria-label="Move to Next Week"
+                                                    >
+                                                        <ChevronRight size={14} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         ))
                                     ) : (
@@ -854,9 +881,60 @@ import { useViewMode } from '@/contexts/ViewModeContext';
 function ObeyaContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const { mode } = useViewMode();
+    const { data: session } = useSession() ?? { data: null };
+    const isGuest = !session;
+    const { status: pitStopStatus, daysSince: pitStopDaysSince, loading: pitStopLoading } = usePitStopStatus();
+    const pitStopDaysLeft = Math.max(0, 7 - pitStopDaysSince);
+    const isPitStopDue = pitStopDaysLeft === 0;
 
+    // --- State Declarations ---
+    const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+    const [isCoachOpen, setIsCoachOpen] = useState(false);
+    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    const [showPitStopTutorial, setShowPitStopTutorial] = useState(false);
+    const [isRestricted, setIsRestricted] = useState(false);
+    const [showLockModal, setShowLockModal] = useState(false);
+    const [currentYear, setCurrentYear] = useState(2026);
+    const [viewMode, setViewMode] = useState<ObeyaViewMode>('operational');
+    const [isLoaded, setIsLoaded] = useState(false);
+    const [goals, setGoals] = useState<GoalCategory[]>([]);
+    const [draggedTask, setDraggedTask] = useState<{ goalId: string; actionId: string; sourceWeek: string } | null>(null);
+    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+    const [editingTaskTitle, setEditingTaskTitle] = useState<string>('');
+    const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
+    const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
+    const [editingGoal, setEditingGoal] = useState<GoalCategory | null>(null);
+    const [activeWeekModal, setActiveWeekModal] = useState<{ week: string, goalId: string } | null>(null);
+    const [activeGraphModal, setActiveGraphModal] = useState<MetricRow | null>(null);
+    const [activeCommentModal, setActiveCommentModal] = useState<{ goalId: string, rowId: string, monthData: MonthlyData } | null>(null);
+    const [activeTaskDetailModal, setActiveTaskDetailModal] = useState<{ goalId: string, action: ActionCard } | null>(null);
+    const [isInspirationOpen, setIsInspirationOpen] = useState(false);
+    const [isPitStopOpen, setIsPitStopOpen] = useState(false);
+    const [viewingPitStop, setViewingPitStop] = useState<any>(null);
+    const [pitStops, setPitStops] = useState<any[]>([]);
+
+
+
+    // --- Helper Functions ---
+    const handleCreateGoal = () => {
+        if (isRestricted && goals.length >= 3) {
+            setShowLockModal(true);
+            return;
+        }
+        setIsInspirationOpen(true);
+    };
+
+    const toggleGoal = (goalId: string) => {
+        setCollapsedGoals(prev => {
+            const next = new Set(prev);
+            if (next.has(goalId)) next.delete(goalId);
+            else next.add(goalId);
+            return next;
+        });
+    };
+
+    // --- Effects ---
     useEffect(() => {
         if (searchParams.get('upgraded') === 'true') {
             setShowWelcomeModal(true);
@@ -881,12 +959,16 @@ function ObeyaContent() {
             newParams.delete('action');
             window.history.replaceState(null, '', `/obeya?${newParams.toString()}`);
         }
-    }, [searchParams]);
 
-    const [showPitStopTutorial, setShowPitStopTutorial] = useState(false);
-
-    const [isRestricted, setIsRestricted] = useState(false);
-    const [showLockModal, setShowLockModal] = useState(false);
+        // Handle Floating Action Button "Pit Stop"
+        if (searchParams.get('action') === 'pit-stop') {
+            if (isRestricted) setShowLockModal(true);
+            else setIsPitStopOpen(true);
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.delete('action');
+            window.history.replaceState(null, '', `/obeya?${newParams.toString()}`);
+        }
+    }, [searchParams, isRestricted]);
 
     useEffect(() => {
         fetch('/api/profile')
@@ -902,47 +984,7 @@ function ObeyaContent() {
             .catch(err => console.error("Failed to check subscription", err));
     }, []);
 
-    const handleCreateGoal = () => {
-        if (isRestricted && goals.length >= 3) {
-            setShowLockModal(true);
-            return;
-        }
-        setIsInspirationOpen(true);
-    };
 
-    const [currentYear, setCurrentYear] = useState(2026);
-    const [viewMode, setViewMode] = useState<ObeyaViewMode>('operational');
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [goals, setGoals] = useState<GoalCategory[]>([]);
-    const [draggedTask, setDraggedTask] = useState<{ goalId: string; actionId: string; sourceWeek: string } | null>(null);
-    const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
-    const [editingTaskTitle, setEditingTaskTitle] = useState<string>('');
-
-    const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
-
-
-
-    // Collapse state for entire goals (Excel-style)
-    const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
-
-    const toggleGoal = (goalId: string) => {
-        setCollapsedGoals(prev => {
-            const next = new Set(prev);
-            if (next.has(goalId)) next.delete(goalId);
-            else next.add(goalId);
-            return next;
-        });
-    };
-
-    // Mobile check: Collapse all on mount if screen is narrow
-    useEffect(() => {
-        if (typeof window !== 'undefined' && window.innerWidth < 768) {
-            const allGoalIds = goals.map(g => g.id);
-            if (allGoalIds.length > 0) {
-                setCollapsedGoals(new Set(allGoalIds));
-            }
-        }
-    }, [goals]);
 
     // Beginner Mode: Collapse OKR/KPI sections by default
     useEffect(() => {
@@ -1028,18 +1070,6 @@ function ObeyaContent() {
         };
         fetchGoals();
     }, []);
-
-    const [editingGoal, setEditingGoal] = useState<GoalCategory | null>(null);
-    const [activeWeekModal, setActiveWeekModal] = useState<{ week: string, goalId: string } | null>(null);
-    const [activeGraphModal, setActiveGraphModal] = useState<MetricRow | null>(null);
-    const [activeCommentModal, setActiveCommentModal] = useState<{ goalId: string, rowId: string, monthData: MonthlyData } | null>(null);
-    const [activeTaskDetailModal, setActiveTaskDetailModal] = useState<{ goalId: string, action: ActionCard } | null>(null);
-    const [isInspirationOpen, setIsInspirationOpen] = useState(false);
-
-    // Pit Stop State
-    const [isPitStopOpen, setIsPitStopOpen] = useState(false);
-    const [viewingPitStop, setViewingPitStop] = useState<any>(null);
-    const [pitStops, setPitStops] = useState<any[]>([]);
 
     useEffect(() => {
         const fetchPitStops = async () => {
@@ -1348,11 +1378,15 @@ function ObeyaContent() {
 
     const handleAddActionToCurrentWeek = async (goalId: string, rowId: string) => {
         if (isRestricted) { setShowLockModal(true); return; }
-        const title = window.prompt("Enter task title:");
+        // Always default to Next Week
+        const title = window.prompt("Enter task title (Next Week):");
         if (!title) return;
-        const now = new Date();
-        const currentWeek = getISOWeekNumber(now);
-        const weekId = `W${currentWeek}`;
+
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + 7); // Always add 7 days for next week
+        const targetWeek = getISOWeekNumber(targetDate);
+
+        const weekId = `W${targetWeek}`;
         await handleAddAction(weekId, goalId, title);
     };
 
@@ -1412,9 +1446,15 @@ function ObeyaContent() {
         setEditingGoal(newGoal);
     };
 
-    const [isMobileFabOpen, setIsMobileFabOpen] = useState(false);
-    const [isCoachOpen, setIsCoachOpen] = useState(false);
-    const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    // Mobile check: Collapse all on mount if screen is narrow
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+            const allGoalIds = goals.map(g => g.id);
+            if (allGoalIds.length > 0) {
+                setCollapsedGoals(new Set(allGoalIds));
+            }
+        }
+    }, [goals]);
 
     const toggleSection = (sectionKey: string) => {
         const newSet = new Set(collapsedSections);
@@ -1423,26 +1463,14 @@ function ObeyaContent() {
         setCollapsedSections(newSet);
     };
 
-    // Check if user is a guest (no session)
-    // Use optional chaining to handle SSR where useSession might be undefined
-    const { data: session } = useSession() ?? { data: null };
-    const isGuest = !session;
 
-    // Pit Stop Logic
-    const { status: pitStopStatus, daysSince: pitStopDaysSince, loading: pitStopLoading } = usePitStopStatus();
-    const pitStopDaysLeft = Math.max(0, 7 - pitStopDaysSince);
-    const isPitStopDue = pitStopDaysLeft === 0;
 
     return (
         <div className="flex flex-col h-screen bg-gray-50 overflow-hidden">
             {/* Demo Data Banner for Guest Users */}
             {isGuest && <DemoDataBanner />}
 
-            {/* Landscape Alert for Mobile */}
-            <div className="md:hidden bg-blue-50 p-2 text-center text-xs text-blue-600 border-b border-blue-100 flex items-center justify-center gap-2">
-                <Layout size={14} />
-                <span>Rotate to landscape for better view</span>
-            </div>
+
 
             {isInspirationOpen && (
                 <InspirationModal
@@ -1803,6 +1831,7 @@ function ObeyaContent() {
                                     onUpdateStatus={handleUpdateActionStatus}
                                     onAddAction={handleAddActionToCurrentWeek}
                                     onUpdateMetric={handleCommitMetric}
+                                    onMoveAction={handleMoveAction}
                                 />
                             ))}
 
@@ -2345,55 +2374,7 @@ function ObeyaContent() {
                     </div>
                 </div>)}
             </main>
-            <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
-                {isMobileFabOpen && (
-                    <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
-                        <button
-                            onClick={() => { handleCreateGoal(); setIsMobileFabOpen(false); }}
-                            className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                            <Plus size={16} /> New Goal
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (isRestricted) setShowLockModal(true);
-                                else setIsPitStopOpen(true);
-                                setIsMobileFabOpen(false);
-                            }}
-                            className={`p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs text-white ${isPitStopDue ? 'bg-amber-500' : 'bg-blue-600'}`}
-                        >
-                            <Clock size={16} /> Pit Stop
-                            {isPitStopDue
-                                ? <span className="bg-red-600 text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">DUE</span>
-                                : <span className="bg-blue-800/50 text-[10px] px-1.5 py-0.5 rounded-full">{pitStopDaysLeft}d</span>
-                            }
-                        </button>
-                        <button
-                            onClick={() => {
-                                if (isRestricted) setShowLockModal(true);
-                                else setIsCoachOpen(true);
-                                setIsMobileFabOpen(false);
-                            }}
-                            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                            <Sparkles size={16} /> Coach
-                        </button>
-                    </div>
-                )}
-                <button
-                    onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
-                    className={`relative p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
-                >
-                    <Plus size={24} />
-                    {/* Notification Badge on Main FAB if Pit Stop Due */}
-                    {!isMobileFabOpen && isPitStopDue && (
-                        <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
-                        </span>
-                    )}
-                </button>
-            </div>
+
 
             <div onClick={() => isRestricted && setShowLockModal(true)} className="contents">
                 {mode === 'advanced' && (

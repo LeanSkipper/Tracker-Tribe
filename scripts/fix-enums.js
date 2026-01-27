@@ -2,7 +2,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 async function main() {
-    console.log('Starting Robust Enum Migration (Text Conversion Strategy)...');
+    console.log('Starting Safe Enum Migration (Preserves Existing Data)...');
 
     const run = async (query) => {
         try {
@@ -15,53 +15,63 @@ async function main() {
     };
 
     try {
-        // 0. Drop Defaults to avoid "cannot be cast automatically" errors during push
-        // We let Prisma recreate them later.
-        await run(`ALTER TABLE "User" ALTER COLUMN "userProfile" DROP DEFAULT`);
-        await run(`ALTER TABLE "User" ALTER COLUMN "subscriptionPlan" DROP DEFAULT`);
-        await run(`ALTER TABLE "Subscription" ALTER COLUMN "plan" DROP DEFAULT`);
-        // Note: Badges_Catalog.requiredForProfile is nullable and has no default usually, but we can check schema.
-        // Schema says: requiredForProfile UserProfile? (Optional, no default) - so no need to drop.
+        // 0. Check if columns are already TEXT type
+        const checkType = async (table, column) => {
+            try {
+                const result = await prisma.$queryRawUnsafe(`
+                    SELECT data_type 
+                    FROM information_schema.columns 
+                    WHERE table_name = '${table}' AND column_name = '${column}'
+                `);
+                return result[0]?.data_type === 'text';
+            } catch (e) {
+                return false;
+            }
+        };
 
-        // 1. Convert Enum Columns to TEXT
-        // This allows us to update the values to strings that don't exist in the old enum
-        await run(`ALTER TABLE "User" ALTER COLUMN "userProfile" TYPE text`);
-        await run(`ALTER TABLE "Badges_Catalog" ALTER COLUMN "requiredForProfile" TYPE text`);
-        await run(`ALTER TABLE "User" ALTER COLUMN "subscriptionPlan" TYPE text`);
-        await run(`ALTER TABLE "Subscription" ALTER COLUMN "plan" TYPE text`);
+        const userProfileIsText = await checkType('User', 'userProfile');
+        const subscriptionPlanIsText = await checkType('User', 'subscriptionPlan');
 
-        // 2. Update Old Values to New Values
-        // valid in new schema: STARTER, CREATOR, STARTER_FREE, CREATOR_MONTHLY, CREATOR_ANNUAL
+        // Only convert to TEXT if not already TEXT
+        if (!userProfileIsText) {
+            console.log('Converting userProfile to TEXT...');
+            await run(`ALTER TABLE "User" ALTER COLUMN "userProfile" DROP DEFAULT`);
+            await run(`ALTER TABLE "User" ALTER COLUMN "userProfile" TYPE text`);
+            await run(`ALTER TABLE "Badges_Catalog" ALTER COLUMN "requiredForProfile" TYPE text`);
 
-        // UserProfile updates
-        const upCols = [
-            { table: '"User"', col: '"userProfile"' },
-            { table: '"Badges_Catalog"', col: '"requiredForProfile"' }
-        ];
-
-        for (const { table, col } of upCols) {
-            await run(`UPDATE ${table} SET ${col} = 'STARTER' WHERE ${col} = 'SOFT'`);
-            await run(`UPDATE ${table} SET ${col} = 'CREATOR' WHERE ${col} = 'HARD'`);
+            // Update old enum values to new ones
+            await run(`UPDATE "User" SET "userProfile" = 'STARTER' WHERE "userProfile" = 'SOFT'`);
+            await run(`UPDATE "User" SET "userProfile" = 'CREATOR' WHERE "userProfile" = 'HARD'`);
+            await run(`UPDATE "Badges_Catalog" SET "requiredForProfile" = 'STARTER' WHERE "requiredForProfile" = 'SOFT'`);
+            await run(`UPDATE "Badges_Catalog" SET "requiredForProfile" = 'CREATOR' WHERE "requiredForProfile" = 'HARD'`);
+        } else {
+            console.log('userProfile already TEXT, skipping conversion');
         }
 
-        // SubscriptionPlan updates
-        const spCols = [
-            { table: '"User"', col: '"subscriptionPlan"' },
-            { table: '"Subscription"', col: '"plan"' }
-        ];
+        if (!subscriptionPlanIsText) {
+            console.log('Converting subscriptionPlan to TEXT...');
+            await run(`ALTER TABLE "User" ALTER COLUMN "subscriptionPlan" DROP DEFAULT`);
+            await run(`ALTER TABLE "Subscription" ALTER COLUMN "plan" DROP DEFAULT`);
+            await run(`ALTER TABLE "User" ALTER COLUMN "subscriptionPlan" TYPE text`);
+            await run(`ALTER TABLE "Subscription" ALTER COLUMN "plan" TYPE text`);
 
-        for (const { table, col } of spCols) {
-            await run(`UPDATE ${table} SET ${col} = 'STARTER_FREE' WHERE ${col} = 'SOFT_FREE'`);
-            await run(`UPDATE ${table} SET ${col} = 'CREATOR_MONTHLY' WHERE ${col} = 'HARD_MONTHLY'`);
-            await run(`UPDATE ${table} SET ${col} = 'CREATOR_ANNUAL' WHERE ${col} = 'HARD_ANNUAL'`);
+            // Update old enum values to new ones
+            await run(`UPDATE "User" SET "subscriptionPlan" = 'STARTER_FREE' WHERE "subscriptionPlan" = 'SOFT_FREE'`);
+            await run(`UPDATE "User" SET "subscriptionPlan" = 'CREATOR_MONTHLY' WHERE "subscriptionPlan" = 'HARD_MONTHLY'`);
+            await run(`UPDATE "User" SET "subscriptionPlan" = 'CREATOR_ANNUAL' WHERE "subscriptionPlan" = 'HARD_ANNUAL'`);
+            await run(`UPDATE "Subscription" SET "plan" = 'STARTER_FREE' WHERE "plan" = 'SOFT_FREE'`);
+            await run(`UPDATE "Subscription" SET "plan" = 'CREATOR_MONTHLY' WHERE "plan" = 'HARD_MONTHLY'`);
+            await run(`UPDATE "Subscription" SET "plan" = 'CREATOR_ANNUAL' WHERE "plan" = 'HARD_ANNUAL'`);
+        } else {
+            console.log('subscriptionPlan already TEXT, skipping conversion');
         }
 
-        // 3. Cleanup Old Types (Optional, but good practice if we want to be clean, 
-        //    though db push might replace them anyway)
-        //    We won't drop them explicitly to avoid errors if they are used elsewhere or dependend on.
-        //    Let Prisma handle the cleanup during push.
+        // Update specific users to CREATOR_ANNUAL
+        console.log('Setting specific users to CREATOR_ANNUAL...');
+        await run(`UPDATE "User" SET "userProfile" = 'CREATOR', "subscriptionPlan" = 'CREATOR_ANNUAL' WHERE "id" = 'cmke1fbow000njl04v594xlxc'`);
+        await run(`UPDATE "User" SET "userProfile" = 'CREATOR', "subscriptionPlan" = 'CREATOR_ANNUAL' WHERE "id" = 'cmkjxx9fc0001jm04yqpfk0rg'`);
 
-        console.log('Robust Migration Completed. Columns are now TEXT with new values. Prisma db push will convert them back to Enums.');
+        console.log('Safe Migration Completed. Prisma db push will handle the rest.');
     } catch (e) {
         console.error('Migration Fatal Error:', e);
         process.exit(1);

@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import EnhancedTribeCard from '@/components/EnhancedTribeCard';
 import { Users, Network, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,7 +23,16 @@ type Tribe = {
 };
 
 export default function DashboardPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <DashboardContent />
+        </Suspense>
+    );
+}
+
+function DashboardContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { mode } = useViewMode();
     const [tribes, setTribes] = useState<Tribe[]>([]);
     const [userStats, setUserStats] = useState<any>(null); // Quick type for now
@@ -60,6 +69,15 @@ export default function DashboardPage() {
     useEffect(() => {
         fetchDashboardData();
     }, [fetchDashboardData]);
+
+    useEffect(() => {
+        if (searchParams.get('action') === 'new-tribe') {
+            setShowCreateModal(true);
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.delete('action');
+            window.history.replaceState(null, '', `/dashboard?${newParams.toString()}`);
+        }
+    }, [searchParams]);
 
     if (loading) {
         return (

@@ -4,19 +4,20 @@ import { useState, useEffect } from 'react';
 import { Users, Clock, Target, TrendingUp, Save, X, ChevronDown, ChevronUp, Lock, Calculator, HelpCircle, DollarSign } from 'lucide-react';
 import TribeMonetizationTermsModal from './TribeMonetizationTermsModal';
 import { useRouter } from 'next/navigation';
+import { MATCHMAKING_OPTIONS } from '@/lib/matchmakingOptions';
 
 interface MatchmakingCriteria {
-    ageRange: { enabled: boolean; description: string };
-    lifeFocus: { enabled: boolean; description: string };
-    professional: { enabled: boolean; description: string };
-    wealth: { enabled: boolean; description: string };
-    execution: { enabled: boolean; description: string };
-    personality: { enabled: boolean; description: string };
-    health: { enabled: boolean; description: string };
-    skills: { enabled: boolean; description: string };
-    values: { enabled: boolean; description: string };
-    social: { enabled: boolean; description: string };
-    intent: { enabled: boolean; description: string };
+    ageRange: { enabled: boolean; description: string; customDescription?: string };
+    lifeFocus: { enabled: boolean; description: string; customDescription?: string };
+    professional: { enabled: boolean; description: string; customDescription?: string };
+    wealth: { enabled: boolean; description: string; customDescription?: string };
+    execution: { enabled: boolean; description: string; customDescription?: string };
+    personality: { enabled: boolean; description: string; customDescription?: string };
+    health: { enabled: boolean; description: string; customDescription?: string };
+    skills: { enabled: boolean; description: string; customDescription?: string };
+    values: { enabled: boolean; description: string; customDescription?: string };
+    social: { enabled: boolean; description: string; customDescription?: string };
+    intent: { enabled: boolean; description: string; customDescription?: string };
 }
 
 interface TribeFormData {
@@ -432,15 +433,40 @@ export default function TribeCreationForm({
                                     </div>
 
                                     {formData.matchmaking[key].enabled && (
-                                        <div className="p-4 bg-white border-t border-gray-100">
-                                            <textarea
+                                        <div className="p-4 bg-white border-t border-gray-100 space-y-3">
+                                            <select
                                                 value={formData.matchmaking[key].description}
                                                 onChange={(e) => updateCriteriaDescription(key, e.target.value)}
-                                                placeholder={`Describe your ${criteriaLabels[key].toLowerCase()} requirements...`}
-                                                rows={2}
-                                                readOnly={readOnly}
-                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-600"
-                                            />
+                                                disabled={readOnly}
+                                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-50 disabled:text-gray-600"
+                                            >
+                                                <option value="">Select {criteriaLabels[key].toLowerCase()}...</option>
+                                                {MATCHMAKING_OPTIONS[key].map((option) => (
+                                                    <option key={option} value={option}>
+                                                        {option}
+                                                    </option>
+                                                ))}
+                                            </select>
+
+                                            {formData.matchmaking[key].description === 'Other' && (
+                                                <textarea
+                                                    value={formData.matchmaking[key].customDescription || ''}
+                                                    onChange={(e) => setFormData(prev => ({
+                                                        ...prev,
+                                                        matchmaking: {
+                                                            ...prev.matchmaking,
+                                                            [key]: {
+                                                                ...prev.matchmaking[key],
+                                                                customDescription: e.target.value
+                                                            }
+                                                        }
+                                                    }))}
+                                                    placeholder={`Describe your custom ${criteriaLabels[key].toLowerCase()} requirement...`}
+                                                    rows={2}
+                                                    readOnly={readOnly}
+                                                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none disabled:bg-gray-50 disabled:text-gray-600"
+                                                />
+                                            )}
                                         </div>
                                     )}
                                 </div>

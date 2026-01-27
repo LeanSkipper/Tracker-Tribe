@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Target, Users, LogIn, LogOut, ToggleLeft, ToggleRight, Layout } from 'lucide-react';
+import { Target, Users, LogIn, LogOut, ToggleLeft, ToggleRight, Layout, User } from 'lucide-react';
 import { useState } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import FeedbackModal from './FeedbackModal';
@@ -35,6 +35,13 @@ export default function Navbar() {
                             <span>Tracker</span>
                         </Link>
 
+                        {/* Mobile Profile Button */}
+                        {isAuthenticated && (
+                            <Link href="/profile" className="flex md:hidden flex-col items-center gap-1 text-gray-600 hover:text-[var(--primary)] text-xs p-2">
+                                <User size={20} />
+                                <span className="truncate max-w-[60px]">{session?.user?.name?.split(' ')[0] || 'Profile'}</span>
+                            </Link>
+                        )}
 
                     </div>
 

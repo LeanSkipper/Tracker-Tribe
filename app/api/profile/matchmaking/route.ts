@@ -15,22 +15,52 @@ export async function GET(req: NextRequest) {
         const user = await prisma.user.findUnique({
             where: { email: session.user.email },
             select: {
-                // Identity & Context
+                // 11 Core Matchmaking Criteria
                 ageRange: true,
+                ageRangeCustom: true,
+                ageRangeVisibility: true,
+                lifeFocus: true,
+                lifeFocusCustom: true,
+                lifeFocusVisibility: true,
+                professional: true,
+                professionalCustom: true,
+                professionalVisibility: true,
+                wealth: true,
+                wealthCustom: true,
+                wealthVisibility: true,
+                execution: true,
+                executionCustom: true,
+                executionVisibility: true,
+                personality: true,
+                personalityCustom: true,
+                personalityVisibility: true,
+                health: true,
+                healthCustom: true,
+                healthVisibility: true,
+                skills: true,
+                skillsCustom: true,
+                skillsVisibility: true,
+                values: true,
+                valuesCustom: true,
+                valuesVisibility: true,
+                social: true,
+                socialCustom: true,
+                socialVisibility: true,
+                intent: true,
+                intentCustom: true,
+                intentVisibility: true,
+
+                // Legacy fields
                 country: true,
                 timeZone: true,
                 languagesSpoken: true,
                 city: true,
                 maritalStatus: true,
                 hasChildren: true,
-
-                // Professional
                 professionalRole: true,
                 industry: true,
                 seniorityLevel: true,
                 companySize: true,
-
-                // Execution Style
                 actionSpeed: true,
                 planningStyle: true,
                 followThroughLevel: true,
@@ -84,72 +114,83 @@ export async function PUT(req: NextRequest) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
-        // Calculate completion percentage
-        const identityFields = [body.ageRange, body.country, body.timeZone, body.languagesSpoken?.length, body.city, body.maritalStatus, body.hasChildren !== undefined];
-        const professionalFields = [body.professionalRole, body.industry, body.seniorityLevel, body.companySize];
-        const executionFields = [body.actionSpeed, body.planningStyle, body.followThroughLevel, body.needForAccountability];
+        // Calculate completion percentage based on 11 criteria
+        const criteriaFields = [
+            body.ageRange,
+            body.lifeFocus?.length,
+            body.professional,
+            body.wealth,
+            body.execution?.length,
+            body.personality?.length,
+            body.health,
+            body.skills?.length,
+            body.values,
+            body.social,
+            body.intent,
+        ];
 
-        const identityComplete = identityFields.filter(Boolean).length;
-        const professionalComplete = professionalFields.filter(Boolean).length;
-        const executionComplete = executionFields.filter(Boolean).length;
+        const completedFields = criteriaFields.filter(Boolean).length;
+        const totalCompleteness = Math.round((completedFields / 11) * 100);
 
-        const identityPercent = Math.round((identityComplete / 7) * 100);
-        const professionalPercent = Math.round((professionalComplete / 4) * 100);
-        const executionPercent = Math.round((executionComplete / 4) * 100);
-
-        const totalCompleteness = Math.round((identityPercent + professionalPercent + executionPercent) / 3);
-
-        // Calculate XP rewards
-        let xpToAward = 0;
-        const previousCompleteness = currentUser.matchmakingCompleteness || 0;
-
-        // Check if any category just reached 100%
-        const categoriesComplete = [
-            identityPercent === 100,
-            professionalPercent === 100,
-            executionPercent === 100,
-        ].filter(Boolean).length;
-
-        const previousCategoriesComplete = Math.floor(previousCompleteness / 34); // Rough estimate
-
-        if (categoriesComplete > previousCategoriesComplete) {
-            // First category: +5 XP, additional categories: +2 XP each
-            if (previousCategoriesComplete === 0) {
-                xpToAward = 5;
-            } else {
-                xpToAward = 2;
-            }
-        }
-
-        // 100% completion bonus
-        if (totalCompleteness === 100 && previousCompleteness < 100) {
-            xpToAward += 10;
-        }
+        // Calculate XP rewards - 2 XP per field completed
+        const previousCompletedFields = Math.round((currentUser.matchmakingCompleteness || 0) / 100 * 11);
+        const newFieldsCompleted = completedFields - previousCompletedFields;
+        const xpToAward = Math.max(0, newFieldsCompleted * 2);
 
         // Update user profile
         const updatedUser = await prisma.user.update({
             where: { email: session.user.email },
             data: {
-                // Identity & Context
-                ageRange: body.ageRange,
-                country: body.country,
-                timeZone: body.timeZone,
+                // 11 Core Matchmaking Criteria
+                ageRange: body.ageRange || null,
+                ageRangeCustom: body.ageRangeCustom || null,
+                ageRangeVisibility: body.ageRangeVisibility || 'private',
+                lifeFocus: body.lifeFocus || [],
+                lifeFocusCustom: body.lifeFocusCustom || null,
+                lifeFocusVisibility: body.lifeFocusVisibility || 'private',
+                professional: body.professional || null,
+                professionalCustom: body.professionalCustom || null,
+                professionalVisibility: body.professionalVisibility || 'private',
+                wealth: body.wealth || null,
+                wealthCustom: body.wealthCustom || null,
+                wealthVisibility: body.wealthVisibility || 'private',
+                execution: body.execution || [],
+                executionCustom: body.executionCustom || null,
+                executionVisibility: body.executionVisibility || 'private',
+                personality: body.personality || [],
+                personalityCustom: body.personalityCustom || null,
+                personalityVisibility: body.personalityVisibility || 'private',
+                health: body.health || null,
+                healthCustom: body.healthCustom || null,
+                healthVisibility: body.healthVisibility || 'private',
+                skills: body.skills || [],
+                skillsCustom: body.skillsCustom || null,
+                skillsVisibility: body.skillsVisibility || 'private',
+                values: body.values || null,
+                valuesCustom: body.valuesCustom || null,
+                valuesVisibility: body.valuesVisibility || 'private',
+                social: body.social || null,
+                socialCustom: body.socialCustom || null,
+                socialVisibility: body.socialVisibility || 'private',
+                intent: body.intent || null,
+                intentCustom: body.intentCustom || null,
+                intentVisibility: body.intentVisibility || 'private',
+
+                // Legacy fields (keeping for backward compatibility)
+                country: body.country || null,
+                timeZone: body.timeZone || null,
                 languagesSpoken: body.languagesSpoken || [],
-                city: body.city,
-                maritalStatus: body.maritalStatus,
+                city: body.city || null,
+                maritalStatus: body.maritalStatus || null,
                 hasChildren: body.hasChildren,
-
-                // Professional
-                professionalRole: body.professionalRole,
-                industry: body.industry,
-                seniorityLevel: body.seniorityLevel,
-                companySize: body.companySize,
-
-                // Execution Style
-                actionSpeed: body.actionSpeed,
-                planningStyle: body.planningStyle,
-                followThroughLevel: body.followThroughLevel,
-                needForAccountability: body.needForAccountability,
+                professionalRole: body.professionalRole || null,
+                industry: body.industry || null,
+                seniorityLevel: body.seniorityLevel || null,
+                companySize: body.companySize || null,
+                actionSpeed: body.actionSpeed || null,
+                planningStyle: body.planningStyle || null,
+                followThroughLevel: body.followThroughLevel || null,
+                needForAccountability: body.needForAccountability || null,
 
                 // Privacy Controls
                 identityPrivacy: body.identityPrivacy || 'private',

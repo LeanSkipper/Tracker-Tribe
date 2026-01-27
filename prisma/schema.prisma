@@ -87,8 +87,8 @@ model User {
   manualRank         String? // For Commander/Admin override
   projectROI         Float?  // For ROI King medal
   
-  // "Skill Matrix"
-  skills      String?  // JSON string: {"marketing": 4, "sales": 3}
+  // "Skill Matrix" (Legacy - for skill ratings)
+  skillMatrix      String?  // JSON string: {"marketing": 4, "sales": 3}
   
   lifeVision  String?
   
@@ -134,8 +134,42 @@ model User {
 
   // === MATCHMAKING PROFILE (Phase 1) ===
   
-  // Identity & Context
-  ageRange              String?   // "18-25", "26-35", "36-45", "46-55", "56+"
+  // 11 Core Matchmaking Criteria
+  ageRange              String?   // Dropdown selection
+  ageRangeCustom        String?   // Custom text if "Other" selected
+  ageRangeVisibility    String    @default("private") // "private", "peers", "public"
+  lifeFocus             String[]  @default([]) // Multiple selections allowed
+  lifeFocusCustom       String?
+  lifeFocusVisibility   String    @default("private")
+  professional          String?   // Single selection
+  professionalCustom    String?
+  professionalVisibility String   @default("private")
+  wealth                String?   // Single selection
+  wealthCustom          String?
+  wealthVisibility      String    @default("private")
+  execution             String[]  @default([]) // Multiple selections allowed
+  executionCustom       String?
+  executionVisibility   String    @default("private")
+  personality           String[]  @default([]) // Multiple selections allowed
+  personalityCustom     String?
+  personalityVisibility String    @default("private")
+  health                String?   // Single selection
+  healthCustom          String?
+  healthVisibility      String    @default("private")
+  skills                String[]  @default([]) // Multiple selections allowed
+  skillsCustom          String?
+  skillsVisibility      String    @default("private")
+  values                String?   // Single selection
+  valuesCustom          String?
+  valuesVisibility      String    @default("private")
+  social                String?   // Single selection
+  socialCustom          String?
+  socialVisibility      String    @default("private")
+  intent                String?   // Single selection
+  intentCustom          String?
+  intentVisibility      String    @default("private")
+  
+  // Legacy Identity & Context (keeping for backward compatibility)
   country               String?
   timeZone              String?
   languagesSpoken       String[]  @default([])
@@ -143,19 +177,19 @@ model User {
   maritalStatus         String?   // "single", "married", "partnered", "divorced"
   hasChildren           Boolean?
   
-  // Professional
+  // Legacy Professional (keeping for backward compatibility)
   professionalRole      String?   // "employee", "founder", "freelancer", "investor"
   industry              String?
   seniorityLevel        String?   // "junior", "mid", "senior", "executive", "c-level"
   companySize           String?   // "1-10", "11-50", "51-200", "201-1000", "1000+"
   
-  // Execution Style
+  // Legacy Execution Style (keeping for backward compatibility)
   actionSpeed           String?   // "fast", "steady", "slow"
   planningStyle         String?   // "structured", "flexible", "chaotic"
   followThroughLevel    String?   // "low", "medium", "high"
   needForAccountability String?   // "low", "high"
   
-  // Privacy Controls
+  // Legacy Privacy Controls (deprecated - use individual visibility fields)
   identityPrivacy       String    @default("private") // "public", "private", "members"
   professionalPrivacy   String    @default("members")
   executionPrivacy      String    @default("members")

@@ -1,25 +1,57 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ChevronDown, ChevronUp, Lock, Users, Globe, Save } from 'lucide-react';
+import { Save } from 'lucide-react';
+import { MATCHMAKING_OPTIONS } from '@/lib/matchmakingOptions';
+import VisibilitySelect from './VisibilitySelect';
 
 interface MatchmakingData {
-    // Identity & Context
+    // 11 Matchmaking Criteria (aligned with tribe creation)
     ageRange?: string;
+    ageRangeCustom?: string;
+    ageRangeVisibility?: string;
+    lifeFocus?: string[];  // Multiple selections
+    lifeFocusCustom?: string;
+    lifeFocusVisibility?: string;
+    professional?: string;
+    professionalCustom?: string;
+    professionalVisibility?: string;
+    wealth?: string;
+    wealthCustom?: string;
+    wealthVisibility?: string;
+    execution?: string[];  // Multiple selections
+    executionCustom?: string;
+    executionVisibility?: string;
+    personality?: string[];  // Multiple selections
+    personalityCustom?: string;
+    personalityVisibility?: string;
+    health?: string;
+    healthCustom?: string;
+    healthVisibility?: string;
+    skills?: string[];  // Multiple selections
+    skillsCustom?: string;
+    skillsVisibility?: string;
+    values?: string;
+    valuesCustom?: string;
+    valuesVisibility?: string;
+    social?: string;
+    socialCustom?: string;
+    socialVisibility?: string;
+    intent?: string;
+    intentCustom?: string;
+    intentVisibility?: string;
+
+    // Legacy fields (keeping for backward compatibility)
     country?: string;
     timeZone?: string;
     languagesSpoken?: string[];
     city?: string;
     maritalStatus?: string;
     hasChildren?: boolean;
-
-    // Professional
     professionalRole?: string;
     industry?: string;
     seniorityLevel?: string;
     companySize?: string;
-
-    // Execution Style
     actionSpeed?: string;
     planningStyle?: string;
     followThroughLevel?: string;
@@ -40,11 +72,6 @@ export default function MatchmakingProfile() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saveMessage, setSaveMessage] = useState('');
-    const [expandedSections, setExpandedSections] = useState({
-        identity: true,
-        professional: false,
-        execution: false,
-    });
 
     // Fetch profile data
     useEffect(() => {
@@ -93,20 +120,39 @@ export default function MatchmakingProfile() {
         }
     };
 
-    const toggleSection = (section: keyof typeof expandedSections) => {
-        setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }));
+    const criteriaLabels = {
+        ageRange: 'Age Range',
+        lifeFocus: 'Life Focus (now)',
+        professional: 'Professional',
+        wealth: 'Wealth',
+        execution: 'Execution Style',
+        personality: 'Personality & Behavior',
+        health: 'Health & Energy',
+        skills: 'Skills & Assets',
+        values: 'Values & Principles',
+        social: 'Social & Digital',
+        intent: 'Community Intent',
     };
 
-    const getPrivacyIcon = (level?: string) => {
-        if (level === 'public') return <Globe size={16} className="text-blue-500" />;
-        if (level === 'members') return <Users size={16} className="text-green-500" />;
-        return <Lock size={16} className="text-gray-500" />;
-    };
+    const multiSelectFields = ['lifeFocus', 'execution', 'personality', 'skills'];
 
-    const getPrivacyLabel = (level?: string) => {
-        if (level === 'public') return 'Public';
-        if (level === 'members') return 'Members Only';
-        return 'Private';
+    const handleMultiSelectChange = (key: string, option: string) => {
+        const currentValues = (data[key as keyof MatchmakingData] as string[]) || [];
+        const isSelected = currentValues.includes(option);
+
+        let newValues: string[];
+        if (isSelected) {
+            newValues = currentValues.filter(v => v !== option);
+        } else {
+            // Limit to 3 selections
+            if (currentValues.length >= 3) {
+                alert('You can select up to 3 options. Please deselect one first.');
+                return;
+            }
+            newValues = [...currentValues, option];
+        }
+
+        setData({ ...data, [key]: newValues });
     };
 
     if (loading) {
@@ -115,355 +161,103 @@ export default function MatchmakingProfile() {
 
     return (
         <div className="space-y-4">
-            {/* Identity & Context Section */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <button
-                    onClick={() => toggleSection('identity')}
-                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-gray-900">Identity & Context</h3>
-                        <span className="text-sm text-gray-500">(7 fields)</span>
-                        {getPrivacyIcon(data.identityPrivacy)}
-                    </div>
-                    {expandedSections.identity ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
+            {/* Matchmaking Criteria Sections */}
+            {(Object.keys(criteriaLabels) as Array<keyof typeof criteriaLabels>).map((key) => {
+                const isMultiSelect = multiSelectFields.includes(key);
+                const currentValue = data[key];
+                const hasOther = isMultiSelect
+                    ? (currentValue as string[] || []).includes('Other')
+                    : currentValue === 'Other';
 
-                {expandedSections.identity && (
-                    <div className="p-6 space-y-4 bg-white">
-                        {/* Privacy Control */}
-                        <div className="mb-4 pb-4 border-b">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">
-                                Who can see this section?
-                            </label>
-                            <select
-                                value={data.identityPrivacy || 'private'}
-                                onChange={(e) => setData({ ...data, identityPrivacy: e.target.value })}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="private">🔒 Private (Only me)</option>
-                                <option value="members">👥 Members Only</option>
-                                <option value="public">🌍 Public</option>
-                            </select>
+                return (
+                    <div key={key} className="border border-gray-200 rounded-xl overflow-hidden">
+                        <div className="px-6 py-4 bg-gray-50">
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {criteriaLabels[key]}
+                                {isMultiSelect && <span className="text-sm font-normal text-gray-500 ml-2">(Select up to 3)</span>}
+                            </h3>
                         </div>
 
-                        {/* Age Range */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Age Range</label>
-                            <select
-                                value={data.ageRange || ''}
-                                onChange={(e) => setData({ ...data, ageRange: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="">Select age range</option>
-                                <option value="18-25">18-25</option>
-                                <option value="26-35">26-35</option>
-                                <option value="36-45">36-45</option>
-                                <option value="46-55">46-55</option>
-                                <option value="56+">56+</option>
-                            </select>
-                        </div>
-
-                        {/* Country */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Country</label>
-                            <input
-                                type="text"
-                                value={data.country || ''}
-                                onChange={(e) => setData({ ...data, country: e.target.value })}
-                                placeholder="e.g., United States, Portugal, Brazil"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-
-                        {/* Time Zone */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Time Zone</label>
-                            <input
-                                type="text"
-                                value={data.timeZone || ''}
-                                onChange={(e) => setData({ ...data, timeZone: e.target.value })}
-                                placeholder="e.g., UTC+1, EST, PST"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-
-                        {/* Languages Spoken */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Languages Spoken</label>
-                            <input
-                                type="text"
-                                value={data.languagesSpoken?.join(', ') || ''}
-                                onChange={(e) => setData({ ...data, languagesSpoken: e.target.value.split(',').map(l => l.trim()).filter(Boolean) })}
-                                placeholder="e.g., English, Portuguese, Spanish"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                            <p className="text-xs text-gray-500 mt-1">Separate multiple languages with commas</p>
-                        </div>
-
-                        {/* City */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">City (Optional)</label>
-                            <input
-                                type="text"
-                                value={data.city || ''}
-                                onChange={(e) => setData({ ...data, city: e.target.value })}
-                                placeholder="e.g., Lisbon, New York, São Paulo"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-
-                        {/* Marital Status */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Marital Status</label>
-                            <select
-                                value={data.maritalStatus || ''}
-                                onChange={(e) => setData({ ...data, maritalStatus: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="">Select status</option>
-                                <option value="single">Single</option>
-                                <option value="married">Married</option>
-                                <option value="partnered">Partnered</option>
-                                <option value="divorced">Divorced</option>
-                            </select>
-                        </div>
-
-                        {/* Children */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Do you have children?</label>
-                            <div className="flex gap-4">
-                                <button
-                                    onClick={() => setData({ ...data, hasChildren: true })}
-                                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${data.hasChildren === true
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                        }`}
-                                >
-                                    Yes
-                                </button>
-                                <button
-                                    onClick={() => setData({ ...data, hasChildren: false })}
-                                    className={`flex-1 py-3 px-4 rounded-lg border-2 transition-all ${data.hasChildren === false
-                                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
-                                            : 'border-gray-300 hover:border-gray-400'
-                                        }`}
-                                >
-                                    No
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Professional Section */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <button
-                    onClick={() => toggleSection('professional')}
-                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-gray-900">Professional</h3>
-                        <span className="text-sm text-gray-500">(4 fields)</span>
-                        {getPrivacyIcon(data.professionalPrivacy)}
-                    </div>
-                    {expandedSections.professional ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-
-                {expandedSections.professional && (
-                    <div className="p-6 space-y-4 bg-white">
-                        {/* Privacy Control */}
-                        <div className="mb-4 pb-4 border-b">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">
-                                Who can see this section?
-                            </label>
-                            <select
-                                value={data.professionalPrivacy || 'members'}
-                                onChange={(e) => setData({ ...data, professionalPrivacy: e.target.value })}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="private">🔒 Private (Only me)</option>
-                                <option value="members">👥 Members Only</option>
-                                <option value="public">🌍 Public</option>
-                            </select>
-                        </div>
-
-                        {/* Professional Role */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Professional Role</label>
-                            <select
-                                value={data.professionalRole || ''}
-                                onChange={(e) => setData({ ...data, professionalRole: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="">Select role</option>
-                                <option value="employee">Employee</option>
-                                <option value="founder">Founder</option>
-                                <option value="freelancer">Freelancer</option>
-                                <option value="investor">Investor</option>
-                            </select>
-                        </div>
-
-                        {/* Industry */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Industry</label>
-                            <input
-                                type="text"
-                                value={data.industry || ''}
-                                onChange={(e) => setData({ ...data, industry: e.target.value })}
-                                placeholder="e.g., SaaS, E-commerce, Consulting"
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
-                        </div>
-
-                        {/* Seniority Level */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Seniority Level</label>
-                            <select
-                                value={data.seniorityLevel || ''}
-                                onChange={(e) => setData({ ...data, seniorityLevel: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="">Select level</option>
-                                <option value="junior">Junior</option>
-                                <option value="mid">Mid-Level</option>
-                                <option value="senior">Senior</option>
-                                <option value="executive">Executive</option>
-                                <option value="c-level">C-Level</option>
-                            </select>
-                        </div>
-
-                        {/* Company Size */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Company Size</label>
-                            <select
-                                value={data.companySize || ''}
-                                onChange={(e) => setData({ ...data, companySize: e.target.value })}
-                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="">Select size</option>
-                                <option value="1-10">1-10 employees</option>
-                                <option value="11-50">11-50 employees</option>
-                                <option value="51-200">51-200 employees</option>
-                                <option value="201-1000">201-1,000 employees</option>
-                                <option value="1000+">1,000+ employees</option>
-                            </select>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* Execution Style Section */}
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <button
-                    onClick={() => toggleSection('execution')}
-                    className="w-full px-6 py-4 bg-gray-50 hover:bg-gray-100 transition-colors flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-bold text-gray-900">Execution Style</h3>
-                        <span className="text-sm text-gray-500">(4 fields)</span>
-                        {getPrivacyIcon(data.executionPrivacy)}
-                    </div>
-                    {expandedSections.execution ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                </button>
-
-                {expandedSections.execution && (
-                    <div className="p-6 space-y-4 bg-white">
-                        {/* Privacy Control */}
-                        <div className="mb-4 pb-4 border-b">
-                            <label className="block text-sm font-bold text-gray-700 mb-2">
-                                Who can see this section?
-                            </label>
-                            <select
-                                value={data.executionPrivacy || 'members'}
-                                onChange={(e) => setData({ ...data, executionPrivacy: e.target.value })}
-                                className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                            >
-                                <option value="private">🔒 Private (Only me)</option>
-                                <option value="members">👥 Members Only</option>
-                                <option value="public">🌍 Public</option>
-                            </select>
-                        </div>
-
-                        {/* Action Speed */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Action Speed</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {['fast', 'steady', 'slow'].map((speed) => (
-                                    <button
-                                        key={speed}
-                                        onClick={() => setData({ ...data, actionSpeed: speed })}
-                                        className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${data.actionSpeed === speed
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
-                                                : 'border-gray-300 hover:border-gray-400'
-                                            }`}
+                        <div className="p-6 space-y-4 bg-white">
+                            {isMultiSelect ? (
+                                /* Multi-Select Checkboxes */
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-3">
+                                        Select your {criteriaLabels[key].toLowerCase()}
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                        {MATCHMAKING_OPTIONS[key].map((option) => {
+                                            const isChecked = (currentValue as string[] || []).includes(option);
+                                            return (
+                                                <label
+                                                    key={option}
+                                                    className={`flex items-center gap-2 p-3 border-2 rounded-lg cursor-pointer transition-all ${isChecked
+                                                        ? 'border-blue-500 bg-blue-50'
+                                                        : 'border-gray-300 hover:border-gray-400'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isChecked}
+                                                        onChange={() => handleMultiSelectChange(key, option)}
+                                                        className="w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                    <span className="text-sm">{option}</span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                    <VisibilitySelect
+                                        value={data[`${key}Visibility` as keyof MatchmakingData] as string || 'private'}
+                                        onChange={(value) => setData({ ...data, [`${key}Visibility`]: value })}
+                                        fieldName={criteriaLabels[key]}
+                                    />
+                                </div>
+                            ) : (
+                                /* Single-Select Dropdown */
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Select your {criteriaLabels[key].toLowerCase()}
+                                    </label>
+                                    <select
+                                        value={(currentValue as string) || ''}
+                                        onChange={(e) => setData({ ...data, [key]: e.target.value })}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                                     >
-                                        {speed}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
+                                        <option value="">Select {criteriaLabels[key].toLowerCase()}...</option>
+                                        {MATCHMAKING_OPTIONS[key].map((option) => (
+                                            <option key={option} value={option}>
+                                                {option}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <VisibilitySelect
+                                        value={data[`${key}Visibility` as keyof MatchmakingData] as string || 'private'}
+                                        onChange={(value) => setData({ ...data, [`${key}Visibility`]: value })}
+                                        fieldName={criteriaLabels[key]}
+                                    />
+                                </div>
+                            )}
 
-                        {/* Planning Style */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Planning Style</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {['structured', 'flexible', 'chaotic'].map((style) => (
-                                    <button
-                                        key={style}
-                                        onClick={() => setData({ ...data, planningStyle: style })}
-                                        className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${data.planningStyle === style
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
-                                                : 'border-gray-300 hover:border-gray-400'
-                                            }`}
-                                    >
-                                        {style}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Follow-Through Level */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Follow-Through Level</label>
-                            <div className="grid grid-cols-3 gap-3">
-                                {['low', 'medium', 'high'].map((level) => (
-                                    <button
-                                        key={level}
-                                        onClick={() => setData({ ...data, followThroughLevel: level })}
-                                        className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${data.followThroughLevel === level
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
-                                                : 'border-gray-300 hover:border-gray-400'
-                                            }`}
-                                    >
-                                        {level}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Need for Accountability */}
-                        <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-2">Need for Accountability</label>
-                            <div className="grid grid-cols-2 gap-3">
-                                {['low', 'high'].map((need) => (
-                                    <button
-                                        key={need}
-                                        onClick={() => setData({ ...data, needForAccountability: need })}
-                                        className={`py-3 px-4 rounded-lg border-2 transition-all capitalize ${data.needForAccountability === need
-                                                ? 'border-blue-500 bg-blue-50 text-blue-700 font-bold'
-                                                : 'border-gray-300 hover:border-gray-400'
-                                            }`}
-                                    >
-                                        {need}
-                                    </button>
-                                ))}
-                            </div>
+                            {/* Custom Field for "Other" */}
+                            {hasOther && (
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                                        Describe your custom {criteriaLabels[key].toLowerCase()}
+                                    </label>
+                                    <textarea
+                                        value={data[`${key}Custom` as keyof MatchmakingData] as string || ''}
+                                        onChange={(e) => setData({ ...data, [`${key}Custom`]: e.target.value })}
+                                        placeholder={`Describe your ${criteriaLabels[key].toLowerCase()}...`}
+                                        rows={3}
+                                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
-                )}
-            </div>
+                );
+            })}
 
             {/* Save Button */}
             <div className="flex items-center justify-between pt-4">

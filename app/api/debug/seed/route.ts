@@ -48,7 +48,7 @@ export async function GET() {
             taskCompletionRate: 0.75,
             totalSponsorship: 650,
             totalReliability: 92,
-            skills: JSON.stringify({ Marketing: 4, Sales: 3, Tech: 5 }),
+            skillMatrix: JSON.stringify({ Marketing: 4, Sales: 3, Tech: 5 }),
             createdAt: new Date(Date.now() - 7 * 30 * 24 * 60 * 60 * 1000), // 7 months ago
         };
 

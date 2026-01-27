@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Users, Search, Plus, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import TribeCreationForm from '@/components/TribeCreationForm';
@@ -40,7 +40,16 @@ type UserStats = {
 };
 
 export default function BrowseTribesPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <BrowseTribesContent />
+        </Suspense>
+    );
+}
+
+function BrowseTribesContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [allTribes, setAllTribes] = useState<Tribe[]>([]);
     const [myTribes, setMyTribes] = useState<Tribe[]>([]);
     const [userStats, setUserStats] = useState<UserStats | null>(null);
@@ -72,6 +81,16 @@ export default function BrowseTribesPage() {
     useEffect(() => {
         fetchData();
     }, []);
+
+    useEffect(() => {
+        if (userStats && searchParams.get('action') === 'new-tribe') {
+            handleCreateClick();
+            // Clean up the URL
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.delete('action');
+            window.history.replaceState(null, '', `/tribes?${newParams.toString()}`);
+        }
+    }, [searchParams, userStats]);
 
     const [filterQualified, setFilterQualified] = useState(false);
     const [filterOpenSpots, setFilterOpenSpots] = useState(false);
@@ -363,38 +382,7 @@ export default function BrowseTribesPage() {
                 )}
             </div>
 
-            {/* Mobile Action FAB */}
-            <div className="md:hidden fixed bottom-24 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
-                {isMobileFabOpen && (
-                    <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
-                        <button
-                            onClick={() => { router.push('/peers'); setIsMobileFabOpen(false); }}
-                            className="bg-white text-slate-700 p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs border border-slate-100"
-                        >
-                            <Users size={16} /> Browse Peers
-                        </button>
-                        <button
-                            onClick={() => { setIsMobileFabOpen(false); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-                            className="bg-white text-slate-700 p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs border border-slate-100"
-                        >
-                            <Search size={16} /> Find Tribes
-                        </button>
-                        <button
-                            onClick={() => { handleCreateClick(); setIsMobileFabOpen(false); }}
-                            className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                        >
-                            <Plus size={16} /> New Tribe
-                        </button>
-                    </div>
-                )}
-                <button
-                    onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
-                    className={`p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-slate-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
-                    aria-label="Toggle menu"
-                >
-                    <Plus size={24} />
-                </button>
-            </div>
+
 
             {/* Create Tribe Modal */}
             {showCreateModal && (

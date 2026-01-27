@@ -36,6 +36,8 @@ export async function GET() {
                 trialEndDate: true,
                 reputationScore: true,
                 profileCompleteness: true,
+                matchmakingCompleteness: true,
+                profileXpEarned: true,
                 // Referral
                 referralCode: true,
                 _count: {
@@ -197,6 +199,8 @@ export async function PUT(req: Request) {
                 trialEndDate: true,
                 reputationScore: true,
                 profileCompleteness: true,
+                matchmakingCompleteness: true,
+                profileXpEarned: true,
                 // KPI fields
                 grit: true,
                 level: true,
