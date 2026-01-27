@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Users, Target, ArrowLeft, CheckCircle2, Lock, Unlock, Link, Video, Play, ExternalLink, Edit2, TrendingUp } from 'lucide-react';
+import { Users, Target, ArrowLeft, CheckCircle2, Lock, Unlock, Link, Video, Play, ExternalLink, Edit2, TrendingUp, AlertTriangle } from 'lucide-react';
 import SharedObeyaTracker from '@/components/SharedObeyaTracker';
 import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
@@ -10,10 +10,15 @@ import PitStopModal from '@/components/PitStop/PitStopModal';
 import TribeScoreChart from '@/components/TribeScoreChart';
 import { getISOWeekNumber } from '@/lib/dateUtils';
 
+import { usePitStopStatus } from '@/hooks/usePitStopStatus';
+
 export default function SessionPage() {
     const params = useParams();
     const router = useRouter();
     const tribeId = params?.id as string;
+
+    const { status: pitStopStatus } = usePitStopStatus();
+    const [pokaYokeState, setPokaYokeState] = useState<'IDLE' | 'BLOCK' | 'WARNING'>('IDLE');
 
     const [members, setMembers] = useState<any[]>([]);
     const [tribe, setTribe] = useState<any>(null);
@@ -140,6 +145,23 @@ export default function SessionPage() {
 
     const isAdmin = members.some(m => m.userId === currentUserId && (m.role === 'ADMIN' || m.role === 'MODERATOR')) || tribe?.creator?.id === currentUserId;
 
+    const handleJoinSession = () => {
+        if (!meetingLink) return;
+
+        // Poka-Yoke: Check Pit Stop Status
+        if (pitStopStatus === 'overdue') {
+            if (isAdmin) {
+                setPokaYokeState('WARNING');
+            } else {
+                setPokaYokeState('BLOCK');
+            }
+        } else {
+            // Proceed
+            const url = meetingLink.startsWith('http') ? meetingLink : `https://${meetingLink}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    };
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
@@ -150,6 +172,70 @@ export default function SessionPage() {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-indigo-50 p-8">
+            {/* Poka-Yoke Modal */}
+            {pokaYokeState !== 'IDLE' && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 animate-in fade-in zoom-in duration-200">
+                        <div className="flex flex-col items-center text-center">
+                            <div className={`p-4 rounded-full mb-4 ${pokaYokeState === 'BLOCK' ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'}`}>
+                                <AlertTriangle size={32} />
+                            </div>
+
+                            <h3 className="text-xl font-black text-slate-900 mb-2">
+                                {pokaYokeState === 'BLOCK' ? 'Pit Stop Required' : 'Late to Pit Stop?'}
+                            </h3>
+
+                            <p className="text-slate-600 mb-6 text-sm leading-relaxed">
+                                {pokaYokeState === 'BLOCK'
+                                    ? "Please complete your Pit Stop before joining the live session. It's crucial to reflect on your progress to get the best out of this meeting."
+                                    : "You haven't done your Pit Stop recently. It is not recommended to lead without « skin in the game », but you may proceed as an Admin."}
+                            </p>
+
+                            <div className="flex gap-3 w-full">
+                                {pokaYokeState === 'BLOCK' ? (
+                                    <>
+                                        <button
+                                            onClick={() => setPokaYokeState('IDLE')}
+                                            className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setPokaYokeState('IDLE');
+                                                setIsPitStopOpen(true);
+                                            }}
+                                            className="flex-1 py-3 bg-[var(--primary)] text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all"
+                                        >
+                                            Run Pit Stop Now
+                                        </button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => setPokaYokeState('IDLE')}
+                                            className="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setPokaYokeState('IDLE');
+                                                const url = meetingLink.startsWith('http') ? meetingLink : `https://${meetingLink}`;
+                                                window.open(url, '_blank', 'noopener,noreferrer');
+                                            }}
+                                            className="flex-1 py-3 bg-amber-500 text-white font-bold rounded-xl shadow-lg hover:bg-amber-600 transition-all"
+                                        >
+                                            Join Anyway
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="max-w-[1600px] mx-auto">
                 {/* Mobile Landscape Alert */}
                 <div className="md:hidden bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-6 flex items-start gap-3">
@@ -209,14 +295,12 @@ export default function SessionPage() {
                                 ) : (
                                     <div className="flex items-center justify-between">
                                         {meetingLink ? (
-                                            <a
-                                                href={meetingLink.startsWith('http') ? meetingLink : `https://${meetingLink}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                            <button
+                                                onClick={handleJoinSession}
                                                 className="text-sm font-bold text-indigo-700 hover:underline flex items-center gap-1 truncate max-w-[200px]"
                                             >
                                                 Join Meeting <ExternalLink size={12} />
-                                            </a>
+                                            </button>
                                         ) : (
                                             <span className="text-sm text-slate-400 italic">No link set</span>
                                         )}
