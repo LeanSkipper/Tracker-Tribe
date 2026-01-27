@@ -843,30 +843,7 @@ function ObeyaContent() {
 
     const [editingCell, setEditingCell] = useState<{ id: string, value: string } | null>(null);
 
-    // Collapse state for OKRs
-    const [collapsedOKRs, setCollapsedOKRs] = useState<Set<string>>(new Set());
 
-    const toggleOKR = (okrId: string) => {
-        setCollapsedOKRs(prev => {
-            const next = new Set(prev);
-            if (next.has(okrId)) next.delete(okrId);
-            else next.add(okrId);
-            return next;
-        });
-    };
-
-    const toggleExpandAll = () => {
-        if (collapsedOKRs.size === 0) {
-            // Collapse all OKRs
-            const allOKRIds = goals.flatMap(g =>
-                g.rows.filter(r => 'type' in r && r.type === 'OKR').map(r => r.id)
-            );
-            setCollapsedOKRs(new Set(allOKRIds));
-        } else {
-            // Expand all
-            setCollapsedOKRs(new Set());
-        }
-    };
 
     // Collapse state for entire goals (Excel-style)
     const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
@@ -1491,14 +1468,7 @@ function ObeyaContent() {
                                     {isRestricted && <Lock size={10} className="text-amber-500" />}
                                 </button>
                             </div>
-                            <button
-                                onClick={toggleExpandAll}
-                                className="px-3 py-2 rounded-md text-xs font-bold bg-white shadow-sm text-gray-600 hover:text-blue-600 border border-gray-200 transition-colors flex items-center gap-1"
-                                title={collapsedOKRs.size === 0 ? "Collapse all OKRs" : "Expand all OKRs"}
-                            >
-                                <Layout size={14} />
-                                {collapsedOKRs.size === 0 ? 'Collapse All' : 'Expand All'}
-                            </button>
+
                         </>
                     )}
                 </div>
@@ -1965,42 +1935,12 @@ function ObeyaContent() {
                                                                             heightClass = `h-[${dynamicHeight}px]`;
                                                                         }
 
-                                                                        // Hide KPIs if their parent OKR is collapsed (Legacy logic maintained)
-                                                                        if (isKPI) {
-                                                                            const currentKPIIndex = goal.rows.indexOf(row);
-                                                                            let parentOKR = null;
-                                                                            for (let i = currentKPIIndex - 1; i >= 0; i--) {
-                                                                                const r = goal.rows[i];
-                                                                                if ('type' in r && r.type === 'OKR') {
-                                                                                    parentOKR = r;
-                                                                                    break;
-                                                                                }
-                                                                            }
-                                                                            if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
-                                                                                // If user specifically collapsed an OKR, maybe we should hide its KPIs?
-                                                                                // Since we are in the "KPIs" section now, this might feel disconnected, 
-                                                                                // but respecting the "OKR Collapse" toggle seems correct if users use it.
-                                                                                return null;
-                                                                            }
-                                                                        }
 
                                                                         const okrRowsCount = goal.rows.filter(r => 'type' in r).length;
 
                                                                         return (
                                                                             <div key={row.id} className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative`}>
                                                                                 <div className="w-56 p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
-                                                                                    {/* Collapse button and OKR number for OKRs */}
-                                                                                    {isOKR && !isKPI && (
-                                                                                        <>
-                                                                                            <button
-                                                                                                onClick={() => toggleOKR(row.id)}
-                                                                                                className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
-                                                                                                title={collapsedOKRs.has(row.id) ? "Expand OKR" : "Collapse OKR"}
-                                                                                            >
-                                                                                                <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
-                                                                                            </button>
-                                                                                        </>
-                                                                                    )}
                                                                                     {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1 z-20"><Edit2 size={12} /></button>}
                                                                                     <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                                         {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
@@ -2086,21 +2026,6 @@ function ObeyaContent() {
                                                                         const maxTasks = Math.max(0, ...actionCounts);
                                                                         const dynamicHeight = Math.max(96, maxTasks * 50 + 20);
                                                                         heightClass = `h-[${dynamicHeight}px]`;
-                                                                    }
-
-                                                                    if (isKPI) {
-                                                                        const currentKPIIndex = goal.rows.indexOf(row);
-                                                                        let parentOKR = null;
-                                                                        for (let i = currentKPIIndex - 1; i >= 0; i--) {
-                                                                            const r = goal.rows[i];
-                                                                            if ('type' in r && r.type === 'OKR') {
-                                                                                parentOKR = r;
-                                                                                break;
-                                                                            }
-                                                                        }
-                                                                        if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
-                                                                            return null;
-                                                                        }
                                                                     }
 
                                                                     return (
