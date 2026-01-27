@@ -201,6 +201,7 @@ model User {
   pitStops      PitStop[]
   currentStreak Int       @default(0) // Weekly streak count
   lastPitStopAt DateTime? // To calculate streak
+  lastPitStopReminderAt DateTime? // To separate reminder logic and prevent spam
   
   scoreHistory  ScoreHistory[] // Added for history tracking
 

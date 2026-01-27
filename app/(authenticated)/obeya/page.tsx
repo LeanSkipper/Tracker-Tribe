@@ -72,13 +72,15 @@ const generateMonthlyTargets = (start: number, end: number, startYear: number, s
     return data;
 };
 
-const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }: {
+const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, onUpdateMetric }: {
     goal: GoalCategory,
     currentYear: number,
     onUpdateStatus: (goalId: string, cardId: string, newStatus: 'TBD' | 'DONE') => void;
     onAddAction: (goalId: string, weekId: string) => void;
+    onUpdateMetric: (goalId: string, rowId: string, monthId: string, field: 'actual' | 'target', value: string) => void;
 }) => {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [areMetricsExpanded, setAreMetricsExpanded] = useState(false); // Collapsible Metrics
     const metrics = goal.rows.filter(r => 'type' in r) as MetricRow[];
     const actionRow = goal.rows.find(r => !('type' in r)) as ActionRow;
 
@@ -155,6 +157,86 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction }:
                     </span>
                     <span>actions done</span>
                 </div>
+            </div>
+
+            {/* Metrics Section (Collapsible) */}
+            <div className="bg-slate-50/50 border-t border-slate-100">
+                <button
+                    onClick={() => setAreMetricsExpanded(!areMetricsExpanded)}
+                    className="w-full flex items-center justify-between p-3 text-xs font-bold text-slate-500 hover:bg-slate-100 transition-colors"
+                >
+                    <span className="flex items-center gap-2">
+                        <Target size={14} /> OKRs & KPIs
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="font-normal text-[10px] text-slate-400">
+                            {onTrackCount}/{trackableOKRs.length} on track
+                        </span>
+                        <ChevronRight size={16} className={`transition-transform ${areMetricsExpanded ? 'rotate-90' : ''}`} />
+                    </div>
+                </button>
+
+                {areMetricsExpanded && (
+                    <div className="px-3 pb-4 space-y-3">
+                        {metrics.map(metric => {
+                            const now = new Date();
+                            const currentMonthIdx = now.getMonth();
+                            const prevMonthIdx = (currentMonthIdx - 1 + 12) % 12; // Handle Jan -> Dec
+                            const currentMonthKey = MONTHS[currentMonthIdx];
+                            const prevMonthKey = MONTHS[prevMonthIdx];
+                            // Previous Month Data (Context)
+                            const prevData = metric.monthlyData.find(d => d.monthId === prevMonthKey && d.year === (prevMonthIdx > currentMonthIdx ? currentYear - 1 : currentYear)); // Handle year wrap if needed, simplified to currentYear for now unless Jan
+
+                            // Current Month Data (Editable)
+                            const currData = metric.monthlyData.find(d => d.monthId === currentMonthKey && d.year === currentYear);
+
+                            return (
+                                <div key={metric.id} className="bg-white rounded-lg border border-slate-200 p-3 shadow-sm">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-xs font-bold ${metric.type === 'KPI' ? 'text-slate-500' : 'text-slate-800'}`}>
+                                                {metric.label}
+                                            </span>
+                                            {metric.type === 'KPI' && <span className="text-[8px] bg-slate-100 text-slate-400 px-1 rounded border border-slate-200">KPI</span>}
+                                        </div>
+                                        {/* Prev Month Context */}
+                                        {prevData && prevData.actual !== null && (
+                                            <div className="text-[10px] text-slate-400 text-right">
+                                                <span className="block font-medium">Last Month ({prevMonthKey})</span>
+                                                <span className="font-mono">{prevData.actual} / {prevData.target}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Inputs */}
+                                    <div className="flex items-center gap-2">
+                                        <div className="flex-1 relative">
+                                            <span className="absolute left-2 top-1.5 text-[9px] text-slate-400 font-bold uppercase">Target</span>
+                                            <input
+                                                type="number"
+                                                className="w-full pl-2 pt-4 pb-1 pr-2 text-right bg-slate-50 border border-slate-200 rounded text-sm font-bold text-slate-600 focus:ring-1 focus:ring-indigo-500 outline-none"
+                                                placeholder="-"
+                                                defaultValue={currData?.target ?? ''}
+                                                onBlur={(e) => onUpdateMetric(goal.id, metric.id, currentMonthKey, 'target', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="flex-1 relative">
+                                            <span className="absolute left-2 top-1.5 text-[9px] text-slate-400 font-bold uppercase">Actual</span>
+                                            <input
+                                                type="number"
+                                                className="w-full pl-2 pt-4 pb-1 pr-2 text-right bg-white border border-indigo-200 rounded text-sm font-black text-slate-800 focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+                                                placeholder="-"
+                                                defaultValue={currData?.actual ?? ''}
+                                                onBlur={(e) => onUpdateMetric(goal.id, metric.id, currentMonthKey, 'actual', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                        {metrics.length === 0 && <div className="text-center text-xs text-slate-400 py-2 italic bg-slate-50 rounded-lg">No metrics defined</div>}
+                    </div>
+                )}
             </div>
 
             {/* 3-Column Mobile Kanban (Scrollable) */}
@@ -1388,6 +1470,12 @@ function ObeyaContent() {
             <PitStopModal
                 isOpen={isPitStopOpen}
                 onClose={() => setIsPitStopOpen(false)}
+                nextWeekTaskCount={goals.reduce((acc, g) => {
+                    const actionRow = g.rows.find(r => !('type' in r)) as ActionRow;
+                    if (!actionRow) return acc;
+                    const nextWeekNum = getISOWeekNumber(new Date()) + 1; // Simplified next week logic
+                    return acc + actionRow.actions.filter(a => a.weekId === `W${nextWeekNum}` && a.year === currentYear).length;
+                }, 0)}
                 onComplete={() => {
                     // Refetch handled by dependency
                 }}
@@ -1714,6 +1802,7 @@ function ObeyaContent() {
                                     currentYear={currentYear}
                                     onUpdateStatus={handleUpdateActionStatus}
                                     onAddAction={handleAddActionToCurrentWeek}
+                                    onUpdateMetric={handleCommitMetric}
                                 />
                             ))}
 
@@ -2274,9 +2363,13 @@ function ObeyaContent() {
                                         else setIsPitStopOpen(true);
                                         setIsMobileFabOpen(false);
                                     }}
-                                    className="bg-blue-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                                    className={`p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs text-white ${isPitStopDue ? 'bg-amber-500' : 'bg-blue-600'}`}
                                 >
                                     <Clock size={16} /> Pit Stop
+                                    {isPitStopDue
+                                        ? <span className="bg-red-600 text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">DUE</span>
+                                        : <span className="bg-blue-800/50 text-[10px] px-1.5 py-0.5 rounded-full">{pitStopDaysLeft}d</span>
+                                    }
                                 </button>
                                 <button
                                     onClick={() => {
@@ -2292,9 +2385,16 @@ function ObeyaContent() {
                         )}
                         <button
                             onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
-                            className={`p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
+                            className={`relative p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
                         >
                             <Plus size={24} />
+                            {/* Notification Badge on Main FAB if Pit Stop Due */}
+                            {!isMobileFabOpen && isPitStopDue && (
+                                <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
+                                </span>
+                            )}
                         </button>
                     </div>
                 )

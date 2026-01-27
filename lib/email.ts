@@ -138,3 +138,37 @@ export async function sendTribeApplicationEmails({
 
     return results;
 }
+
+import { PitStopReminderEmail } from './email-templates';
+
+export async function sendPitStopReminderEmail(email: string, name: string, streak: number) {
+    const apiKey = process.env.RESEND_API_KEY;
+
+    if (!apiKey) {
+        console.warn('RESEND_API_KEY is not set. Skipping Pit Stop email.');
+        return null;
+    }
+
+    const resend = new Resend(apiKey);
+    const fromEmail = process.env.EMAIL_FROM || 'Lapis Coach <coach@tntlapis.com>';
+
+    try {
+        const response = await resend.emails.send({
+            from: fromEmail,
+            to: [email],
+            subject: '⚠️ Pit Stop Due: Don\'t break your streak!',
+            html: PitStopReminderEmail(name, streak)
+        });
+
+        if (response.error) {
+            console.error('[EMAIL] Pit Stop reminder API error:', response.error);
+            return null;
+        }
+
+        console.log('[EMAIL] Pit Stop reminder sent successfully:', response.data);
+        return response;
+    } catch (error) {
+        console.error('[EMAIL] Failed to send Pit Stop reminder:', JSON.stringify(error, null, 2));
+        return null;
+    }
+}

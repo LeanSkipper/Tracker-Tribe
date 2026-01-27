@@ -236,3 +236,50 @@ export const TribeApplicationUserConfirmationEmail = (userName: string, tribeNam
 </body>
 </html>
 `;
+
+export const PitStopReminderEmail = (userName: string, streak: number) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pit Stop Reminder</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; font-family: 'Inter', sans-serif; }
+        .header { background-color: #EF4444; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background-color: #ffffff; padding: 30px; border-radius: 0 0 8px 8px; border: 1px solid #e4e4e7; border-top: none; }
+        .button { display: inline-block; background-color: #EF4444; color: #ffffff !important; padding: 14px 28px; text-decoration: none !important; border-radius: 12px; font-weight: bold; margin: 20px 0; box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.2); }
+        .streak-box { background-color: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 16px; font-weight: bold; text-align: center; }
+        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #71717a; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Pit Stop Due! 🏎️</h1>
+        </div>
+        <div class="content">
+            <p>Hi ${userName},</p>
+            <p>Your weekly Pit Stop is due in <strong>less than 24 hours</strong>.</p>
+            
+            <div class="streak-box">
+                🔥 Current Streak: ${streak} Week${streak === 1 ? '' : 's'}
+            </div>
+
+            <p>Don't let your streak break! Take 5 minutes to review your wins, learn from your losses, and plan your next week.</p>
+
+            <div style="text-align: center;">
+                <a href="https://www.tntlapis.com/obeya" class="button">Start Pit Stop Now</a>
+            </div>
+
+            <p style="text-align: center; color: #6b7280; font-size: 14px;">
+                "You can't improve what you don't measure."
+            </p>
+        </div>
+        <div class="footer">
+            <p>© ${new Date().getFullYear()} TNT Platform.</p>
+        </div>
+    </div>
+</body>
+</html>
+`;
