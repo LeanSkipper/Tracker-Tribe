@@ -796,6 +796,14 @@ function ObeyaContent() {
             newParams.delete('tutorial');
             window.history.replaceState(null, '', `/obeya?${newParams.toString()}`);
         }
+
+        // Handle Floating Action Button "Add Goal"
+        if (searchParams.get('action') === 'new-goal') {
+            handleCreateGoal();
+            const newParams = new URLSearchParams(searchParams.toString());
+            newParams.delete('action');
+            window.history.replaceState(null, '', `/obeya?${newParams.toString()}`);
+        }
     }, [searchParams]);
 
     const [showPitStopTutorial, setShowPitStopTutorial] = useState(false);
