@@ -2345,60 +2345,55 @@ function ObeyaContent() {
                     </div>
                 </div>)}
             </main>
-            {/* Mobile Action FAB - Only show in Advanced Mode */}
-            {
-                mode === 'advanced' && (
-                    <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
-                        {isMobileFabOpen && (
-                            <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
-                                <button
-                                    onClick={() => { handleCreateGoal(); setIsMobileFabOpen(false); }}
-                                    className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                                >
-                                    <Plus size={16} /> New Goal
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (isRestricted) setShowLockModal(true);
-                                        else setIsPitStopOpen(true);
-                                        setIsMobileFabOpen(false);
-                                    }}
-                                    className={`p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs text-white ${isPitStopDue ? 'bg-amber-500' : 'bg-blue-600'}`}
-                                >
-                                    <Clock size={16} /> Pit Stop
-                                    {isPitStopDue
-                                        ? <span className="bg-red-600 text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">DUE</span>
-                                        : <span className="bg-blue-800/50 text-[10px] px-1.5 py-0.5 rounded-full">{pitStopDaysLeft}d</span>
-                                    }
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        if (isRestricted) setShowLockModal(true);
-                                        else setIsCoachOpen(true);
-                                        setIsMobileFabOpen(false);
-                                    }}
-                                    className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
-                                >
-                                    <Sparkles size={16} /> Coach
-                                </button>
-                            </div>
-                        )}
+            <div className="md:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+                {isMobileFabOpen && (
+                    <div className="flex flex-col items-end gap-3 mb-2 animate-in slide-in-from-bottom-5 fade-in duration-200 pointer-events-auto">
                         <button
-                            onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
-                            className={`relative p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
+                            onClick={() => { handleCreateGoal(); setIsMobileFabOpen(false); }}
+                            className="bg-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
                         >
-                            <Plus size={24} />
-                            {/* Notification Badge on Main FAB if Pit Stop Due */}
-                            {!isMobileFabOpen && isPitStopDue && (
-                                <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
-                                </span>
-                            )}
+                            <Plus size={16} /> New Goal
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (isRestricted) setShowLockModal(true);
+                                else setIsPitStopOpen(true);
+                                setIsMobileFabOpen(false);
+                            }}
+                            className={`p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs text-white ${isPitStopDue ? 'bg-amber-500' : 'bg-blue-600'}`}
+                        >
+                            <Clock size={16} /> Pit Stop
+                            {isPitStopDue
+                                ? <span className="bg-red-600 text-[10px] px-1.5 py-0.5 rounded-full animate-pulse">DUE</span>
+                                : <span className="bg-blue-800/50 text-[10px] px-1.5 py-0.5 rounded-full">{pitStopDaysLeft}d</span>
+                            }
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (isRestricted) setShowLockModal(true);
+                                else setIsCoachOpen(true);
+                                setIsMobileFabOpen(false);
+                            }}
+                            className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-3 rounded-full shadow-lg flex items-center gap-2 font-bold text-xs"
+                        >
+                            <Sparkles size={16} /> Coach
                         </button>
                     </div>
-                )
-            }
+                )}
+                <button
+                    onClick={() => setIsMobileFabOpen(!isMobileFabOpen)}
+                    className={`relative p-4 rounded-full shadow-2xl transition-all pointer-events-auto ${isMobileFabOpen ? 'bg-gray-800 text-white rotate-45' : 'bg-indigo-600 text-white'}`}
+                >
+                    <Plus size={24} />
+                    {/* Notification Badge on Main FAB if Pit Stop Due */}
+                    {!isMobileFabOpen && isPitStopDue && (
+                        <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 border-2 border-white"></span>
+                        </span>
+                    )}
+                </button>
+            </div>
 
             <div onClick={() => isRestricted && setShowLockModal(true)} className="contents">
                 {mode === 'advanced' && (
