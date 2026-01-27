@@ -7,11 +7,17 @@ import Link from 'next/link';
 import FeedbackModal from './FeedbackModal';
 import Coach from './Coach';
 
+import { usePathname } from 'next/navigation';
+
 export default function FloatingActions() {
     const { } = useViewMode();
+    const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [isCoachOpen, setIsCoachOpen] = useState(false);
+
+    // Hide FAB on Obeya page (it has its own specialized FAB)
+    if (pathname?.startsWith('/obeya')) return null;
 
     return (
         <>
