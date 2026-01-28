@@ -49,6 +49,7 @@ export async function GET() {
             okrs: g.okrs.map(okr => ({
                 ...okr,
                 monthlyData: okr.monthlyData ? JSON.parse(okr.monthlyData) : null,
+                direction: okr.direction || 'UP'
             }))
         }));
 
@@ -95,7 +96,7 @@ export async function POST(req: Request) {
                     startMonth: r.startMonth || 0,
                     deadlineYear: r.deadlineYear || 2026,
                     deadlineMonth: r.deadlineMonth || 11,
-                    monthlyData: r.monthlyData || null, // Already parsed if coming from FE? No, usually raw object
+                    direction: r.direction || 'UP',
                     actions: rows.find((ar: any) => !ar.type && ar.actions)?.actions?.map((a: any, j: number) => ({
                         id: a.id && !a.id.startsWith('act-') ? a.id : `guest-act-${Date.now()}-${j}`,
                         description: a.title,
@@ -303,6 +304,7 @@ export async function POST(req: Request) {
                                 startMonth: row.startMonth || 0,
                                 deadlineYear: row.deadlineYear || 2026,
                                 deadlineMonth: row.deadlineMonth || 11,
+                                direction: row.direction || 'UP',
                                 monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
                                 order: row.order !== undefined ? row.order : undefined,
                                 // For shared tribes, we might want to be careful not to wipe them out if not sending them?
@@ -327,6 +329,7 @@ export async function POST(req: Request) {
                                 startMonth: row.startMonth || 0,
                                 deadlineYear: row.deadlineYear || 2026,
                                 deadlineMonth: row.deadlineMonth || 11,
+                                direction: row.direction || 'UP',
                                 monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
                                 order: row.order !== undefined ? row.order : 0,
                                 sharedTribes: {
@@ -420,6 +423,7 @@ export async function POST(req: Request) {
             okrs: savedGoal?.okrs.map(okr => ({
                 ...okr,
                 monthlyData: okr.monthlyData ? JSON.parse(okr.monthlyData) : null,
+                direction: okr.direction || 'UP'
             }))
         };
 

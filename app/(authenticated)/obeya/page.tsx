@@ -36,7 +36,8 @@ type MetricRow = {
     unit: string;
     startValue: number;
     targetValue: number;
-    startYear: number;
+    direction?: 'UP' | 'DOWN';
+    startYear?: number;
     startMonth: number;
     deadlineYear: number;
     deadlineMonth: number;
@@ -91,9 +92,12 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, o
     const onTrackCount = trackableOKRs.filter(m => {
         const lastData = m.monthlyData.filter(d => d.actual !== null).pop();
         if (!lastData) return false;
-        return m.targetValue >= m.startValue
-            ? (lastData.actual! >= lastData.target!)
-            : (lastData.actual! <= lastData.target!);
+        const isSuccess = m.direction === 'DOWN'
+            ? (lastData.actual! <= lastData.target!)
+            : (m.direction === 'UP'
+                ? (lastData.actual! >= lastData.target!)
+                : (m.targetValue >= m.startValue ? (lastData.actual! >= lastData.target!) : (lastData.actual! <= lastData.target!)));
+        return isSuccess;
     }).length;
 
     // Get current week actions
@@ -373,8 +377,11 @@ const ObeyaMobileGoalCard = ({ goal, currentYear, onUpdateStatus, onAddAction, o
                         const lastData = metric.monthlyData.filter(d => d.actual !== null).pop();
                         const target = lastData?.target ?? metric.targetValue;
                         const actual = lastData?.actual ?? 0;
-                        const isHigherBetter = metric.targetValue >= metric.startValue;
-                        const isSuccess = lastData ? (isHigherBetter ? actual >= target : actual <= target) : false;
+                        const isSuccess = metric.direction === 'DOWN'
+                            ? (actual <= target)
+                            : (metric.direction === 'UP'
+                                ? (actual >= target)
+                                : (metric.targetValue >= metric.startValue ? (actual >= target) : (actual <= target)));
 
                         return (
                             <div key={metric.id} className="flex items-center justify-between bg-white p-2 rounded-lg border border-slate-100 shadow-sm">
@@ -485,6 +492,7 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                 unit: '',
                 startValue: 0,
                 targetValue: 100,
+                direction: 'UP',
                 startYear: 2025,
                 startMonth: new Date().getMonth(),
                 deadlineYear: 2026,
@@ -492,8 +500,8 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
             }]
     );
 
-    const [kpis, setKpis] = useState<{ id: string; label: string; target: number }[]>(
-        existingKPIs.length > 0 ? existingKPIs.map(k => ({ id: k.id, label: k.label, target: k.targetValue })) : []
+    const [kpis, setKpis] = useState<Omit<MetricRow, 'monthlyData'>[]>(
+        existingKPIs.length > 0 ? existingKPIs.map(({ monthlyData, ...rest }) => rest) : []
     );
 
     return (
@@ -548,6 +556,23 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                                 <div className="grid grid-cols-2 gap-4">
                                     <div><label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Start Val</label><input type="number" className="w-full p-2 border rounded-lg bg-white text-sm" value={okr.startValue} onChange={e => { const n = [...okrs]; n[idx].startValue = Number(e.target.value); setOkrs(n) }} /></div>
                                     <div><label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Target Val</label><input type="number" className="w-full p-2 border rounded-lg bg-white text-sm" value={okr.targetValue} onChange={e => { const n = [...okrs]; n[idx].targetValue = Number(e.target.value); setOkrs(n) }} /></div>
+                                    <div className="col-span-2">
+                                        <label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Success Condition</label>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => { const n = [...okrs]; n[idx].direction = 'UP'; setOkrs(n) }}
+                                                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${okr.direction === 'UP' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-100 text-gray-400'}`}
+                                            >
+                                                ↑ Higher is Better
+                                            </button>
+                                            <button
+                                                onClick={() => { const n = [...okrs]; n[idx].direction = 'DOWN'; setOkrs(n) }}
+                                                className={`flex-1 py-1.5 rounded-lg text-xs font-bold border-2 transition-all ${okr.direction === 'DOWN' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-100 text-gray-400'}`}
+                                            >
+                                                ↓ Lower is Better
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-blue-100">
                                     <div><label className="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Start Date</label><div className="flex gap-1"><select className="w-full p-1 border rounded bg-white text-[10px]" value={okr.startMonth} onChange={e => { const n = [...okrs]; n[idx].startMonth = Number(e.target.value); setOkrs(n) }}>{MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}</select><input type="number" className="w-16 p-1 border rounded bg-white text-[10px]" value={okr.startYear} onChange={e => { const n = [...okrs]; n[idx].startYear = Number(e.target.value); setOkrs(n) }} /></div></div>
@@ -560,14 +585,30 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Shared System KPIs</label>
-                            {kpis.length < 3 && <button onClick={() => setKpis([...kpis, { id: 'new-' + Date.now(), label: '', target: 10 }])} className="text-[10px] bg-white border border-gray-200 hover:bg-gray-100 px-2 py-1 rounded-full font-bold flex items-center gap-1"><Plus size={10} /> Add KPI</button>}
+                            {kpis.length < 3 && <button onClick={() => setKpis([...kpis, { id: 'new-' + Date.now(), label: '', targetValue: 10, type: 'KPI', unit: '', startValue: 0, startMonth: 0, deadlineYear: 2026, deadlineMonth: 11, direction: 'UP' }])} className="text-[10px] bg-white border border-gray-200 hover:bg-gray-100 px-2 py-1 rounded-full font-bold flex items-center gap-1"><Plus size={10} /> Add KPI</button>}
                         </div>
                         <div className="space-y-2">
                             {kpis.map((kpi, idx) => (
-                                <div key={kpi.id} className="flex gap-2 items-center">
-                                    <input className="flex-1 p-2 border rounded-lg text-xs bg-white" placeholder="KPI Name" value={kpi.label} onChange={e => { const n = [...kpis]; n[idx].label = e.target.value; setKpis(n) }} />
-                                    <div className="w-24 relative"><input type="number" className="w-full p-2 pl-6 border rounded-lg text-xs bg-white" value={kpi.target} onChange={e => { const n = [...kpis]; n[idx].target = Number(e.target.value); setKpis(n) }} /><span className="absolute left-2 top-2 text-gray-400 text-[10px]">T:</span></div>
-                                    <button onClick={() => setKpis(kpis.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500"><X size={14} /></button>
+                                <div key={kpi.id} className="flex flex-col gap-2 p-2 bg-white border border-gray-100 rounded-lg">
+                                    <div className="flex gap-2 items-center">
+                                        <input className="flex-1 p-2 border rounded-lg text-xs bg-white" placeholder="KPI Name" value={kpi.label} onChange={e => { const n = [...kpis]; n[idx].label = e.target.value; setKpis(n) }} />
+                                        <div className="w-24 relative"><input type="number" className="w-full p-2 pl-6 border rounded-lg text-xs bg-white" value={kpi.targetValue} onChange={e => { const n = [...kpis]; n[idx].targetValue = Number(e.target.value); setKpis(n) }} /><span className="absolute left-2 top-2 text-gray-400 text-[10px]">T:</span></div>
+                                        <button onClick={() => setKpis(kpis.filter((_, i) => i !== idx))} className="text-gray-400 hover:text-red-500 shrink-0"><X size={14} /></button>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => { const n = [...kpis]; n[idx].direction = 'UP'; setKpis(n) }}
+                                            className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition-all ${kpi.direction === 'UP' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-gray-50 border-transparent text-gray-400'}`}
+                                        >
+                                            ↑ Higher is Good
+                                        </button>
+                                        <button
+                                            onClick={() => { const n = [...kpis]; n[idx].direction = 'DOWN'; setKpis(n) }}
+                                            className={`flex-1 py-1 rounded-md text-[10px] font-bold border transition-all ${kpi.direction === 'DOWN' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-transparent text-gray-400'}`}
+                                        >
+                                            ↓ Lower is Good
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -576,9 +617,10 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                         <button onClick={() => {
                             const okrRows = okrs.map(o => {
                                 const ex = existingOKRs.find(e => e.id === o.id);
-                                const targets = generateMonthlyTargets(o.startValue, o.targetValue, o.startYear, o.startMonth, o.deadlineYear, o.deadlineMonth);
+                                const targets = generateMonthlyTargets(o.startValue, o.targetValue, o.startYear || 2025, o.startMonth, o.deadlineYear, o.deadlineMonth);
                                 return {
                                     ...o,
+                                    direction: o.direction as "UP" | "DOWN" || 'UP',
                                     monthlyData: targets.map(d => {
                                         const e = ex?.monthlyData?.find(x => x.monthId === d.monthId && x.year === d.year);
                                         return e ? { ...d, actual: e.actual } : d;
@@ -588,19 +630,25 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
 
                             const kpiRows = kpis.map(k => {
                                 const ex = existingKPIs.find(e => e.id === k.id);
-                                const refOkr = okrs[0];
-                                const t = generateMonthlyTargets(k.target, k.target, refOkr.startYear, refOkr.startMonth, refOkr.deadlineYear, refOkr.deadlineMonth);
+                                const refOkr = okrs[0]; // Use first OKR's dates as a fallback for KPI date range
+                                const startYear = k.startYear || refOkr?.startYear || 2025;
+                                const startMonth = k.startMonth || refOkr?.startMonth || 0;
+                                const deadlineYear = k.deadlineYear || refOkr?.deadlineYear || 2026;
+                                const deadlineMonth = k.deadlineMonth || refOkr?.deadlineMonth || 11;
+
+                                const t = generateMonthlyTargets(k.startValue, k.targetValue, startYear, startMonth, deadlineYear, deadlineMonth);
                                 return {
                                     id: k.id.startsWith('new-') ? 'kpi-' + Date.now() + Math.random() : k.id,
                                     type: 'KPI',
                                     label: k.label,
-                                    unit: '',
-                                    startValue: k.target,
-                                    targetValue: k.target,
-                                    startYear: refOkr.startYear,
-                                    startMonth: refOkr.startMonth,
-                                    deadlineYear: refOkr.deadlineYear,
-                                    deadlineMonth: refOkr.deadlineMonth,
+                                    unit: k.unit || '',
+                                    startValue: k.startValue,
+                                    targetValue: k.targetValue,
+                                    direction: k.direction as "UP" | "DOWN" || 'UP',
+                                    startYear: startYear,
+                                    startMonth: startMonth,
+                                    deadlineYear: deadlineYear,
+                                    deadlineMonth: deadlineMonth,
                                     monthlyData: t.map(d => {
                                         const e = ex?.monthlyData?.find(x => x.monthId === d.monthId && x.year === d.year);
                                         return e ? { ...d, actual: e.actual } : d;
@@ -768,15 +816,22 @@ const GraphModal = ({ metric, onClose }: { metric: MetricRow, onClose: () => voi
                     <svg width={width} height={height} className="overflow-visible">
                         {[0, 0.25, 0.5, 0.75, 1].map(t => { const y = height - padding - (t * (height - padding * 2)); return <line key={t} x1={padding} y1={y} x2={width - padding} y2={y} stroke="#e5e7eb" strokeDasharray="4" /> })}
                         <path d={targetPath} fill="none" stroke="black" strokeWidth="2" strokeDasharray="4" opacity="0.5" />
-                        <path d={data.filter(d => d.actual !== null).map((d, i) => `${i === 0 ? 'M' : 'L'} ${getX(data.indexOf(d))} ${getY(d.actual!)}`).join(' ')} fill="none" stroke="#9ca3af" strokeWidth="1" opacity="0.3" />
+                        <path d={data.filter(d => d.actual !== null).map((d, i) => {
+                            const originalIndex = data.indexOf(d);
+                            return `${i === 0 ? 'M' : 'L'} ${getX(originalIndex)} ${getY(d.actual!)}`;
+                        }).join(' ')} fill="none" stroke="#9ca3af" strokeWidth="1" opacity="0.3" />
                         {data.map((d, i) => {
                             if (d.target === null) return null;
-                            const isHigherBetter = metric.targetValue >= metric.startValue;
+                            const isSuccess = metric.direction === 'DOWN'
+                                ? (d.actual! <= d.target!)
+                                : (metric.direction === 'UP'
+                                    ? (d.actual! >= d.target!)
+                                    : (metric.targetValue >= metric.startValue ? (d.actual! >= d.target!) : (d.actual! <= d.target!)));
                             return (
                                 <g key={i}>
                                     <text x={getX(i)} y={height - 10} textAnchor="middle" fontSize="10" fill="#9ca3af">{d.monthId}</text>
                                     {d.actual !== null && (
-                                        <circle cx={getX(i)} cy={getY(d.actual)} r="5" fill={(isHigherBetter && d.actual >= d.target!) || (!isHigherBetter && d.actual <= d.target!) ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
+                                        <circle cx={getX(i)} cy={getY(d.actual)} r="5" fill={isSuccess ? "#22c55e" : "#ef4444"} stroke="white" strokeWidth="2" />
                                     )}
                                 </g>
                             )
@@ -1016,6 +1071,7 @@ function ObeyaContent() {
                             unit: '',
                             targetValue: o.targetValue,
                             startValue: o.currentValue,
+                            direction: o.direction || 'UP', // Default to 'UP'
                             startYear: o.startYear || 2026,
                             startMonth: o.startMonth || 0,
                             deadlineYear: o.deadlineYear || 2026,
@@ -1119,8 +1175,10 @@ function ObeyaContent() {
                         unit: '',
                         targetValue: o.targetValue,
                         startValue: o.currentValue,
+                        direction: o.direction || 'UP',
                         startYear: o.startYear || 2026,
                         startMonth: o.startMonth || 0,
+                        deadlineYear: o.deadlineYear || 2026,
                         deadlineMonth: o.deadlineMonth || 11,
                         monthlyData: o.monthlyData || generateMonthlyTargets(
                             o.currentValue, o.targetValue,
@@ -1371,7 +1429,7 @@ function ObeyaContent() {
                 return {
                     ...g, rows: g.rows.map(r => {
                         if ('type' in r) return r;
-                        // When moving to a NEW week, put it at the end. 
+                        // When moving to a NEW week, put it at the end.
                         // If same week, this function shouldn't be called for reordering (use handleReorderAction).
                         return { ...r, actions: r.actions.map(a => a.id === actionId ? { ...a, weekId: targetWeekId, order: 999 } : a) };
                     })
@@ -1502,6 +1560,7 @@ function ObeyaContent() {
                     unit: '',
                     startValue: template.startValue,
                     targetValue: template.targetValue,
+                    direction: 'UP', // Default direction for templates
                     startYear: currentYear,
                     startMonth: 0,
                     deadlineYear: currentYear,
@@ -1523,6 +1582,7 @@ function ObeyaContent() {
                     unit: '',
                     startValue: 0,
                     targetValue: 100,
+                    direction: 'UP', // Default direction for templates
                     startYear: currentYear,
                     startMonth: 0,
                     deadlineYear: currentYear,
@@ -1759,8 +1819,6 @@ function ObeyaContent() {
                                                 return `${i === 0 ? 'M' : 'L'} ${getX(originalIndex)} ${getY(d.actual!)}`;
                                             }).join(' ');
 
-                                            const isHigherBetter = metric.targetValue >= metric.startValue;
-
                                             return (
                                                 <div key={metric.id} className="bg-gray-50 rounded-xl border border-gray-200 p-4">
                                                     <div className="flex items-center justify-between mb-3">
@@ -1791,8 +1849,11 @@ function ObeyaContent() {
                                                             const x = getX(i);
                                                             const hasActual = d.actual !== null;
                                                             const isOnTarget = hasActual && (
-                                                                (isHigherBetter && d.actual! >= d.target!) ||
-                                                                (!isHigherBetter && d.actual! <= d.target!)
+                                                                metric.direction === 'DOWN'
+                                                                    ? (d.actual! <= d.target!)
+                                                                    : (metric.direction === 'UP'
+                                                                        ? (d.actual! >= d.target!)
+                                                                        : (metric.targetValue >= metric.startValue ? (d.actual! >= d.target!) : (d.actual! <= d.target!)))
                                                             );
 
                                                             return (
@@ -2028,7 +2089,7 @@ function ObeyaContent() {
                                     // Removed unused okrRowsCount
 
                                     return (
-                                        <div key={goal.id} className="bg-white border-b-2 border-gray-100">
+                                        <div key={goal.id} className="bg-white border-b-4 border-gray-50 last:border-0">
                                             {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
 
                                             <div
@@ -2345,7 +2406,13 @@ function ObeyaContent() {
                                                                                                 const hasResult = data && data.actual !== null && data.actual !== undefined;
                                                                                                 if (!hasData) return <div className="w-full h-full bg-gray-50/50 flex items-center justify-center"><span className="text-gray-200 text-[10px]">-</span></div>;
 
-                                                                                                const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
+                                                                                                const isSuccess = hasResult && (
+                                                                                                    metricRow.direction === 'DOWN'
+                                                                                                        ? (data.actual! <= data.target!)
+                                                                                                        : (metricRow.direction === 'UP'
+                                                                                                            ? (data.actual! >= data.target!)
+                                                                                                            : (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!)))
+                                                                                                );
                                                                                                 let cardClass = "";
                                                                                                 let textClass = "";
 

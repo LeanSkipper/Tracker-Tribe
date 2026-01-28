@@ -516,6 +516,7 @@ model OKR {
   
   metricName  String
   type        String   @default("OKR") // "OKR" or "KPI"
+  direction   String   @default("UP") // "UP" (Higher is better) or "DOWN" (Lower is better)
   targetValue Float
   currentValue Float   @default(0)
   

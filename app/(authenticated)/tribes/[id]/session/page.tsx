@@ -89,6 +89,9 @@ export default function SessionPage() {
                     id: okr.id,
                     type: okr.type || 'OKR',
                     label: okr.metricName,
+                    direction: okr.direction || 'UP',
+                    startValue: okr.currentValue || 0, // In this context currentValue from DB is the startValue for the year
+                    targetValue: okr.targetValue || 0,
                     monthlyData
                 };
             });

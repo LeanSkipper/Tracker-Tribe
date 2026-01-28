@@ -22,6 +22,7 @@ type MetricRow = {
     unit?: string;
     startValue: number;
     targetValue: number;
+    direction?: 'UP' | 'DOWN';
     monthlyData: MonthlyData[];
 };
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
@@ -551,7 +552,13 @@ export default function SharedObeyaTracker({
                                                                             const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
 
                                                                             const hasResult = data.actual !== null;
-                                                                            const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
+                                                                            const isSuccess = hasResult && (
+                                                                                metricRow.direction === 'DOWN'
+                                                                                    ? (data.actual! <= data.target!)
+                                                                                    : (metricRow.direction === 'UP'
+                                                                                        ? (data.actual! >= data.target!)
+                                                                                        : (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!)))
+                                                                            );
 
                                                                             const cardClass = isKPI
                                                                                 ? "bg-white border border-dashed border-gray-100"
