@@ -29,17 +29,17 @@ export async function GET() {
 
         const goals = await prisma.goal.findMany({
             where: { userId: user.id },
-            orderBy: { order: 'asc' },
+            orderBy: { order: 'asc' } as any,
             include: {
                 okrs: {
-                    orderBy: { order: 'asc' },
+                    orderBy: { order: 'asc' } as any,
                     include: {
                         actions: {
-                            orderBy: { order: 'asc' }
-                        },
+                            orderBy: { order: 'asc' } as any
+                        } as any,
                         sharedTribes: true,
                     }
-                }
+                } as any
             }
         });
 
@@ -49,7 +49,7 @@ export async function GET() {
             okrs: g.okrs.map(okr => ({
                 ...okr,
                 monthlyData: okr.monthlyData ? JSON.parse(okr.monthlyData) : null,
-                direction: okr.direction || 'UP'
+                direction: (okr as any).direction || 'UP'
             }))
         }));
 
@@ -197,7 +197,7 @@ export async function POST(req: Request) {
                     status: "ACTIVE",
                     visibility: visibility,
                     category: category,
-                    order: order !== undefined ? order : 0,
+                    order: (order !== undefined ? order : 0) as any,
                 },
             });
         } else {
@@ -209,7 +209,7 @@ export async function POST(req: Request) {
                     status: "ACTIVE",
                     visibility: visibility,
                     category: category,
-                    order: order !== undefined ? order : undefined,
+                    order: (order !== undefined ? order : undefined) as any,
                 },
             });
         }
@@ -304,9 +304,9 @@ export async function POST(req: Request) {
                                 startMonth: row.startMonth || 0,
                                 deadlineYear: row.deadlineYear || 2026,
                                 deadlineMonth: row.deadlineMonth || 11,
-                                direction: row.direction || 'UP',
+                                direction: (row.direction || 'UP') as any,
                                 monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
-                                order: row.order !== undefined ? row.order : undefined,
+                                order: (row.order !== undefined ? row.order : undefined) as any,
                                 // For shared tribes, we might want to be careful not to wipe them out if not sending them?
                                 // Assuming payload sends full list if it sends it at all.
                                 ...(row.sharedTribeIds ? {
@@ -329,9 +329,9 @@ export async function POST(req: Request) {
                                 startMonth: row.startMonth || 0,
                                 deadlineYear: row.deadlineYear || 2026,
                                 deadlineMonth: row.deadlineMonth || 11,
-                                direction: row.direction || 'UP',
+                                direction: (row.direction || 'UP') as any,
                                 monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
-                                order: row.order !== undefined ? row.order : 0,
+                                order: (row.order !== undefined ? row.order : 0) as any,
                                 sharedTribes: {
                                     connect: row.sharedTribeIds?.map((id: string) => ({ id })) || []
                                 }
@@ -381,7 +381,7 @@ export async function POST(req: Request) {
                                         // Update week if dragged (handled by handleMoveAction usually, but here for full save)
                                         weekDate: weekDate,
                                         dueDate: weekDate,
-                                        order: actionCard.order !== undefined ? actionCard.order : undefined
+                                        order: (actionCard.order !== undefined ? actionCard.order : undefined) as any
                                     }
                                 }).catch(e => console.warn("Failed to update action (might have been deleted):", e));
                             } else {
@@ -394,7 +394,7 @@ export async function POST(req: Request) {
                                         status: dbStatus,
                                         weekDate: weekDate,
                                         dueDate: weekDate,
-                                        order: actionCard.order !== undefined ? actionCard.order : 0
+                                        order: (actionCard.order !== undefined ? actionCard.order : 0) as any
                                     }
                                 });
                             }
@@ -423,7 +423,7 @@ export async function POST(req: Request) {
             okrs: savedGoal?.okrs.map(okr => ({
                 ...okr,
                 monthlyData: okr.monthlyData ? JSON.parse(okr.monthlyData) : null,
-                direction: okr.direction || 'UP'
+                direction: (okr as any).direction || 'UP'
             }))
         };
 

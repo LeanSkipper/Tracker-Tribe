@@ -492,7 +492,7 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                 unit: '',
                 startValue: 0,
                 targetValue: 100,
-                direction: 'UP',
+                direction: 'UP' as const,
                 startYear: 2025,
                 startMonth: new Date().getMonth(),
                 deadlineYear: 2026,
@@ -585,7 +585,7 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
                     <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                         <div className="flex justify-between items-center mb-2">
                             <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide">Shared System KPIs</label>
-                            {kpis.length < 3 && <button onClick={() => setKpis([...kpis, { id: 'new-' + Date.now(), label: '', targetValue: 10, type: 'KPI', unit: '', startValue: 0, startMonth: 0, deadlineYear: 2026, deadlineMonth: 11, direction: 'UP' }])} className="text-[10px] bg-white border border-gray-200 hover:bg-gray-100 px-2 py-1 rounded-full font-bold flex items-center gap-1"><Plus size={10} /> Add KPI</button>}
+                            {kpis.length < 3 && <button onClick={() => setKpis([...kpis, { id: 'new-' + Date.now(), label: '', targetValue: 10, type: 'KPI', unit: '', startValue: 0, startMonth: 0, deadlineYear: 2026, deadlineMonth: 11, direction: 'UP' as const }])} className="text-[10px] bg-white border border-gray-200 hover:bg-gray-100 px-2 py-1 rounded-full font-bold flex items-center gap-1"><Plus size={10} /> Add KPI</button>}
                         </div>
                         <div className="space-y-2">
                             {kpis.map((kpi, idx) => (
@@ -1560,7 +1560,7 @@ function ObeyaContent() {
                     unit: '',
                     startValue: template.startValue,
                     targetValue: template.targetValue,
-                    direction: 'UP', // Default direction for templates
+                    direction: 'UP' as const, // Default direction for templates
                     startYear: currentYear,
                     startMonth: 0,
                     deadlineYear: currentYear,
@@ -1582,7 +1582,7 @@ function ObeyaContent() {
                     unit: '',
                     startValue: 0,
                     targetValue: 100,
-                    direction: 'UP', // Default direction for templates
+                    direction: 'UP' as const, // Default direction for templates
                     startYear: currentYear,
                     startMonth: 0,
                     deadlineYear: currentYear,

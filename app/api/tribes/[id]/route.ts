@@ -39,10 +39,10 @@ export async function GET(
                                 reputationScore: true, // Added
                                 goals: {
                                     where: { visibility: 'TRIBE' },
-                                    orderBy: { order: 'asc' },
+                                    orderBy: { order: 'asc' } as any,
                                     include: {
                                         okrs: {
-                                            orderBy: { order: 'asc' },
+                                            orderBy: { order: 'asc' } as any,
                                             include: {
                                                 actions: true
                                             }
@@ -62,7 +62,7 @@ export async function GET(
 
         // Transform members to flatten user details for frontend convenience
         // Frontend expects member.name, member.grit, etc.
-        const transformedMembers = tribe.members.map(member => {
+        const transformedMembers = (tribe as any).members.map((member: any) => {
             // Calculate Global Score (Standardized)
             const rankingScore = calculateGlobalScore({
                 level: member.user.level,
