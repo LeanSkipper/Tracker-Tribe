@@ -1942,7 +1942,7 @@ function ObeyaContent() {
                     </div>
 
                     {/* Desktop View: Strategic/Operational Table */}
-                    <div className="hidden md:block min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
+                    <div className="hidden md:block min-w-full bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
                         <div className="sticky top-0 z-[60] bg-white border-b border-gray-200 shadow-sm flex min-w-max">
                             <div className="sticky left-0 w-[150px] md:w-[320px] bg-white border-r border-gray-100 z-[70] shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end uppercase tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Strategic Context</div>
                             <div className="sticky left-[150px] md:left-[320px] w-20 bg-gray-50/50 border-r border-gray-200 z-[70] shrink-0 p-4 font-bold text-gray-400 text-[10px] flex items-end justify-center uppercase shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Result/KPI</div>
@@ -2020,129 +2020,266 @@ function ObeyaContent() {
                             ))}
                         </div>
 
-                        {[...goals]
-                            .sort((a, b) => (a.order ?? LIFE_AREAS.indexOf(a.category)) - (b.order ?? LIFE_AREAS.indexOf(b.category)))
-                            .map((goal, gIdx, allGoals) => {
-                                const isFirstInCat = gIdx === 0 || allGoals[gIdx - 1].category !== goal.category;
-                                // Removed unused okrRowsCount
+                        <div className="min-w-max">
+                            {[...goals]
+                                .sort((a, b) => (a.order ?? LIFE_AREAS.indexOf(a.category)) - (b.order ?? LIFE_AREAS.indexOf(b.category)))
+                                .map((goal, gIdx, allGoals) => {
+                                    const isFirstInCat = gIdx === 0 || allGoals[gIdx - 1].category !== goal.category;
+                                    // Removed unused okrRowsCount
 
-                                return (
-                                    <div key={goal.id} className="bg-white border-b-2 border-gray-100">
-                                        {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
+                                    return (
+                                        <div key={goal.id} className="bg-white border-b-2 border-gray-100">
+                                            {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
 
-                                        {/* Horizontal Vision Band - Sticky Content on Left */}
-                                        <div
-                                            className={`min-h-[52px] min-w-max ${goal.category === 'Health' ? 'bg-teal-600' :
-                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
-                                                    goal.category === 'Family' ? 'bg-indigo-500' :
-                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
-                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
-                                                } flex items-stretch shadow-md transition-all ${draggedGoalId === goal.id ? 'opacity-40' : ''}`}
-                                            draggable
-                                            onDragStart={(e) => {
-                                                setDraggedGoalId(goal.id);
-                                                e.dataTransfer.effectAllowed = 'move';
-                                            }}
-                                            onDragOver={(e) => {
-                                                e.preventDefault();
-                                                if (draggedGoalId && draggedGoalId !== goal.id) {
-                                                    e.currentTarget.classList.add('brightness-110', 'scale-[1.01]');
-                                                }
-                                            }}
-                                            onDragLeave={(e) => {
-                                                e.currentTarget.classList.remove('brightness-110', 'scale-[1.01]');
-                                            }}
-                                            onDrop={(e) => {
-                                                e.preventDefault();
-                                                e.currentTarget.classList.remove('brightness-110', 'scale-[1.01]');
-                                                if (draggedGoalId && draggedGoalId !== goal.id) {
-                                                    handleMoveGoal(draggedGoalId, goal.id);
-                                                    setDraggedGoalId(null);
-                                                }
-                                            }}
-                                        >
-                                            <div className={`sticky left-0 z-50 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] ${goal.category === 'Health' ? 'bg-teal-600' :
-                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
-                                                    goal.category === 'Family' ? 'bg-indigo-500' :
-                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
-                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
-                                                }`}>
-                                                <div className="flex items-center gap-3 overflow-hidden">
-                                                    <div className="p-1 cursor-grab active:cursor-grabbing text-white/40 hover:text-white/80 transition-colors">
-                                                        <GripVertical size={16} />
-                                                    </div>
+                                            <div
+                                                className={`min-h-[52px] w-full flex items-stretch shadow-md transition-all ${draggedGoalId === goal.id ? 'opacity-40' : ''}`}
+                                                draggable
+                                                onDragStart={(e) => {
+                                                    setDraggedGoalId(goal.id);
+                                                    e.dataTransfer.effectAllowed = 'move';
+                                                }}
+                                                onDragOver={(e) => {
+                                                    e.preventDefault();
+                                                    if (draggedGoalId && draggedGoalId !== goal.id) {
+                                                        e.currentTarget.classList.add('brightness-110', 'scale-[1.01]');
+                                                    }
+                                                }}
+                                                onDragLeave={(e) => {
+                                                    e.currentTarget.classList.remove('brightness-110', 'scale-[1.01]');
+                                                }}
+                                                onDrop={(e) => {
+                                                    e.preventDefault();
+                                                    e.currentTarget.classList.remove('brightness-110', 'scale-[1.01]');
+                                                    if (draggedGoalId && draggedGoalId !== goal.id) {
+                                                        handleMoveGoal(draggedGoalId, goal.id);
+                                                        setDraggedGoalId(null);
+                                                    }
+                                                }}
+                                            >
+                                                <div className={`sticky left-0 z-50 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden shadow-[4px_0_12px_-4px_rgba(0,0,0,0.4)] ${goal.category === 'Health' ? 'bg-teal-600' :
+                                                    goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                                        goal.category === 'Family' ? 'bg-indigo-500' :
+                                                            goal.category === 'Leisure' ? 'bg-pink-500' :
+                                                                goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
+                                                    }`}>
+                                                    <div className="flex items-center gap-3 overflow-hidden">
+                                                        <div className="p-1 cursor-grab active:cursor-grabbing text-white/40 hover:text-white/80 transition-colors">
+                                                            <GripVertical size={16} />
+                                                        </div>
 
-                                                    <div className="flex flex-col">
-                                                        <span className="text-white font-bold text-[10px] uppercase tracking-wide shrink-0 opacity-80">{goal.category}</span>
-                                                        <span className="text-white font-bold text-xs md:text-sm leading-tight whitespace-normal break-words">{goal.title}</span>
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    {/* Visibility Toggle */}
-                                                    <div className="relative group">
-                                                        <button
-                                                            className="text-white/80 hover:text-white transition-colors p-1.5 rounded hover:bg-white/10"
-                                                            title="Share settings"
-                                                        >
-                                                            {goal.visibility === 'TRIBE' ? <Users size={16} /> :
-                                                                goal.visibility === 'PUBLIC' ? <Globe size={16} /> :
-                                                                    <Circle size={16} />}
-                                                        </button>
-                                                        {/* Dropdown */}
-                                                        <div className="absolute right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-[180px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-30">
-                                                            <button
-                                                                onClick={async () => {
-                                                                    await fetch(`/api/goals/${goal.id}/visibility`, {
-                                                                        method: 'PATCH',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ visibility: 'PRIVATE' })
-                                                                    });
-                                                                    window.location.reload();
-                                                                }}
-                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-                                                            >
-                                                                <Circle size={14} /> Private
-                                                            </button>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    await fetch(`/api/goals/${goal.id}/visibility`, {
-                                                                        method: 'PATCH',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ visibility: 'TRIBE' })
-                                                                    });
-                                                                    window.location.reload();
-                                                                }}
-                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-                                                            >
-                                                                <Users size={14} /> Share with Tribe
-                                                            </button>
-                                                            <button
-                                                                onClick={async () => {
-                                                                    await fetch(`/api/goals/${goal.id}/visibility`, {
-                                                                        method: 'PATCH',
-                                                                        headers: { 'Content-Type': 'application/json' },
-                                                                        body: JSON.stringify({ visibility: 'PUBLIC' })
-                                                                    });
-                                                                    window.location.reload();
-                                                                }}
-                                                                className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-                                                            >
-                                                                <Globe size={14} /> Public
-                                                            </button>
+                                                        <div className="flex flex-col">
+                                                            <span className="text-white font-bold text-[10px] uppercase tracking-wide shrink-0 opacity-80">{goal.category}</span>
+                                                            <span className="text-white font-bold text-xs md:text-sm leading-tight whitespace-normal break-words">{goal.title}</span>
                                                         </div>
                                                     </div>
-                                                    <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
-                                                        <Edit2 size={16} />
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        {/* Visibility Toggle */}
+                                                        <div className="relative group">
+                                                            <button
+                                                                className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all border border-white/20 shadow-sm"
+                                                                title="Share settings"
+                                                            >
+                                                                {goal.visibility === 'TRIBE' ? <Users size={12} className="text-white" /> :
+                                                                    goal.visibility === 'PUBLIC' ? <Globe size={12} className="text-white" /> :
+                                                                        <Lock size={12} className="text-white/80" />}
+                                                                <span className="text-[10px] font-black uppercase tracking-tight leading-none whitespace-nowrap">
+                                                                    {goal.visibility === 'TRIBE' ? 'Tribe' : goal.visibility === 'PUBLIC' ? 'Public' : 'Private'}
+                                                                </span>
+                                                            </button>
+                                                            {/* Dropdown */}
+                                                            <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 py-1.5 min-w-[200px] opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all z-[80]">
+                                                                <div className="px-3 py-2 border-b border-gray-50 mb-1">
+                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Visibility Settings</span>
+                                                                </div>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                            method: 'PATCH',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ visibility: 'PRIVATE' })
+                                                                        });
+                                                                        window.location.reload();
+                                                                    }}
+                                                                    className="w-full px-3 py-2.5 text-left text-sm hover:bg-slate-50 flex items-center gap-3 text-slate-700 transition-colors"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500"><Lock size={16} /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-bold text-xs">Private</span>
+                                                                        <span className="text-[9px] text-slate-400">Only you can see this</span>
+                                                                    </div>
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                            method: 'PATCH',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ visibility: 'TRIBE' })
+                                                                        });
+                                                                        window.location.reload();
+                                                                    }}
+                                                                    className="w-full px-3 py-2.5 text-left text-sm hover:bg-indigo-50 flex items-center gap-3 text-slate-700 transition-colors"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-lg bg-indigo-100 flex items-center justify-center text-indigo-600"><Users size={16} /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-bold text-xs text-indigo-700">Tribe</span>
+                                                                        <span className="text-[9px] text-indigo-400">Share with your tribes</span>
+                                                                    </div>
+                                                                </button>
+                                                                <button
+                                                                    onClick={async () => {
+                                                                        await fetch(`/api/goals/${goal.id}/visibility`, {
+                                                                            method: 'PATCH',
+                                                                            headers: { 'Content-Type': 'application/json' },
+                                                                            body: JSON.stringify({ visibility: 'PUBLIC' })
+                                                                        });
+                                                                        window.location.reload();
+                                                                    }}
+                                                                    className="w-full px-3 py-2.5 text-left text-sm hover:bg-emerald-50 flex items-center gap-3 text-slate-700 transition-colors"
+                                                                >
+                                                                    <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600"><Globe size={16} /></div>
+                                                                    <div className="flex flex-col">
+                                                                        <span className="font-bold text-xs text-emerald-700">Public</span>
+                                                                        <span className="text-[9px] text-emerald-400">Visible on public profile</span>
+                                                                    </div>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => setEditingGoal(goal)} className="text-white/80 hover:text-white transition-colors">
+                                                            <Edit2 size={16} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white min-w-max">
-                                            {/* 1. Left Sticky Column - Higher Z-index for scroll */}
-                                            <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-40 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] flex overflow-hidden">
-                                                {/* Labels Column */}
-                                                <div className="flex-1 flex flex-col w-full">
+                                            <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white min-w-max">
+                                                {/* 1. Left Sticky Column - Higher Z-index for scroll */}
+                                                <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-40 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] flex overflow-hidden">
+                                                    {/* Labels Column */}
+                                                    <div className="flex-1 flex flex-col w-full">
+                                                        {(() => {
+                                                            const metricRows = goal.rows.filter(r => 'type' in r);
+                                                            const actionRows = goal.rows.filter(r => !('type' in r));
+
+                                                            const sections = [
+                                                                { id: 'METRIC', title: 'Results & KPIs', rows: metricRows },
+                                                                { id: 'ACTION', title: 'Action Plan', rows: actionRows }
+                                                            ];
+
+                                                            return sections.map(section => {
+                                                                if (viewMode === 'tactical' && section.id === 'ACTION') return null;
+
+                                                                if (viewMode === 'strategic' && section.id === 'KPI') return null; // Strategic view filters
+
+                                                                const sectionKey = `${goal.id}-${section.id}`;
+                                                                // Logic: If Goal Collapsed, OKR/KPI hidden (unless overriden?). User request: "Action plan visible when everything collapsed."
+                                                                const isGoalCollapsed = collapsedGoals.has(goal.id);
+                                                                // Force hide OKRs and KPIs if goal is collapsed.
+                                                                const isForceHidden = isGoalCollapsed && section.id !== 'ACTION';
+                                                                const isCollapsed = collapsedSections.has(sectionKey) || isForceHidden;
+
+                                                                if (section.rows.length === 0) return null;
+
+                                                                return (
+                                                                    <div key={section.id} className="flex flex-col w-full">
+                                                                        {/* Header */}
+                                                                        <div
+                                                                            className="h-[26px] bg-gray-50 border-b border-gray-100 px-2 flex items-center gap-2 cursor-pointer hover:bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-wider sticky top-0 bg-opacity-95 backdrop-blur-sm z-10"
+                                                                            onClick={() => toggleSection(sectionKey)}
+                                                                            title={isCollapsed ? "Expand Section" : "Collapse Section"}
+                                                                        >
+                                                                            <ChevronRight size={14} className={`transition-transform text-gray-400 ${!isCollapsed ? 'rotate-90' : ''}`} />
+                                                                            {section.title} <span className="text-gray-400 font-normal">({section.rows.length})</span>
+                                                                        </div>
+
+                                                                        {/* Rows */}
+                                                                        {!isCollapsed && section.rows.map((row, rIdx) => {
+                                                                            const isOKR = 'type' in row;
+                                                                            const isKPI = isOKR && (row as MetricRow).type === 'KPI';
+                                                                            // Removed unused isActionRow
+
+                                                                            // Determine exact height
+                                                                            let heightClass = 'h-[45px]';
+                                                                            if (!isOKR && !isKPI) {
+                                                                                const actionRow = row as ActionRow;
+                                                                                // Calculate max tasks in any visible week for this year
+                                                                                const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
+                                                                                    actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
+                                                                                ));
+                                                                                const maxTasks = Math.max(0, ...actionCounts);
+                                                                                const dynamicHeight = Math.max(96, maxTasks * 50 + 20);
+                                                                                heightClass = `h-[${dynamicHeight}px]`;
+                                                                            }
+
+
+                                                                            const okrRowsCount = goal.rows.filter(r => 'type' in r).length;
+
+                                                                            return (
+                                                                                <div
+                                                                                    key={row.id}
+                                                                                    className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative transition-colors hover:bg-gray-50/50 ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
+                                                                                    draggable={isOKR}
+                                                                                    onDragStart={(e) => {
+                                                                                        if (!isOKR) return;
+                                                                                        setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
+                                                                                        e.dataTransfer.effectAllowed = 'move';
+                                                                                    }}
+                                                                                    onDragOver={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        if (draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                                            e.currentTarget.classList.add('bg-blue-50');
+                                                                                        }
+                                                                                    }}
+                                                                                    onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-50')}
+                                                                                    onDrop={(e) => {
+                                                                                        e.preventDefault();
+                                                                                        e.currentTarget.classList.remove('bg-blue-50');
+                                                                                        if (draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                                            handleMoveRow(goal.id, draggedRowInfo.rowId, row.id);
+                                                                                            setDraggedRowInfo(null);
+                                                                                        }
+                                                                                    }}
+                                                                                >
+                                                                                    <div className={`w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full border-l-4 ${goal.category === 'Health' ? 'border-teal-600' :
+                                                                                        goal.category === 'Wealth' ? 'border-emerald-600' :
+                                                                                            goal.category === 'Family' ? 'border-indigo-500' :
+                                                                                                goal.category === 'Leisure' ? 'border-pink-500' :
+                                                                                                    goal.category === 'Business/Career' ? 'border-blue-700' : 'border-gray-500'
+                                                                                        }`}>
+                                                                                        {isOKR && (
+                                                                                            <div className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0">
+                                                                                                <GripVertical size={14} />
+                                                                                            </div>
+                                                                                        )}
+                                                                                        <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
+                                                                                            {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
+                                                                                            {row.label}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
+                                                                                        <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
+                                                                                        {isOKR && (row as MetricRow).unit && <span className="text-[9px] text-gray-300">({(row as MetricRow).unit})</span>}
+                                                                                        {!isOKR && (
+                                                                                            <button
+                                                                                                onClick={() => handleAddActionToCurrentWeek(goal.id, row.id)}
+                                                                                                className="mt-1 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                                title="Add Task to Current Week"
+                                                                                            >
+                                                                                                <Plus size={14} />
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </div>
+                                                                            );
+                                                                        })}
+                                                                    </div>
+                                                                );
+                                                            });
+                                                        })()}
+                                                    </div>
+                                                </div>
+
+                                                {/* 2. Data Columns (Right Side) */}
+                                                <div className="flex-1 flex flex-col min-w-0">
                                                     {(() => {
                                                         const metricRows = goal.rows.filter(r => 'type' in r);
                                                         const actionRows = goal.rows.filter(r => !('type' in r));
@@ -2155,40 +2292,35 @@ function ObeyaContent() {
                                                         return sections.map(section => {
                                                             if (viewMode === 'tactical' && section.id === 'ACTION') return null;
 
-                                                            if (viewMode === 'strategic' && section.id === 'KPI') return null; // Strategic view filters
+                                                            if (viewMode === 'strategic' && section.id === 'KPI') return null;
 
                                                             const sectionKey = `${goal.id}-${section.id}`;
-                                                            // Logic: If Goal Collapsed, OKR/KPI hidden (unless overriden?). User request: "Action plan visible when everything collapsed."
                                                             const isGoalCollapsed = collapsedGoals.has(goal.id);
-                                                            // Force hide OKRs and KPIs if goal is collapsed.
                                                             const isForceHidden = isGoalCollapsed && section.id !== 'ACTION';
                                                             const isCollapsed = collapsedSections.has(sectionKey) || isForceHidden;
 
                                                             if (section.rows.length === 0) return null;
 
                                                             return (
-                                                                <div key={section.id} className="flex flex-col w-full">
-                                                                    {/* Header */}
-                                                                    <div
-                                                                        className="h-[26px] bg-gray-50 border-b border-gray-100 px-2 flex items-center gap-2 cursor-pointer hover:bg-gray-100 text-[10px] font-bold text-gray-500 uppercase tracking-wider sticky top-0 bg-opacity-95 backdrop-blur-sm z-10"
-                                                                        onClick={() => toggleSection(sectionKey)}
-                                                                        title={isCollapsed ? "Expand Section" : "Collapse Section"}
-                                                                    >
-                                                                        <ChevronRight size={14} className={`transition-transform text-gray-400 ${!isCollapsed ? 'rotate-90' : ''}`} />
-                                                                        {section.title} <span className="text-gray-400 font-normal">({section.rows.length})</span>
+                                                                <div key={section.id} className="flex flex-col min-w-0">
+                                                                    {/* Header Spacer - Matching Height */}
+                                                                    <div className="h-[26px] bg-gray-50 border-b border-gray-100 flex sticky top-0 z-10">
+                                                                        {(viewMode === 'strategic' ?
+                                                                            [currentYear, currentYear + 1, currentYear + 2].flatMap(y => MONTHS.map(m => ({ month: m, year: y, key: `${y}-${m}` })))
+                                                                            : MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
+                                                                        ).map(({ key }) => (
+                                                                            <div key={key} className={`${viewMode === 'operational' ? 'w-[45rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-100 flex-1`}></div>
+                                                                        ))}
                                                                     </div>
 
-                                                                    {/* Rows */}
                                                                     {!isCollapsed && section.rows.map((row, rIdx) => {
                                                                         const isOKR = 'type' in row;
                                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
-                                                                        // Removed unused isActionRow
 
-                                                                        // Determine exact height
+                                                                        // Height calculation
                                                                         let heightClass = 'h-[45px]';
                                                                         if (!isOKR && !isKPI) {
                                                                             const actionRow = row as ActionRow;
-                                                                            // Calculate max tasks in any visible week for this year
                                                                             const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
                                                                                 actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
                                                                             ));
@@ -2197,320 +2329,202 @@ function ObeyaContent() {
                                                                             heightClass = `h-[${dynamicHeight}px]`;
                                                                         }
 
-
-                                                                        const okrRowsCount = goal.rows.filter(r => 'type' in r).length;
-
                                                                         return (
-                                                                            <div
-                                                                                key={row.id}
-                                                                                className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative transition-colors hover:bg-gray-50/50 ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
-                                                                                draggable={isOKR}
-                                                                                onDragStart={(e) => {
-                                                                                    if (!isOKR) return;
-                                                                                    setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
-                                                                                    e.dataTransfer.effectAllowed = 'move';
-                                                                                }}
-                                                                                onDragOver={(e) => {
-                                                                                    e.preventDefault();
-                                                                                    if (draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
-                                                                                        e.currentTarget.classList.add('bg-blue-50');
-                                                                                    }
-                                                                                }}
-                                                                                onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-50')}
-                                                                                onDrop={(e) => {
-                                                                                    e.preventDefault();
-                                                                                    e.currentTarget.classList.remove('bg-blue-50');
-                                                                                    if (draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
-                                                                                        handleMoveRow(goal.id, draggedRowInfo.rowId, row.id);
-                                                                                        setDraggedRowInfo(null);
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                <div className={`w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full border-l-4 ${goal.category === 'Health' ? 'border-teal-600' :
-                                                                                        goal.category === 'Wealth' ? 'border-emerald-600' :
-                                                                                            goal.category === 'Family' ? 'border-indigo-500' :
-                                                                                                goal.category === 'Leisure' ? 'border-pink-500' :
-                                                                                                    goal.category === 'Business/Career' ? 'border-blue-700' : 'border-gray-500'
-                                                                                    }`}>
-                                                                                    {isOKR && (
-                                                                                        <div className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0">
-                                                                                            <GripVertical size={14} />
-                                                                                        </div>
-                                                                                    )}
-                                                                                    <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
-                                                                                        {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
-                                                                                        {row.label}
-                                                                                    </span>
-                                                                                </div>
-                                                                                <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
-                                                                                    <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
-                                                                                    {isOKR && (row as MetricRow).unit && <span className="text-[9px] text-gray-300">({(row as MetricRow).unit})</span>}
-                                                                                    {!isOKR && (
-                                                                                        <button
-                                                                                            onClick={() => handleAddActionToCurrentWeek(goal.id, row.id)}
-                                                                                            className="mt-1 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                                            title="Add Task to Current Week"
-                                                                                        >
-                                                                                            <Plus size={14} />
-                                                                                        </button>
-                                                                                    )}
-                                                                                </div>
+                                                                            <div key={row.id} className={`flex ${heightClass}`}>
+                                                                                {(viewMode === 'strategic' ?
+                                                                                    [currentYear, currentYear + 1, currentYear + 2].flatMap(y => MONTHS.map(m => ({ month: m, year: y, key: `${y}-${m}` })))
+                                                                                    :
+                                                                                    MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
+                                                                                ).map(({ month: m, year: y, key }) => (
+                                                                                    <div key={key} className={`${viewMode === 'operational' ? 'w-[45rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
+                                                                                        {isOKR ? (
+                                                                                            (() => {
+                                                                                                const metricRow = row as MetricRow;
+                                                                                                const data = metricRow.monthlyData.find(d => d.monthId === m && d.year === y);
+                                                                                                const hasData = data && data.target !== null;
+                                                                                                const hasResult = data && data.actual !== null && data.actual !== undefined;
+                                                                                                if (!hasData) return <div className="w-full h-full bg-gray-50/50 flex items-center justify-center"><span className="text-gray-200 text-[10px]">-</span></div>;
+
+                                                                                                const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
+                                                                                                let cardClass = "";
+                                                                                                let textClass = "";
+
+                                                                                                if (isKPI) {
+                                                                                                    cardClass = "bg-white border border-dashed border-gray-100";
+                                                                                                    textClass = hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300";
+                                                                                                } else {
+                                                                                                    cardClass = hasResult ? (isSuccess ? 'bg-green-500 shadow-md shadow-green-200' : 'bg-red-500 shadow-md shadow-red-200') : 'bg-gray-50';
+                                                                                                    textClass = hasResult ? "text-white" : "text-gray-300";
+                                                                                                }
+
+                                                                                                const targetCellId = `${goal.id}-${row.id}-${m}-target`;
+                                                                                                const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
+                                                                                                const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
+                                                                                                const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
+
+                                                                                                return (
+                                                                                                    <div
+                                                                                                        className={`w-full h-full rounded-lg flex flex-col items-center justify-center relative group isolate ${cardClass} ${isKPI ? 'hover:border-gray-300' : ''} cursor-pointer`}
+                                                                                                        onClick={() => hasData && setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data })}
+                                                                                                        title={data.comment || 'Click to add note'}
+                                                                                                    >
+                                                                                                        {hasResult ? <span className={`${textClass} font-black drop-shadow-sm ${isKPI ? 'text-xs' : (viewMode === 'tactical' ? 'text-2xl' : 'text-xl')}`}>{data.actual}</span> : <span className="text-gray-300 font-medium group-hover:hidden">-</span>}
+                                                                                                        {data.comment && (
+                                                                                                            <div className="absolute top-0.5 right-0.5 text-[10px] opacity-70">💬</div>
+                                                                                                        )}
+                                                                                                        {/* Only show input overlay for Execution view, not Planning */}
+                                                                                                        {viewMode === 'operational' && (
+                                                                                                            <div className={`absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-20 rounded-lg border border-gray-200 shadow-sm`} onClick={(e) => e.stopPropagation()}>
+                                                                                                                <div className="flex flex-col gap-1 w-full p-2">
+                                                                                                                    {viewMode === 'operational' && !isKPI && <div className="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase"><span>Target</span><span>Actual</span></div>}
+                                                                                                                    <div className="flex items-center gap-1">
+                                                                                                                        <input className={`p-1 text-center font-bold text-xs bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-400 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} value={currentTargetVal} onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)} title="Target" />
+                                                                                                                        {viewMode === 'operational' && (
+                                                                                                                            <button
+                                                                                                                                onClick={(e) => {
+                                                                                                                                    e.stopPropagation();
+                                                                                                                                    setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data });
+                                                                                                                                }}
+                                                                                                                                className="p-1 hover:bg-blue-50 rounded text-blue-600 transition-colors"
+                                                                                                                                title="Add/Edit Note"
+                                                                                                                            >
+                                                                                                                                💬
+                                                                                                                            </button>
+                                                                                                                        )}
+                                                                                                                        <input className={`p-1 text-center font-bold text-sm bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-900 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} placeholder="-" value={currentActualVal} onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)} title="Actual" />
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        )}
+                                                                                                    </div>
+                                                                                                );
+                                                                                            })()
+                                                                                        ) : (
+                                                                                            viewMode === 'operational' ? (
+                                                                                                <div className="flex w-full h-full gap-1">
+                                                                                                    {MONTH_WEEKS[m].map(w => {
+                                                                                                        const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
+
+                                                                                                        // Logic for visual cues
+                                                                                                        const now = new Date();
+                                                                                                        const currentWeekNum = getISOWeekNumber(now);
+                                                                                                        const weekNum = parseInt(w.replace('W', ''));
+                                                                                                        const isPastWeek = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && weekNum < currentWeekNum);
+                                                                                                        const isNextWeek = currentYear === now.getFullYear() && weekNum === currentWeekNum + 1;
+                                                                                                        const isEmpty = weekActions.length === 0;
+
+                                                                                                        let bgClass = 'bg-gray-50/30';
+                                                                                                        if (isPastWeek && isEmpty) {
+                                                                                                            bgClass = 'bg-red-50/50'; // Light red for Missed Opportunity
+                                                                                                        } else if (isNextWeek && isEmpty) {
+                                                                                                            bgClass = 'bg-indigo-50/60 ring-inset ring-2 ring-indigo-100/50'; // Encouragement for next week
+                                                                                                        }
+
+                                                                                                        return (
+                                                                                                            <div
+                                                                                                                key={w}
+                                                                                                                className={`flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 min-h-[80px] transition-colors ${bgClass}`}
+                                                                                                                onDragOver={(e) => {
+                                                                                                                    e.preventDefault();
+                                                                                                                    e.currentTarget.classList.add('bg-blue-100', 'border-blue-300');
+                                                                                                                }}
+                                                                                                                onDragLeave={(e) => {
+                                                                                                                    e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
+                                                                                                                }}
+                                                                                                                onDrop={(e) => {
+                                                                                                                    e.preventDefault();
+                                                                                                                    e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
+
+                                                                                                                    if (draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
+                                                                                                                        handleMoveAction(goal.id, draggedTask.actionId, w);
+                                                                                                                        setDraggedTask(null);
+                                                                                                                    }
+                                                                                                                }}
+                                                                                                            >
+                                                                                                                {weekActions.map(a => (
+                                                                                                                    <div
+                                                                                                                        key={a.id}
+                                                                                                                        draggable
+                                                                                                                        onDragStart={() => setDraggedTask({ goalId: goal.id, actionId: a.id, sourceWeek: w })}
+                                                                                                                        onDragEnd={() => setDraggedTask(null)}
+                                                                                                                        className={`p-2 rounded-lg border shadow-sm text-[10px] font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
+                                                                                                                            (isPastWeek) ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' :
+                                                                                                                                a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
+                                                                                                                                    a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
+                                                                                                                                        'bg-white border-gray-200 text-gray-700'
+                                                                                                                            }`}
+                                                                                                                    >
+                                                                                                                        <div className="flex items-start gap-1.5">
+                                                                                                                            <input
+                                                                                                                                type="checkbox"
+                                                                                                                                checked={a.status === 'DONE'}
+                                                                                                                                onChange={() => handleUpdateActionStatus(goal.id, a.id, a.status === 'DONE' ? 'TBD' : 'DONE')}
+                                                                                                                                className="mt-0.5 flex-shrink-0 cursor-pointer"
+                                                                                                                                onClick={(e) => e.stopPropagation()}
+                                                                                                                            />
+                                                                                                                            {editingTaskId === a.id ? (
+                                                                                                                                <input
+                                                                                                                                    type="text"
+                                                                                                                                    value={editingTaskTitle}
+                                                                                                                                    onChange={(e) => setEditingTaskTitle(e.target.value)}
+                                                                                                                                    onBlur={() => {
+                                                                                                                                        if (editingTaskTitle.trim()) {
+                                                                                                                                            handleUpdateActionTitle(goal.id, a.id, editingTaskTitle);
+                                                                                                                                        }
+                                                                                                                                        setEditingTaskId(null);
+                                                                                                                                    }}
+                                                                                                                                    onKeyDown={(e) => {
+                                                                                                                                        if (e.key === 'Enter') {
+                                                                                                                                            if (editingTaskTitle.trim()) {
+                                                                                                                                                handleUpdateActionTitle(goal.id, a.id, editingTaskTitle);
+                                                                                                                                            }
+                                                                                                                                            setEditingTaskId(null);
+                                                                                                                                        } else if (e.key === 'Escape') {
+                                                                                                                                            setEditingTaskId(null);
+                                                                                                                                        }
+                                                                                                                                    }}
+                                                                                                                                    className="flex-1 leading-tight break-words bg-white border border-blue-300 rounded px-1 outline-none focus:ring-1 focus:ring-blue-500 text-[10px]"
+                                                                                                                                    autoFocus
+                                                                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                                                                />
+                                                                                                                            ) : (
+                                                                                                                                <div
+                                                                                                                                    className="flex-1 leading-tight break-words cursor-text"
+                                                                                                                                    onDoubleClick={(e) => {
+                                                                                                                                        e.stopPropagation();
+                                                                                                                                        setEditingTaskId(a.id);
+                                                                                                                                        setEditingTaskTitle(a.title);
+                                                                                                                                    }}
+                                                                                                                                >
+                                                                                                                                    {a.title}
+                                                                                                                                </div>
+                                                                                                                            )}
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                ))}
+                                                                                                            </div>
+                                                                                                        );
+                                                                                                    })}
+                                                                                                </div>
+                                                                                            ) : null
+                                                                                        )
+                                                                                        }
+                                                                                    </div>
+                                                                                ))}
                                                                             </div>
                                                                         );
                                                                     })}
                                                                 </div>
                                                             );
-                                                        });
+                                                        })
+
                                                     })()}
                                                 </div>
                                             </div>
-
-                                            {/* 2. Data Columns (Right Side) */}
-                                            <div className="flex-1 flex flex-col min-w-0">
-                                                {(() => {
-                                                    const metricRows = goal.rows.filter(r => 'type' in r);
-                                                    const actionRows = goal.rows.filter(r => !('type' in r));
-
-                                                    const sections = [
-                                                        { id: 'METRIC', title: 'Results & KPIs', rows: metricRows },
-                                                        { id: 'ACTION', title: 'Action Plan', rows: actionRows }
-                                                    ];
-
-                                                    return sections.map(section => {
-                                                        if (viewMode === 'tactical' && section.id === 'ACTION') return null;
-
-                                                        if (viewMode === 'strategic' && section.id === 'KPI') return null;
-
-                                                        const sectionKey = `${goal.id}-${section.id}`;
-                                                        const isGoalCollapsed = collapsedGoals.has(goal.id);
-                                                        const isForceHidden = isGoalCollapsed && section.id !== 'ACTION';
-                                                        const isCollapsed = collapsedSections.has(sectionKey) || isForceHidden;
-
-                                                        if (section.rows.length === 0) return null;
-
-                                                        return (
-                                                            <div key={section.id} className="flex flex-col min-w-0">
-                                                                {/* Header Spacer - Matching Height */}
-                                                                <div className="h-[26px] bg-gray-50 border-b border-gray-100 flex sticky top-0 z-10">
-                                                                    {(viewMode === 'strategic' ?
-                                                                        [currentYear, currentYear + 1, currentYear + 2].flatMap(y => MONTHS.map(m => ({ month: m, year: y, key: `${y}-${m}` })))
-                                                                        : MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
-                                                                    ).map(({ key }) => (
-                                                                        <div key={key} className={`${viewMode === 'operational' ? 'w-[45rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-100 flex-1`}></div>
-                                                                    ))}
-                                                                </div>
-
-                                                                {!isCollapsed && section.rows.map((row, rIdx) => {
-                                                                    const isOKR = 'type' in row;
-                                                                    const isKPI = isOKR && (row as MetricRow).type === 'KPI';
-
-                                                                    // Height calculation
-                                                                    let heightClass = 'h-[45px]';
-                                                                    if (!isOKR && !isKPI) {
-                                                                        const actionRow = row as ActionRow;
-                                                                        const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
-                                                                            actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
-                                                                        ));
-                                                                        const maxTasks = Math.max(0, ...actionCounts);
-                                                                        const dynamicHeight = Math.max(96, maxTasks * 50 + 20);
-                                                                        heightClass = `h-[${dynamicHeight}px]`;
-                                                                    }
-
-                                                                    return (
-                                                                        <div key={row.id} className={`flex ${heightClass}`}>
-                                                                            {(viewMode === 'strategic' ?
-                                                                                [currentYear, currentYear + 1, currentYear + 2].flatMap(y => MONTHS.map(m => ({ month: m, year: y, key: `${y}-${m}` })))
-                                                                                :
-                                                                                MONTHS.map(m => ({ month: m, year: currentYear, key: `${currentYear}-${m}` }))
-                                                                            ).map(({ month: m, year: y, key }) => (
-                                                                                <div key={key} className={`${viewMode === 'operational' ? 'w-[45rem]' : viewMode === 'strategic' ? 'w-[5rem]' : 'w-[16rem]'} shrink-0 border-r border-gray-200 flex items-center justify-center p-1 transition-all duration-300`}>
-                                                                                    {isOKR ? (
-                                                                                        (() => {
-                                                                                            const metricRow = row as MetricRow;
-                                                                                            const data = metricRow.monthlyData.find(d => d.monthId === m && d.year === y);
-                                                                                            const hasData = data && data.target !== null;
-                                                                                            const hasResult = data && data.actual !== null && data.actual !== undefined;
-                                                                                            if (!hasData) return <div className="w-full h-full bg-gray-50/50 flex items-center justify-center"><span className="text-gray-200 text-[10px]">-</span></div>;
-
-                                                                                            const isSuccess = hasResult && (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!));
-                                                                                            let cardClass = "";
-                                                                                            let textClass = "";
-
-                                                                                            if (isKPI) {
-                                                                                                cardClass = "bg-white border border-dashed border-gray-100";
-                                                                                                textClass = hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300";
-                                                                                            } else {
-                                                                                                cardClass = hasResult ? (isSuccess ? 'bg-green-500 shadow-md shadow-green-200' : 'bg-red-500 shadow-md shadow-red-200') : 'bg-gray-50';
-                                                                                                textClass = hasResult ? "text-white" : "text-gray-300";
-                                                                                            }
-
-                                                                                            const targetCellId = `${goal.id}-${row.id}-${m}-target`;
-                                                                                            const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
-                                                                                            const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
-                                                                                            const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
-
-                                                                                            return (
-                                                                                                <div
-                                                                                                    className={`w-full h-full rounded-lg flex flex-col items-center justify-center relative group isolate ${cardClass} ${isKPI ? 'hover:border-gray-300' : ''} cursor-pointer`}
-                                                                                                    onClick={() => hasData && setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data })}
-                                                                                                    title={data.comment || 'Click to add note'}
-                                                                                                >
-                                                                                                    {hasResult ? <span className={`${textClass} font-black drop-shadow-sm ${isKPI ? 'text-xs' : (viewMode === 'tactical' ? 'text-2xl' : 'text-xl')}`}>{data.actual}</span> : <span className="text-gray-300 font-medium group-hover:hidden">-</span>}
-                                                                                                    {data.comment && (
-                                                                                                        <div className="absolute top-0.5 right-0.5 text-[10px] opacity-70">💬</div>
-                                                                                                    )}
-                                                                                                    {/* Only show input overlay for Execution view, not Planning */}
-                                                                                                    {viewMode === 'operational' && (
-                                                                                                        <div className={`absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 focus-within:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-20 rounded-lg border border-gray-200 shadow-sm`} onClick={(e) => e.stopPropagation()}>
-                                                                                                            <div className="flex flex-col gap-1 w-full p-2">
-                                                                                                                {viewMode === 'operational' && !isKPI && <div className="flex items-center justify-between text-[10px] text-gray-500 font-bold uppercase"><span>Target</span><span>Actual</span></div>}
-                                                                                                                <div className="flex items-center gap-1">
-                                                                                                                    <input className={`p-1 text-center font-bold text-xs bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-400 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} value={currentTargetVal} onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)} title="Target" />
-                                                                                                                    {viewMode === 'operational' && (
-                                                                                                                        <button
-                                                                                                                            onClick={(e) => {
-                                                                                                                                e.stopPropagation();
-                                                                                                                                setActiveCommentModal({ goalId: goal.id, rowId: row.id, monthData: data });
-                                                                                                                            }}
-                                                                                                                            className="p-1 hover:bg-blue-50 rounded text-blue-600 transition-colors"
-                                                                                                                            title="Add/Edit Note"
-                                                                                                                        >
-                                                                                                                            💬
-                                                                                                                        </button>
-                                                                                                                    )}
-                                                                                                                    <input className={`p-1 text-center font-bold text-sm bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:ring-[var(--primary)] text-gray-900 ${viewMode === 'operational' ? 'w-1/2' : 'w-full'}`} placeholder="-" value={currentActualVal} onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })} onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })} onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)} title="Actual" />
-                                                                                                                </div>
-                                                                                                            </div>
-                                                                                                        </div>
-                                                                                                    )}
-                                                                                                </div>
-                                                                                            );
-                                                                                        })()
-                                                                                    ) : (
-                                                                                        viewMode === 'operational' ? (
-                                                                                            <div className="flex w-full h-full gap-1">
-                                                                                                {MONTH_WEEKS[m].map(w => {
-                                                                                                    const weekActions = (row as ActionRow).actions.filter(a => a.weekId === w && a.year === currentYear);
-
-                                                                                                    // Logic for visual cues
-                                                                                                    const now = new Date();
-                                                                                                    const currentWeekNum = getISOWeekNumber(now);
-                                                                                                    const weekNum = parseInt(w.replace('W', ''));
-                                                                                                    const isPastWeek = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && weekNum < currentWeekNum);
-                                                                                                    const isNextWeek = currentYear === now.getFullYear() && weekNum === currentWeekNum + 1;
-                                                                                                    const isEmpty = weekActions.length === 0;
-
-                                                                                                    let bgClass = 'bg-gray-50/30';
-                                                                                                    if (isPastWeek && isEmpty) {
-                                                                                                        bgClass = 'bg-red-50/50'; // Light red for Missed Opportunity
-                                                                                                    } else if (isNextWeek && isEmpty) {
-                                                                                                        bgClass = 'bg-indigo-50/60 ring-inset ring-2 ring-indigo-100/50'; // Encouragement for next week
-                                                                                                    }
-
-                                                                                                    return (
-                                                                                                        <div
-                                                                                                            key={w}
-                                                                                                            className={`flex-1 border-r border-gray-50 last:border-0 p-2 flex flex-col gap-2 min-h-[80px] transition-colors ${bgClass}`}
-                                                                                                            onDragOver={(e) => {
-                                                                                                                e.preventDefault();
-                                                                                                                e.currentTarget.classList.add('bg-blue-100', 'border-blue-300');
-                                                                                                            }}
-                                                                                                            onDragLeave={(e) => {
-                                                                                                                e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
-                                                                                                            }}
-                                                                                                            onDrop={(e) => {
-                                                                                                                e.preventDefault();
-                                                                                                                e.currentTarget.classList.remove('bg-blue-100', 'border-blue-300');
-
-                                                                                                                if (draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
-                                                                                                                    handleMoveAction(goal.id, draggedTask.actionId, w);
-                                                                                                                    setDraggedTask(null);
-                                                                                                                }
-                                                                                                            }}
-                                                                                                        >
-                                                                                                            {weekActions.map(a => (
-                                                                                                                <div
-                                                                                                                    key={a.id}
-                                                                                                                    draggable
-                                                                                                                    onDragStart={() => setDraggedTask({ goalId: goal.id, actionId: a.id, sourceWeek: w })}
-                                                                                                                    onDragEnd={() => setDraggedTask(null)}
-                                                                                                                    className={`p-2 rounded-lg border shadow-sm text-[10px] font-medium cursor-move hover:shadow-md transition-all ${a.status === 'DONE' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' :
-                                                                                                                        (isPastWeek) ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' :
-                                                                                                                            a.status === 'IN_PROGRESS' ? 'bg-blue-50 border-blue-200 text-blue-800' :
-                                                                                                                                a.status === 'STUCK' ? 'bg-rose-50 border-rose-200 text-rose-800' :
-                                                                                                                                    'bg-white border-gray-200 text-gray-700'
-                                                                                                                        }`}
-                                                                                                                >
-                                                                                                                    <div className="flex items-start gap-1.5">
-                                                                                                                        <input
-                                                                                                                            type="checkbox"
-                                                                                                                            checked={a.status === 'DONE'}
-                                                                                                                            onChange={() => handleUpdateActionStatus(goal.id, a.id, a.status === 'DONE' ? 'TBD' : 'DONE')}
-                                                                                                                            className="mt-0.5 flex-shrink-0 cursor-pointer"
-                                                                                                                            onClick={(e) => e.stopPropagation()}
-                                                                                                                        />
-                                                                                                                        {editingTaskId === a.id ? (
-                                                                                                                            <input
-                                                                                                                                type="text"
-                                                                                                                                value={editingTaskTitle}
-                                                                                                                                onChange={(e) => setEditingTaskTitle(e.target.value)}
-                                                                                                                                onBlur={() => {
-                                                                                                                                    if (editingTaskTitle.trim()) {
-                                                                                                                                        handleUpdateActionTitle(goal.id, a.id, editingTaskTitle);
-                                                                                                                                    }
-                                                                                                                                    setEditingTaskId(null);
-                                                                                                                                }}
-                                                                                                                                onKeyDown={(e) => {
-                                                                                                                                    if (e.key === 'Enter') {
-                                                                                                                                        if (editingTaskTitle.trim()) {
-                                                                                                                                            handleUpdateActionTitle(goal.id, a.id, editingTaskTitle);
-                                                                                                                                        }
-                                                                                                                                        setEditingTaskId(null);
-                                                                                                                                    } else if (e.key === 'Escape') {
-                                                                                                                                        setEditingTaskId(null);
-                                                                                                                                    }
-                                                                                                                                }}
-                                                                                                                                className="flex-1 leading-tight break-words bg-white border border-blue-300 rounded px-1 outline-none focus:ring-1 focus:ring-blue-500 text-[10px]"
-                                                                                                                                autoFocus
-                                                                                                                                onClick={(e) => e.stopPropagation()}
-                                                                                                                            />
-                                                                                                                        ) : (
-                                                                                                                            <div
-                                                                                                                                className="flex-1 leading-tight break-words cursor-text"
-                                                                                                                                onDoubleClick={(e) => {
-                                                                                                                                    e.stopPropagation();
-                                                                                                                                    setEditingTaskId(a.id);
-                                                                                                                                    setEditingTaskTitle(a.title);
-                                                                                                                                }}
-                                                                                                                            >
-                                                                                                                                {a.title}
-                                                                                                                            </div>
-                                                                                                                        )}
-                                                                                                                    </div>
-                                                                                                                </div>
-                                                                                                            ))}
-                                                                                                        </div>
-                                                                                                    );
-                                                                                                })}
-                                                                                            </div>
-                                                                                        ) : null
-                                                                                    )
-                                                                                    }
-                                                                                </div>
-                                                                            ))}
-                                                                        </div>
-                                                                    );
-                                                                })}
-                                                            </div>
-                                                        );
-                                                    })
-
-                                                })()}
-                                            </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                        </div>
                     </div>
                 </div>)
                 }
