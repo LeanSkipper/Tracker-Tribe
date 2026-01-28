@@ -581,12 +581,12 @@ export default function ProfilePage() {
                 <div className="bg-white rounded-3xl shadow-xl p-8">
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-xl font-black text-gray-900">Account Information</h2>
-                        {profile?.subscriptionStatus === 'ACTIVE' && (
+                        {(profile?.subscriptionStatus === 'ACTIVE' || profile?.subscriptionStatus === 'TRIAL') && (
                             <button
                                 onClick={() => setShowCancelModal(true)}
-                                className="text-sm font-bold text-red-600 hover:text-red-700 hover:bg-red-50 px-3 py-2 rounded-lg transition-colors"
+                                className="text-[10px] font-bold text-gray-300 hover:text-red-400 uppercase tracking-widest transition-colors opacity-70 hover:opacity-100"
                             >
-                                Cancel Subscription
+                                Unsubscribe from the app
                             </button>
                         )}
                     </div>

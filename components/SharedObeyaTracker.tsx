@@ -308,9 +308,8 @@ export default function SharedObeyaTracker({
                 {/* 1. Sticky Header Row (Months & Weeks) */}
                 <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
                     {/* Top Left Corner (Sticky) */}
-                    <div className="sticky left-0 w-[150px] md:w-[400px] bg-white border-r border-gray-200 z-40 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">
-                        STRATEGIC CONTEXT
-                    </div>
+                    <div className="sticky left-0 w-[150px] md:w-[320px] bg-white border-r border-gray-100 z-40 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end uppercase tracking-wider">STRATEGIC CONTEXT</div>
+                    <div className="sticky left-[150px] md:left-[320px] w-20 bg-gray-50/50 border-r border-gray-200 z-40 shrink-0 p-4 font-bold text-gray-400 text-[10px] flex items-end justify-center uppercase">Result/KPI</div>
 
                     {/* Month/Week Columns */}
                     {MONTHS.map(m => (
@@ -362,7 +361,7 @@ export default function SharedObeyaTracker({
                             {/* Group Header - Only if grouping is active */}
                             {groupBy !== 'none' && (
                                 <div className="w-full bg-gray-50/50 border-b border-gray-200 sticky left-0">
-                                    <div className="sticky left-0 w-[150px] md:w-[400px] px-4 py-2 font-bold text-gray-600 bg-gray-50 border-r border-gray-200 z-20 flex items-center gap-2 overflow-hidden">
+                                    <div className="sticky left-0 w-[230px] md:w-[400px] px-4 py-2 font-bold text-gray-600 bg-gray-50 border-r border-gray-200 z-20 flex items-center gap-2 overflow-hidden text-xs uppercase tracking-tight">
                                         {groupBy === 'member' ? <User size={14} /> : <Layers size={14} />}
                                         <span className="truncate">{groupName}</span>
                                         <span className="text-xs font-normal text-gray-400 ml-2 whitespace-nowrap">({groupGoals.length})</span>
@@ -384,7 +383,7 @@ export default function SharedObeyaTracker({
                                     <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {/* Revised Vision Band */}
                                         <div className={`w-full min-h-[52px] ${categoryBgColor} flex items-stretch`}>
-                                            <div className={`sticky left-0 z-20 w-[150px] md:w-[400px] px-3 py-2 flex items-center justify-between ${categoryBgColor}`}>
+                                            <div className={`sticky left-0 z-20 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between ${categoryBgColor}`}>
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     <button
                                                         onClick={() => toggleGoal(goal.id)}
@@ -449,33 +448,35 @@ export default function SharedObeyaTracker({
                                                 return (
                                                     <div key={row.id} className={`flex ${heightClass} border-b border-gray-50 last:border-0 group`}>
                                                         {/* Left Sticky Label Column */}
-                                                        <div className="sticky left-0 w-[150px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 p-3 flex items-center gap-2 overflow-x-auto no-scrollbar">
-                                                            {isOKR && !isKPI && (
-                                                                <button
-                                                                    onClick={() => toggleOKR(row.id)}
-                                                                    className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
-                                                                >
-                                                                    <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
-                                                                </button>
-                                                            )}
+                                                        <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex overflow-hidden">
+                                                            <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
+                                                                {isOKR && !isKPI && (
+                                                                    <button
+                                                                        onClick={() => toggleOKR(row.id)}
+                                                                        className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
+                                                                    >
+                                                                        <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
+                                                                    </button>
+                                                                )}
 
-                                                            <div className={`flex-1 text-xs whitespace-normal break-words leading-tight ${isKPI ? 'pl-6 text-gray-500 italic' : 'font-bold text-gray-700'} ${isActionRow ? 'pl-6 text-gray-500 font-bold' : ''}`}>
-                                                                {isKPI && <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mr-2" />}
-                                                                {row.label}
+                                                                <div className={`flex-1 text-xs whitespace-normal break-words leading-tight ${isKPI ? 'pl-6 text-gray-500 italic' : 'font-bold text-gray-700'} ${isActionRow ? 'pl-6 text-gray-500 font-bold' : ''}`}>
+                                                                    {isKPI && <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mr-2" />}
+                                                                    {row.label}
+                                                                </div>
+                                                                {/* Add Task Button for Goal Owners */}
+                                                                {isActionRow && canEdit && (
+                                                                    <button
+                                                                        onClick={() => handleAddAction(goal.id, row.id)}
+                                                                        className="ml-2 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                        title="Add Task to Current Week"
+                                                                    >
+                                                                        <Plus size={14} />
+                                                                    </button>
+                                                                )}
                                                             </div>
-                                                            {/* Add Task Button for Goal Owners */}
-                                                            {isActionRow && canEdit && (
-                                                                <button
-                                                                    onClick={() => handleAddAction(goal.id, row.id)}
-                                                                    className="ml-2 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                    title="Add Task to Current Week"
-                                                                >
-                                                                    <Plus size={14} />
-                                                                </button>
-                                                            )}
 
-                                                            <div className="text-[10px] font-bold text-gray-300 bg-gray-50 px-1 rounded ml-2">
-                                                                {isOKR ? (isKPI ? 'KPI' : 'OKR') : 'Act'}
+                                                            <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
+                                                                <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
                                                             </div>
                                                         </div>
 

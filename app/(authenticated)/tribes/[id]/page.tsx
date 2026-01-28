@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, Users, CheckCircle2, FileText, Share2, Edit3, Save, Plus, Info, UserPlus, Lock, CreditCard, AlertCircle, X } from 'lucide-react';
 import TribeCreationForm from '@/components/TribeCreationForm';
 import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
+import LeaveTribeModal from '@/components/LeaveTribeModal';
 
 type Badge = {
     id: string;
@@ -105,6 +106,7 @@ export default function TribeDetailsPage() {
 
     const [isRestricted, setIsRestricted] = useState(false);
     const [showLockModal, setShowLockModal] = useState(false);
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
 
     useEffect(() => {
         fetch('/api/profile')
@@ -265,6 +267,25 @@ export default function TribeDetailsPage() {
                 alert(data.error || 'Failed to send application.');
             }
         } catch (e) { alert('Error applying'); }
+    };
+
+    const handleLeaveTribe = async (reason: string) => {
+        try {
+            const res = await fetch(`/api/tribes/${tribe?.id}/leave`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ reason })
+            });
+
+            if (res.ok) {
+                router.push('/dashboard');
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert(data.error || 'Failed to leave tribe.');
+            }
+        } catch (e) {
+            alert('Error leaving tribe');
+        }
     };
 
     if (loading) {
@@ -743,6 +764,25 @@ export default function TribeDetailsPage() {
                 )}
 
                 <SubscriptionLockedModal isOpen={showLockModal} onClose={() => router.push('/dashboard')} />
+
+                <LeaveTribeModal
+                    isOpen={showLeaveModal}
+                    onClose={() => setShowLeaveModal(false)}
+                    tribeName={tribe.name}
+                    onConfirm={handleLeaveTribe}
+                />
+
+                {/* VERY TINY UNSUBSCRIBE BUTTON (at the bottom of the section) */}
+                {isMember && !isCreator && (
+                    <div className="flex justify-center mt-12 pb-8">
+                        <button
+                            onClick={() => setShowLeaveModal(true)}
+                            className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase tracking-widest transition-colors opacity-50 hover:opacity-100"
+                        >
+                            Unsubscribe from this Tribe
+                        </button>
+                    </div>
+                )}
 
             </div>
         </div>

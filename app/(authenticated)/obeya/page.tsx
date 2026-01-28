@@ -1847,7 +1847,8 @@ function ObeyaContent() {
                     {/* Desktop View: Strategic/Operational Table */}
                     <div className="hidden md:block min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
                         <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
-                            <div className="sticky left-0 w-[150px] md:w-[400px] bg-white border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end">STRATEGIC CONTEXT</div>
+                            <div className="sticky left-0 w-[150px] md:w-[320px] bg-white border-r border-gray-100 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end uppercase tracking-wider">Strategic Context</div>
+                            <div className="sticky left-[150px] md:left-[320px] w-20 bg-gray-50/50 border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-[10px] flex items-end justify-center uppercase">Result/KPI</div>
                             {(viewMode === 'strategic' ?
                                 Array.from({ length: 36 }, (_, i) => {
                                     const yearOffset = Math.floor(i / 12);
@@ -2024,7 +2025,7 @@ function ObeyaContent() {
 
                                         <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white">
                                             {/* 1. Left Sticky Column - Higher Z-index for scroll */}
-                                            <div className="sticky left-0 w-[150px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-30 shadow-md overflow-x-auto no-scrollbar">
+                                            <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-30 shadow-md flex overflow-hidden">
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {(() => {
@@ -2088,7 +2089,7 @@ function ObeyaContent() {
 
                                                                         return (
                                                                             <div key={row.id} className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative`}>
-                                                                                <div className="w-56 p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
+                                                                                <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
                                                                                     {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1 z-20"><Edit2 size={12} /></button>}
                                                                                     <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                                         {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
