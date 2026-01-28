@@ -39,8 +39,10 @@ export async function GET(
                                 reputationScore: true, // Added
                                 goals: {
                                     where: { visibility: 'TRIBE' },
+                                    orderBy: { order: 'asc' },
                                     include: {
                                         okrs: {
+                                            orderBy: { order: 'asc' },
                                             include: {
                                                 actions: true
                                             }

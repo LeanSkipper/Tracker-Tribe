@@ -433,261 +433,255 @@ export default function SharedObeyaTracker({
                                             </div>
                                         </div>
 
-                                        {/* Goal Rows */}
+                                        {/* Goal Rows Grouped */}
                                         <div className="flex flex-col">
-                                            {goal.rows.map((row) => {
-                                                // Visibility Logic
-                                                const isOKR = 'type' in row;
-                                                const isKPI = isOKR && (row as MetricRow).type === 'KPI';
-                                                const isActionRow = !isOKR && !isKPI;
+                                            {(() => {
+                                                const metricRows = goal.rows.filter(r => 'type' in r);
+                                                const actionRows = goal.rows.filter(r => !('type' in r));
+                                                const sections = [
+                                                    { id: 'METRIC', title: 'Results & KPIs', rows: metricRows },
+                                                    { id: 'ACTION', title: 'Action Plan', rows: actionRows }
+                                                ];
 
-                                                // Hide OKRs/KPIs if goal collapsed
-                                                // MODIFICATION: Keep Action Rows visible even if goal is collapsed
-                                                if (collapsedGoals.has(goal.id) && (isOKR || isKPI)) return null;
+                                                return sections.map(section => {
+                                                    if (section.rows.length === 0) return null;
 
-                                                // Hide KPIs if parent OKR collapsed
-                                                if (isKPI) {
-                                                    const currentKPIIndex = goal.rows.indexOf(row);
-                                                    let parentOKR = null;
-                                                    for (let i = currentKPIIndex - 1; i >= 0; i--) {
-                                                        const r = goal.rows[i];
-                                                        if ('type' in r && (r as MetricRow).type === 'OKR') {
-                                                            parentOKR = r;
-                                                            break;
-                                                        }
-                                                    }
-                                                    if (parentOKR && collapsedOKRs.has(parentOKR.id)) {
-                                                        return null;
-                                                    }
-                                                }
-
-                                                // Row Height Logic
-                                                let heightClass = 'h-[45px]';
-                                                if (isActionRow) {
-                                                    const actionRow = row as ActionRow;
-                                                    const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
-                                                        actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
-                                                    ));
-                                                    const maxTasks = Math.max(0, ...actionCounts);
-                                                    const dynamicHeight = Math.max(80, maxTasks * 24 + 20);
-                                                    heightClass = `h-[${dynamicHeight}px]`;
-                                                }
-
-                                                return (
-                                                    <div
-                                                        key={row.id}
-                                                        className={`flex ${heightClass} border-b border-gray-50 last:border-0 group transition-colors ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
-                                                        draggable={!readOnly}
-                                                        onDragStart={(e) => {
-                                                            if (!readOnly) {
-                                                                setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
-                                                                e.dataTransfer.effectAllowed = 'move';
-                                                            }
-                                                        }}
-                                                        onDragOver={(e) => {
-                                                            e.preventDefault();
-                                                            if (!readOnly && draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
-                                                                e.currentTarget.classList.add('bg-blue-50');
-                                                            }
-                                                        }}
-                                                        onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-50')}
-                                                        onDrop={(e) => {
-                                                            e.preventDefault();
-                                                            e.currentTarget.classList.remove('bg-blue-50');
-                                                            if (!readOnly && draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
-                                                                handleMoveRow(goal.id, draggedRowInfo.rowId, row.id);
-                                                                setDraggedRowInfo(null);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {/* Left Sticky Label Column */}
-                                                        <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex overflow-hidden">
-                                                            <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
-                                                                {isOKR && !isKPI && (
-                                                                    <button
-                                                                        onClick={() => toggleOKR(row.id)}
-                                                                        className="text-gray-400 hover:text-blue-600 transition-colors flex-shrink-0"
-                                                                    >
-                                                                        <ChevronRight className={`transition-transform ${!collapsedOKRs.has(row.id) ? 'rotate-90' : ''}`} size={16} />
-                                                                    </button>
-                                                                )}
-
-                                                                <div className={`flex-1 text-xs whitespace-normal break-words leading-tight ${isKPI ? 'pl-6 text-gray-500 italic' : 'font-bold text-gray-700'} ${isActionRow ? 'pl-6 text-gray-500 font-bold' : ''}`}>
-                                                                    {isKPI && <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mr-2" />}
-                                                                    {row.label}
+                                                    return (
+                                                        <div key={section.id} className="flex flex-col">
+                                                            {/* Section Header */}
+                                                            <div className="w-full bg-gray-50/30 border-b border-gray-100 sticky left-0 z-10">
+                                                                <div className="sticky left-0 w-[230px] md:w-[400px] px-8 py-1 font-bold text-[10px] text-gray-400 uppercase tracking-widest bg-gray-50/50 border-r border-gray-100 shrink-0">
+                                                                    {section.title}
                                                                 </div>
-                                                                {/* Add Task Button for Goal Owners */}
-                                                                {isActionRow && canEdit && (
-                                                                    <button
-                                                                        onClick={() => handleAddAction(goal.id, row.id)}
-                                                                        className="ml-2 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                                                        title="Add Task to Current Week"
+                                                            </div>
+
+                                                            {section.rows.map((row) => {
+                                                                // Visibility Logic
+                                                                const isOKR = 'type' in row;
+                                                                const isKPI = isOKR && (row as MetricRow).type === 'KPI';
+                                                                const isActionRow = !isOKR && !isKPI;
+
+                                                                // Hide OKRs/KPIs if goal collapsed
+                                                                if (collapsedGoals.has(goal.id) && (isOKR || isKPI)) return null;
+
+                                                                // Row Height Logic
+                                                                let heightClass = 'h-[45px]';
+                                                                if (isActionRow) {
+                                                                    const actionRow = row as ActionRow;
+                                                                    const actionCounts = MONTHS.flatMap(m => MONTH_WEEKS[m].map(w =>
+                                                                        actionRow.actions.filter(a => a.weekId === w && a.year === currentYear).length
+                                                                    ));
+                                                                    const maxTasks = Math.max(0, ...actionCounts);
+                                                                    const dynamicHeight = Math.max(80, maxTasks * 24 + 20);
+                                                                    heightClass = `h-[${dynamicHeight}px]`;
+                                                                }
+
+                                                                return (
+                                                                    <div
+                                                                        key={row.id}
+                                                                        className={`flex ${heightClass} border-b border-gray-50 last:border-0 group transition-colors ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
+                                                                        draggable={!readOnly}
+                                                                        onDragStart={(e) => {
+                                                                            if (!readOnly) {
+                                                                                setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
+                                                                                e.dataTransfer.effectAllowed = 'move';
+                                                                            }
+                                                                        }}
+                                                                        onDragOver={(e) => {
+                                                                            e.preventDefault();
+                                                                            if (!readOnly && draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                                e.currentTarget.classList.add('bg-blue-50');
+                                                                            }
+                                                                        }}
+                                                                        onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-50')}
+                                                                        onDrop={(e) => {
+                                                                            e.preventDefault();
+                                                                            e.currentTarget.classList.remove('bg-blue-50');
+                                                                            if (!readOnly && draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                                handleMoveRow(goal.id, draggedRowInfo.rowId, row.id);
+                                                                                setDraggedRowInfo(null);
+                                                                            }
+                                                                        }}
                                                                     >
-                                                                        <Plus size={14} />
-                                                                    </button>
-                                                                )}
-                                                            </div>
+                                                                        {/* Left Sticky Label Column */}
+                                                                        <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex overflow-hidden">
+                                                                            <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
+                                                                                <div className={`flex-1 text-xs whitespace-normal break-words leading-tight ${isKPI ? 'text-gray-500 italic' : 'font-bold text-gray-700'}`}>
+                                                                                    {isKPI && <span className="inline-block w-1.5 h-1.5 bg-gray-300 rounded-full mr-2" />}
+                                                                                    {row.label}
+                                                                                </div>
+                                                                                {/* Add Task Button for Goal Owners */}
+                                                                                {isActionRow && canEdit && (
+                                                                                    <button
+                                                                                        onClick={() => handleAddAction(goal.id, row.id)}
+                                                                                        className="ml-2 p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                                                        title="Add Task to Current Week"
+                                                                                    >
+                                                                                        <Plus size={14} />
+                                                                                    </button>
+                                                                                )}
+                                                                            </div>
 
-                                                            <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
-                                                                <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
-                                                            </div>
-                                                        </div>
+                                                                            <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
+                                                                                <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
+                                                                            </div>
+                                                                        </div>
 
-                                                        {/* Data Columns */}
-                                                        {MONTHS.map(m => {
-                                                            const key = `${currentYear}-${m}`;
-
-                                                            return (
-                                                                <div key={key} className="w-[16rem] shrink-0 border-r border-gray-200 flex items-center justify-center p-1 relative">
-                                                                    {isOKR ? (
-                                                                        // Metric Cell
-                                                                        (() => {
-                                                                            const metricRow = row as MetricRow;
-                                                                            const monthlyData = metricRow.monthlyData || [];
-                                                                            const data = monthlyData.find(d => d.monthId === m && d.year === currentYear) || { monthId: m, year: currentYear, target: null, actual: null };
-
-                                                                            const targetCellId = `${goal.id}-${row.id}-${m}-target`;
-                                                                            const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
-                                                                            const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
-                                                                            const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
-
-                                                                            const hasResult = data.actual !== null;
-                                                                            const isSuccess = hasResult && (
-                                                                                metricRow.direction === 'DOWN'
-                                                                                    ? (data.actual! <= data.target!)
-                                                                                    : (metricRow.direction === 'UP'
-                                                                                        ? (data.actual! >= data.target!)
-                                                                                        : (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!)))
-                                                                            );
-
-                                                                            const cardClass = isKPI
-                                                                                ? "bg-white border border-dashed border-gray-100"
-                                                                                : (hasResult ? (isSuccess ? 'bg-green-500' : 'bg-red-500') : 'bg-gray-50');
-
-                                                                            const textClass = isKPI
-                                                                                ? (hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300")
-                                                                                : (hasResult ? "text-white" : "text-gray-300");
+                                                                        {/* Data Columns */}
+                                                                        {MONTHS.map(m => {
+                                                                            const key = `${currentYear}-${m}`;
 
                                                                             return (
-                                                                                <div className={`w-full h-3/4 rounded-md flex items-center justify-center ${cardClass} relative group/cell`}>
-                                                                                    <span className={`${textClass} font-bold text-lg`}>{data.actual ?? '-'}</span>
-                                                                                    <span className="absolute bottom-1 right-2 text-[8px] text-gray-400 opacity-70">/ {data.target}</span>
-                                                                                    {data.comment && <div className="absolute top-1 right-1 text-[8px]">💬</div>}
+                                                                                <div key={key} className="w-[16rem] shrink-0 border-r border-gray-200 flex items-center justify-center p-1 relative">
+                                                                                    {isOKR ? (
+                                                                                        // Metric Cell
+                                                                                        (() => {
+                                                                                            const metricRow = row as MetricRow;
+                                                                                            const monthlyData = metricRow.monthlyData || [];
+                                                                                            const data = monthlyData.find(d => d.monthId === m && d.year === currentYear) || { monthId: m, year: currentYear, target: null, actual: null };
 
-                                                                                    {/* Edit Overlay */}
-                                                                                    {canEdit && (
-                                                                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-10 rounded-md border border-gray-200 shadow-sm" onClick={(e) => e.stopPropagation()}>
-                                                                                            <div className="flex flex-col gap-1 w-full p-1">
-                                                                                                <div className="flex items-center gap-1 justify-center">
-                                                                                                    {/* Target Input */}
-                                                                                                    <input
-                                                                                                        className="w-1/2 p-0.5 text-center text-[10px] bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:text-blue-600 focus:ring-blue-500 text-gray-400"
-                                                                                                        value={currentTargetVal}
-                                                                                                        onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })}
-                                                                                                        onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })}
-                                                                                                        onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)}
-                                                                                                        placeholder="T"
-                                                                                                        title="Target"
-                                                                                                    />
-                                                                                                    {/* Actual Input */}
-                                                                                                    <input
-                                                                                                        className="w-1/2 p-0.5 text-center font-bold text-xs bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:text-blue-600 focus:ring-blue-500 text-gray-900"
-                                                                                                        value={currentActualVal}
-                                                                                                        onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })}
-                                                                                                        onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })}
-                                                                                                        onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)}
-                                                                                                        placeholder="A"
-                                                                                                        title="Actual"
-                                                                                                    />
+                                                                                            const targetCellId = `${goal.id}-${row.id}-${m}-target`;
+                                                                                            const actualCellId = `${goal.id}-${row.id}-${m}-actual`;
+                                                                                            const currentTargetVal = editingCell?.id === targetCellId ? editingCell.value : (data.target !== null ? data.target : '');
+                                                                                            const currentActualVal = editingCell?.id === actualCellId ? editingCell.value : (data.actual !== null ? data.actual : '');
+
+                                                                                            const hasResult = data.actual !== null;
+                                                                                            const isSuccess = hasResult && (
+                                                                                                metricRow.direction === 'DOWN'
+                                                                                                    ? (data.actual! <= data.target!)
+                                                                                                    : (metricRow.direction === 'UP'
+                                                                                                        ? (data.actual! >= data.target!)
+                                                                                                        : (metricRow.targetValue >= metricRow.startValue ? (data.actual! >= data.target!) : (data.actual! <= data.target!)))
+                                                                                            );
+
+                                                                                            const cardClass = isKPI
+                                                                                                ? "bg-white border border-dashed border-gray-100"
+                                                                                                : (hasResult ? (isSuccess ? 'bg-green-500' : 'bg-red-500') : 'bg-gray-50');
+
+                                                                                            const textClass = isKPI
+                                                                                                ? (hasResult ? (isSuccess ? "text-green-600" : "text-red-500") : "text-gray-300")
+                                                                                                : (hasResult ? "text-white" : "text-gray-300");
+
+                                                                                            return (
+                                                                                                <div className={`w-full h-3/4 rounded-md flex items-center justify-center ${cardClass} relative group/cell`}>
+                                                                                                    <span className={`${textClass} font-bold text-lg`}>{data.actual ?? '-'}</span>
+                                                                                                    <span className="absolute bottom-1 right-2 text-[8px] text-gray-400 opacity-70">/ {data.target}</span>
+                                                                                                    {data.comment && <div className="absolute top-1 right-1 text-[8px]">💬</div>}
+
+                                                                                                    {/* Edit Overlay */}
+                                                                                                    {canEdit && (
+                                                                                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 backdrop-blur-sm bg-gray-50/90 transition-opacity z-10 rounded-md border border-gray-200 shadow-sm" onClick={(e) => e.stopPropagation()}>
+                                                                                                            <div className="flex flex-col gap-1 w-full p-1">
+                                                                                                                <div className="flex items-center gap-1 justify-center">
+                                                                                                                    {/* Target Input */}
+                                                                                                                    <input
+                                                                                                                        className="w-1/2 p-0.5 text-center text-[10px] bg-white border border-gray-200 rounded outline-none focus:ring-1 focus:text-blue-600 focus:ring-blue-500 text-gray-400"
+                                                                                                                        value={currentTargetVal}
+                                                                                                                        onChange={(e) => setEditingCell({ id: targetCellId, value: e.target.value })}
+                                                                                                                        onFocus={() => setEditingCell({ id: targetCellId, value: data.target?.toString() || '' })}
+                                                                                                                        onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'target', e.target.value)}
+                                                                                                                        placeholder="T"
+                                                                                                                        title="Target"
+                                                                                                                    />
+                                                                                                                    {/* Actual Input */}
+                                                                                                                    <input
+                                                                                                                        className="w-1/2 p-0.5 text-center font-bold text-xs bg-white border border-blue-200 rounded outline-none focus:ring-1 focus:text-blue-600 focus:ring-blue-500 text-gray-900"
+                                                                                                                        value={currentActualVal}
+                                                                                                                        onChange={(e) => setEditingCell({ id: actualCellId, value: e.target.value })}
+                                                                                                                        onFocus={() => setEditingCell({ id: actualCellId, value: data.actual?.toString() || '' })}
+                                                                                                                        onBlur={(e) => handleCommitMetric(goal.id, row.id, m, 'actual', e.target.value)}
+                                                                                                                        placeholder="A"
+                                                                                                                        title="Actual"
+                                                                                                                    />
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    )}
                                                                                                 </div>
-                                                                                            </div>
+                                                                                            );
+                                                                                        })()
+                                                                                    ) : (
+                                                                                        // Action Row Cell
+                                                                                        <div className="flex w-full h-full gap-0.5">
+                                                                                            {MONTH_WEEKS[m].map(w => {
+                                                                                                const actionRow = row as ActionRow;
+                                                                                                const weekActions = actionRow.actions.filter(a => a.weekId === w && a.year === currentYear);
+
+                                                                                                // Logic for visual cues
+                                                                                                const weekNum = parseInt(w.replace('W', ''));
+                                                                                                const isPastWeek = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && weekNum < currentWeekNum);
+                                                                                                const isNextWeek = currentYear === now.getFullYear() && weekNum === currentWeekNum + 1;
+                                                                                                const isEmpty = weekActions.length === 0;
+
+                                                                                                // Pit Stop Check (Mock for now, should ideally come from props/context if not available)
+                                                                                                const isNextWeekReminder = isNextWeek && isEmpty;
+
+                                                                                                // Background Color Logic
+                                                                                                let bgClass = 'bg-gray-50/20';
+                                                                                                if (isPastWeek && isEmpty) {
+                                                                                                    bgClass = 'bg-red-50/50'; // Light red for Missed Opportunity
+                                                                                                } else if (isNextWeekReminder) {
+                                                                                                    bgClass = 'bg-indigo-50/60 ring-inset ring-2 ring-indigo-100/50'; // Encouragement for next week
+                                                                                                }
+
+                                                                                                return (
+                                                                                                    <div
+                                                                                                        key={w}
+                                                                                                        className={`flex-1 border-r border-gray-50 last:border-0 ${bgClass} p-1 flex flex-col gap-1 items-center justify-start overflow-hidden transition-colors`}
+                                                                                                        onDragOver={(e) => {
+                                                                                                            e.preventDefault();
+                                                                                                            if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
+                                                                                                                e.currentTarget.classList.add('bg-blue-100');
+                                                                                                            }
+                                                                                                        }}
+                                                                                                        onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-100')}
+                                                                                                        onDrop={(e) => {
+                                                                                                            e.preventDefault();
+                                                                                                            e.currentTarget.classList.remove('bg-blue-100');
+                                                                                                            if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
+                                                                                                                handleMoveAction(goal.id, draggedTask.id, w);
+                                                                                                                setDraggedTask(null);
+                                                                                                            }
+                                                                                                        }}
+                                                                                                    >
+                                                                                                        {weekActions.map(action => (
+                                                                                                            <div
+                                                                                                                key={action.id}
+                                                                                                                className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all
+                                                                                                                    ${action.status === 'DONE'
+                                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
+                                                                                                                        : (isPastWeek
+                                                                                                                            ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' // Yellow/Amber for Unfinished Past
+                                                                                                                            : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300')
+                                                                                                                    } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
+                                                                                                                draggable={canEdit}
+                                                                                                                onDragStart={(e) => {
+                                                                                                                    if (canEdit) {
+                                                                                                                        setDraggedTask({ id: action.id, goalId: goal.id, sourceWeek: w });
+                                                                                                                        e.dataTransfer.effectAllowed = 'move';
+                                                                                                                    }
+                                                                                                                }}
+                                                                                                                title={action.title}
+                                                                                                                onClick={() => canEdit && handleUpdateActionStatus(goal.id, action.id)}
+                                                                                                            >
+                                                                                                                {action.title}
+                                                                                                            </div>
+                                                                                                        ))}
+                                                                                                    </div>
+                                                                                                );
+                                                                                            })}
                                                                                         </div>
                                                                                     )}
                                                                                 </div>
                                                                             );
-                                                                        })()
-                                                                    ) : (
-                                                                        // Action Row Cell
-                                                                        // Action Row Cell
-                                                                        <div className="flex w-full h-full gap-0.5">
-                                                                            {MONTH_WEEKS[m].map(w => {
-                                                                                const actionRow = row as ActionRow;
-                                                                                const weekActions = actionRow.actions.filter(a => a.weekId === w && a.year === currentYear);
-
-                                                                                // Logic for visual cues
-                                                                                const weekNum = parseInt(w.replace('W', ''));
-                                                                                const isPastWeek = currentYear < now.getFullYear() || (currentYear === now.getFullYear() && weekNum < currentWeekNum);
-                                                                                const isNextWeek = currentYear === now.getFullYear() && weekNum === currentWeekNum + 1;
-                                                                                const isEmpty = weekActions.length === 0;
-
-                                                                                // Pit Stop Check (Mock for now, should ideally come from props/context if not available)
-                                                                                // Assuming global Pit Stop state might be passed down or we check date
-                                                                                // For now, highlighting next week empty cells if current week is Pit Stop week (usually W4/W8 etc)
-                                                                                // Or just generic "highlight next empty week" as a reminder
-                                                                                const isNextWeekReminder = isNextWeek && isEmpty;
-
-                                                                                // Background Color Logic
-                                                                                let bgClass = 'bg-gray-50/20';
-                                                                                if (isPastWeek && isEmpty) {
-                                                                                    bgClass = 'bg-red-50/50'; // Light red for Missed Opportunity
-                                                                                } else if (isNextWeekReminder) {
-                                                                                    bgClass = 'bg-indigo-50/60 ring-inset ring-2 ring-indigo-100/50'; // Encouragement for next week
-                                                                                }
-
-                                                                                return (
-                                                                                    <div
-                                                                                        key={w}
-                                                                                        className={`flex-1 border-r border-gray-50 last:border-0 ${bgClass} p-1 flex flex-col gap-1 items-center justify-start overflow-hidden transition-colors`}
-                                                                                        onDragOver={(e) => {
-                                                                                            e.preventDefault();
-                                                                                            if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
-                                                                                                e.currentTarget.classList.add('bg-blue-100');
-                                                                                            }
-                                                                                        }}
-                                                                                        onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-100')}
-                                                                                        onDrop={(e) => {
-                                                                                            e.preventDefault();
-                                                                                            e.currentTarget.classList.remove('bg-blue-100');
-                                                                                            if (canEdit && draggedTask && draggedTask.goalId === goal.id && draggedTask.sourceWeek !== w) {
-                                                                                                handleMoveAction(goal.id, draggedTask.id, w);
-                                                                                                setDraggedTask(null);
-                                                                                            }
-                                                                                        }}
-                                                                                    >
-                                                                                        {weekActions.map(action => (
-                                                                                            <div
-                                                                                                key={action.id}
-                                                                                                className={`w-full p-1 rounded text-[8px] leading-tight truncate text-left transition-all 
-                                                                                                    ${action.status === 'DONE'
-                                                                                                        ? 'bg-green-100 text-green-700 line-through opacity-70 hover:opacity-100'
-                                                                                                        : (isPastWeek
-                                                                                                            ? 'bg-white border text-gray-700 ring-1 ring-amber-300 border-amber-200' // Yellow/Amber for Unfinished Past
-                                                                                                            : 'bg-white border border-gray-200 shadow-sm text-gray-700 hover:border-blue-300')
-                                                                                                    } ${canEdit ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}
-                                                                                                draggable={canEdit}
-                                                                                                onDragStart={(e) => {
-                                                                                                    if (canEdit) {
-                                                                                                        setDraggedTask({ id: action.id, goalId: goal.id, sourceWeek: w });
-                                                                                                        e.dataTransfer.effectAllowed = 'move';
-                                                                                                    }
-                                                                                                }}
-                                                                                                title={action.title}
-                                                                                                onClick={() => canEdit && handleUpdateActionStatus(goal.id, action.id)}
-                                                                                            >
-                                                                                                {action.title}
-                                                                                            </div>
-                                                                                        ))}
-                                                                                    </div>
-                                                                                );
-                                                                            })}
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                );
-                                            })}
+                                                                        })}
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    );
+                                                });
+                                            })()}
                                         </div>
                                     </div>
                                 );
