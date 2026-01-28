@@ -43,6 +43,17 @@ async function fixEnums() {
 
         console.log('Data migration complete.');
 
+        // Ensure specific users have premium status
+        console.log('Setting specific users to CREATOR_ANNUAL...');
+        await prisma.user.update({
+            where: { id: 'cmke1fbow000njl04v594xlxc' },
+            data: { userProfile: 'CREATOR', subscriptionPlan: 'CREATOR_ANNUAL', subscriptionStatus: 'ACTIVE', maxGoals: -1 }
+        });
+        await prisma.user.update({
+            where: { id: 'cmkjxx9fc0001jm04yqpfk0rg' },
+            data: { userProfile: 'CREATOR', subscriptionPlan: 'CREATOR_ANNUAL', subscriptionStatus: 'ACTIVE', maxGoals: -1 }
+        });
+
     } catch (e) {
         console.error('Migration failed:', e);
     } finally {

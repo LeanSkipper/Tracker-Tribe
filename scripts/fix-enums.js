@@ -68,8 +68,8 @@ async function main() {
 
         // Update specific users to CREATOR_ANNUAL
         console.log('Setting specific users to CREATOR_ANNUAL...');
-        await run(`UPDATE "User" SET "userProfile" = 'CREATOR', "subscriptionPlan" = 'CREATOR_ANNUAL' WHERE "id" = 'cmke1fbow000njl04v594xlxc'`);
-        await run(`UPDATE "User" SET "userProfile" = 'CREATOR', "subscriptionPlan" = 'CREATOR_ANNUAL' WHERE "id" = 'cmkjxx9fc0001jm04yqpfk0rg'`);
+        await run(`UPDATE "User" SET "userProfile" = 'CREATOR', "subscriptionPlan" = 'CREATOR_ANNUAL', "subscriptionStatus" = 'ACTIVE', "maxGoals" = -1 WHERE "id" = 'cmke1fbow000njl04v594xlxc'`);
+        await run(`UPDATE "User" SET "userProfile" = 'CREATOR', "subscriptionPlan" = 'CREATOR_ANNUAL', "subscriptionStatus" = 'ACTIVE', "maxGoals" = -1 WHERE "id" = 'cmkjxx9fc0001jm04yqpfk0rg'`);
 
         console.log('Safe Migration Completed. Prisma db push will handle the rest.');
     } catch (e) {

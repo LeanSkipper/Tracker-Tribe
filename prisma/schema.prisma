@@ -490,6 +490,7 @@ model Goal {
   // Relations
   okrs        OKR[]
   actionPlans ActionPlan[]
+  order       Int      @default(0)
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -530,6 +531,7 @@ model OKR {
   // Relations
   actions     Action[]
   sharedTribes Tribe[] @relation("OKRSharing")
+  order       Int      @default(0)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -548,6 +550,7 @@ model Action {
   status      String   @default("NOT_DONE") // DONE, NOT_DONE, STUCK
   dueDate     DateTime // The "coming Friday"
   weekDate    DateTime // Identifier for the week (e.g. start of week date or end of week date)
+  order       Int      @default(0)
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

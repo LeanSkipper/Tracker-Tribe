@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import Coach from '@/components/Coach';
 import DemoDataBanner from '@/components/DemoDataBanner';
-import { ChevronLeft, ChevronRight, Plus, Calendar, Layout, Award, Target, TrendingUp, Edit2, BarChart2, BookOpen, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, AlertTriangle, Share2, Globe, Lock, Zap } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Layout, Target, TrendingUp, Edit2, BarChart2, Clock, Archive, CheckCircle2, X, Users, Trash2, Circle, AlertTriangle, Globe, Lock, Zap, GripVertical } from 'lucide-react';
 import SubscriptionLockedModal from '@/components/SubscriptionLockedModal';
 import InspirationModal from '@/components/InspirationModal';
 import PitStopModal from '@/components/PitStop/PitStopModal';
@@ -28,7 +28,7 @@ const MONTH_WEEKS: Record<string, string[]> = MONTHS.reduce((acc, m, i) => {
 
 
 type MonthlyData = { monthId: string; year: number; target: number | null; actual: number | null; comment?: string; };
-type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; };
+type ActionCard = { id: string; weekId: string; year: number; title: string; status: 'TBD' | 'IN_PROGRESS' | 'DONE' | 'STUCK'; order?: number; };
 type MetricRow = {
     id: string;
     type: 'OKR' | 'KPI';
@@ -42,9 +42,10 @@ type MetricRow = {
     deadlineMonth: number;
     monthlyData: MonthlyData[];
     sharedTribeIds?: string[]; // Granular sharing
+    order?: number;
 };
 type ActionRow = { id: string; label: string; actions: ActionCard[]; };
-type GoalCategory = { id: string; category: string; title: string; isShared?: boolean; visibility?: 'PRIVATE' | 'TRIBE' | 'PUBLIC'; rows: (MetricRow | ActionRow)[]; };
+type GoalCategory = { id: string; category: string; title: string; isShared?: boolean; visibility?: 'PRIVATE' | 'TRIBE' | 'PUBLIC'; rows: (MetricRow | ActionRow)[]; order?: number; };
 
 const generateMonthlyTargets = (start: number, end: number, startYear: number, startMonth: number, endYear: number, endMonth: number) => {
     const data: MonthlyData[] = [];
@@ -914,6 +915,7 @@ function ObeyaContent() {
     const [isPitStopOpen, setIsPitStopOpen] = useState(false);
     const [viewingPitStop, setViewingPitStop] = useState<any>(null);
     const [pitStops, setPitStops] = useState<any[]>([]);
+    const [draggedGoalId, setDraggedGoalId] = useState<string | null>(null);
 
 
 
@@ -1119,14 +1121,14 @@ function ObeyaContent() {
                         startValue: o.currentValue,
                         startYear: o.startYear || 2026,
                         startMonth: o.startMonth || 0,
-                        deadlineYear: o.deadlineYear || 2026,
                         deadlineMonth: o.deadlineMonth || 11,
                         monthlyData: o.monthlyData || generateMonthlyTargets(
                             o.currentValue, o.targetValue,
                             o.startYear || 2026, o.startMonth || 0,
                             o.deadlineYear || 2026, o.deadlineMonth || 11
                         ),
-                        sharedTribeIds: o.sharedTribes ? o.sharedTribes.map((t: any) => t.id) : []
+                        sharedTribeIds: o.sharedTribes ? o.sharedTribes.map((t: any) => t.id) : [],
+                        order: o.order
                     }));
 
                     const allActions = (g.okrs || []).flatMap((o: any) =>
@@ -1138,7 +1140,8 @@ function ObeyaContent() {
                                 weekId: `W${weekNum}`,
                                 year: weekDate.getFullYear(),
                                 title: a.description,
-                                status: a.status === 'DONE' ? 'DONE' : 'TBD'
+                                status: a.status === 'DONE' ? 'DONE' : 'TBD',
+                                order: a.order
                             };
                         })
                     );
@@ -1148,7 +1151,8 @@ function ObeyaContent() {
                         category: g.category || 'Business/Career',
                         title: g.vision,
                         isShared: g.visibility === 'TRIBE',
-                        rows: [...okrRows, { id: 'act-' + g.id, label: 'Action Plan', actions: allActions }]
+                        rows: [...okrRows, { id: 'act-' + g.id, label: 'Action Plan', actions: allActions }],
+                        order: g.order
                     };
                 }));
             }
@@ -1367,9 +1371,48 @@ function ObeyaContent() {
                 return {
                     ...g, rows: g.rows.map(r => {
                         if ('type' in r) return r;
-                        return { ...r, actions: r.actions.map(a => a.id === actionId ? { ...a, weekId: targetWeekId } : a) };
+                        // When moving to a NEW week, put it at the end. 
+                        // If same week, this function shouldn't be called for reordering (use handleReorderAction).
+                        return { ...r, actions: r.actions.map(a => a.id === actionId ? { ...a, weekId: targetWeekId, order: 999 } : a) };
                     })
                 };
+            });
+            const updatedGoal = next.find(g => g.id === goalId);
+            if (updatedGoal) handleSaveGoal(updatedGoal);
+            return next;
+        });
+    };
+
+    const handleReorderAction = async (goalId: string, sourceId: string, targetId: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
+        setGoals(prev => {
+            const next = prev.map(g => {
+                if (g.id !== goalId) return g;
+                const newRows = g.rows.map(r => {
+                    if ('type' in r) return r;
+                    const weekOfTarget = r.actions.find(a => a.id === targetId)?.weekId;
+                    if (!weekOfTarget) return r;
+
+                    const actionsInWeek = r.actions.filter(a => a.weekId === weekOfTarget).sort((a, b) => (a.order || 0) - (b.order || 0));
+                    const sourceIdx = actionsInWeek.findIndex(a => a.id === sourceId);
+                    const targetIdx = actionsInWeek.findIndex(a => a.id === targetId);
+
+                    if (sourceIdx === -1 || targetIdx === -1) return r;
+
+                    const newActionsInWeek = [...actionsInWeek];
+                    const [removed] = newActionsInWeek.splice(sourceIdx, 1);
+                    newActionsInWeek.splice(targetIdx, 0, removed);
+
+                    // Re-assign orders for THIS week
+                    const reorderedActions = r.actions.map(a => {
+                        if (a.weekId !== weekOfTarget) return a;
+                        const newIdx = newActionsInWeek.findIndex(na => na.id === a.id);
+                        return { ...a, order: newIdx };
+                    });
+
+                    return { ...r, actions: reorderedActions };
+                });
+                return { ...g, rows: newRows };
             });
             const updatedGoal = next.find(g => g.id === goalId);
             if (updatedGoal) handleSaveGoal(updatedGoal);
@@ -1394,11 +1437,38 @@ function ObeyaContent() {
                 const [removed] = newRows.splice(sourceIdx, 1);
                 newRows.splice(targetIdx, 0, removed);
 
-                const updatedGoal = { ...g, rows: newRows };
+                // Assign order to each row
+                const orderedRows = newRows.map((r, idx) => ({ ...r, order: idx }));
+
+                const updatedGoal = { ...g, rows: orderedRows };
                 handleSaveGoal(updatedGoal);
                 return updatedGoal;
             });
             return next;
+        });
+    };
+
+    const handleMoveGoal = async (sourceGoalId: string, targetGoalId: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
+        if (sourceGoalId === targetGoalId) return;
+
+        setGoals(prev => {
+            const newGoals = [...prev];
+            const sourceIdx = newGoals.findIndex(g => g.id === sourceGoalId);
+            const targetIdx = newGoals.findIndex(g => g.id === targetGoalId);
+
+            if (sourceIdx === -1 || targetIdx === -1) return prev;
+
+            const [removed] = newGoals.splice(sourceIdx, 1);
+            newGoals.splice(targetIdx, 0, removed);
+
+            // Assign order to each goal
+            const orderedGoals = newGoals.map((g, idx) => ({ ...g, order: idx }));
+
+            // Save all goals with new order
+            orderedGoals.forEach(g => handleSaveGoal(g));
+
+            return orderedGoals;
         });
     };
 
@@ -1472,12 +1542,13 @@ function ObeyaContent() {
         setEditingGoal(newGoal);
     };
 
-    // Mobile check: Collapse all on mount if screen is narrow
+    const isFirstMountAtMobile = useRef(true);
     useEffect(() => {
-        if (typeof window !== 'undefined' && window.innerWidth < 768) {
+        if (typeof window !== 'undefined' && window.innerWidth < 768 && isFirstMountAtMobile.current) {
             const allGoalIds = goals.map(g => g.id);
             if (allGoalIds.length > 0) {
                 setCollapsedGoals(new Set(allGoalIds));
+                isFirstMountAtMobile.current = false;
             }
         }
     }, [goals]);
@@ -1566,7 +1637,7 @@ function ObeyaContent() {
                         <h2 className="text-2xl font-black text-slate-900 mb-3">Welcome to the Arena!</h2>
                         <p className="text-slate-600 mb-8 leading-relaxed">
                             This is your Scoreboard. Your commitment is simple: <br />
-                            <strong className="text-slate-900">Hit the "Pit Stop" button once a week.</strong>
+                            <strong className="text-slate-900">Hit the &quot;Pit Stop&quot; button once a week.</strong>
                         </p>
                         <div className="space-y-3">
                             <button
@@ -1872,9 +1943,9 @@ function ObeyaContent() {
 
                     {/* Desktop View: Strategic/Operational Table */}
                     <div className="hidden md:block min-w-full bg-white border border-gray-200 rounded-lg shadow-sm">
-                        <div className="sticky top-0 z-20 bg-white border-b border-gray-200 shadow-sm flex min-w-max">
-                            <div className="sticky left-0 w-[150px] md:w-[320px] bg-white border-r border-gray-100 z-30 shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end uppercase tracking-wider">Strategic Context</div>
-                            <div className="sticky left-[150px] md:left-[320px] w-20 bg-gray-50/50 border-r border-gray-200 z-30 shrink-0 p-4 font-bold text-gray-400 text-[10px] flex items-end justify-center uppercase">Result/KPI</div>
+                        <div className="sticky top-0 z-[60] bg-white border-b border-gray-200 shadow-sm flex min-w-max">
+                            <div className="sticky left-0 w-[150px] md:w-[320px] bg-white border-r border-gray-100 z-[70] shrink-0 p-4 font-bold text-gray-400 text-xs flex items-end uppercase tracking-wider shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Strategic Context</div>
+                            <div className="sticky left-[150px] md:left-[320px] w-20 bg-gray-50/50 border-r border-gray-200 z-[70] shrink-0 p-4 font-bold text-gray-400 text-[10px] flex items-end justify-center uppercase shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]">Result/KPI</div>
                             {(viewMode === 'strategic' ?
                                 Array.from({ length: 36 }, (_, i) => {
                                     const yearOffset = Math.floor(i / 12);
@@ -1950,7 +2021,7 @@ function ObeyaContent() {
                         </div>
 
                         {[...goals]
-                            .sort((a, b) => LIFE_AREAS.indexOf(a.category) - LIFE_AREAS.indexOf(b.category))
+                            .sort((a, b) => (a.order ?? LIFE_AREAS.indexOf(a.category)) - (b.order ?? LIFE_AREAS.indexOf(b.category)))
                             .map((goal, gIdx, allGoals) => {
                                 const isFirstInCat = gIdx === 0 || allGoals[gIdx - 1].category !== goal.category;
                                 // Removed unused okrRowsCount
@@ -1961,15 +2032,40 @@ function ObeyaContent() {
 
                                         {/* Horizontal Vision Band - Sticky Content on Left */}
                                         <div
-                                            className={`min-h-[52px] ${goal.category === 'Health' ? 'bg-teal-600' :
+                                            className={`min-h-[52px] min-w-max ${goal.category === 'Health' ? 'bg-teal-600' :
                                                 goal.category === 'Wealth' ? 'bg-emerald-600' :
                                                     goal.category === 'Family' ? 'bg-indigo-500' :
                                                         goal.category === 'Leisure' ? 'bg-pink-500' :
                                                             goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
-                                                } flex items-stretch shadow-md`}
+                                                } flex items-stretch shadow-md transition-all ${draggedGoalId === goal.id ? 'opacity-40' : ''}`}
+                                            draggable
+                                            onDragStart={(e) => {
+                                                setDraggedGoalId(goal.id);
+                                                e.dataTransfer.effectAllowed = 'move';
+                                            }}
+                                            onDragOver={(e) => {
+                                                e.preventDefault();
+                                                if (draggedGoalId && draggedGoalId !== goal.id) {
+                                                    e.currentTarget.classList.add('brightness-110', 'scale-[1.01]');
+                                                }
+                                            }}
+                                            onDragLeave={(e) => {
+                                                e.currentTarget.classList.remove('brightness-110', 'scale-[1.01]');
+                                            }}
+                                            onDrop={(e) => {
+                                                e.preventDefault();
+                                                e.currentTarget.classList.remove('brightness-110', 'scale-[1.01]');
+                                                if (draggedGoalId && draggedGoalId !== goal.id) {
+                                                    handleMoveGoal(draggedGoalId, goal.id);
+                                                    setDraggedGoalId(null);
+                                                }
+                                            }}
                                         >
-                                            <div className="sticky left-0 z-40 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden">
+                                            <div className="sticky left-0 z-50 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)]">
                                                 <div className="flex items-center gap-3 overflow-hidden">
+                                                    <div className="p-1 cursor-grab active:cursor-grabbing text-white/40 hover:text-white/80 transition-colors">
+                                                        <GripVertical size={16} />
+                                                    </div>
                                                     {/* Goal collapse button (Excel-style) */}
                                                     <button
                                                         onClick={(e) => {
@@ -2048,9 +2144,9 @@ function ObeyaContent() {
                                             </div>
                                         </div>
 
-                                        <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white">
+                                        <div className="flex border-b-4 border-gray-50 last:border-0 relative bg-white min-w-max">
                                             {/* 1. Left Sticky Column - Higher Z-index for scroll */}
-                                            <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-30 shadow-md flex overflow-hidden">
+                                            <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-40 shadow-[4px_0_10px_-4px_rgba(0,0,0,0.1)] flex overflow-hidden">
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {(() => {
@@ -2113,7 +2209,7 @@ function ObeyaContent() {
                                                                         return (
                                                                             <div
                                                                                 key={row.id}
-                                                                                className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative transition-colors cursor-grab active:cursor-grabbing hover:bg-gray-50/50 ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
+                                                                                className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative transition-colors hover:bg-gray-50/50 ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
                                                                                 draggable
                                                                                 onDragStart={(e) => {
                                                                                     setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
@@ -2136,6 +2232,9 @@ function ObeyaContent() {
                                                                                 }}
                                                                             >
                                                                                 <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
+                                                                                    <div className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0">
+                                                                                        <GripVertical size={14} />
+                                                                                    </div>
                                                                                     <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                                         {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
                                                                                         {row.label}

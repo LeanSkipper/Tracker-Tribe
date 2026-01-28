@@ -29,10 +29,14 @@ export async function GET() {
 
         const goals = await prisma.goal.findMany({
             where: { userId: user.id },
+            orderBy: { order: 'asc' },
             include: {
                 okrs: {
+                    orderBy: { order: 'asc' },
                     include: {
-                        actions: true,
+                        actions: {
+                            orderBy: { order: 'asc' }
+                        },
                         sharedTribes: true,
                     }
                 }
@@ -174,7 +178,7 @@ export async function POST(req: Request) {
             return forbiddenResponse(permission.message);
         }
 
-        const { id, title, category, isShared, rows } = data;
+        const { id, title, category, isShared, rows, order } = data;
 
         // Map isShared boolean to visibility enum
         const visibility = isShared ? Visibility.TRIBE : Visibility.PRIVATE;
@@ -192,6 +196,7 @@ export async function POST(req: Request) {
                     status: "ACTIVE",
                     visibility: visibility,
                     category: category,
+                    order: order !== undefined ? order : 0,
                 },
             });
         } else {
@@ -203,6 +208,7 @@ export async function POST(req: Request) {
                     status: "ACTIVE",
                     visibility: visibility,
                     category: category,
+                    order: order !== undefined ? order : undefined,
                 },
             });
         }
@@ -298,6 +304,7 @@ export async function POST(req: Request) {
                                 deadlineYear: row.deadlineYear || 2026,
                                 deadlineMonth: row.deadlineMonth || 11,
                                 monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
+                                order: row.order !== undefined ? row.order : undefined,
                                 // For shared tribes, we might want to be careful not to wipe them out if not sending them?
                                 // Assuming payload sends full list if it sends it at all.
                                 ...(row.sharedTribeIds ? {
@@ -321,6 +328,7 @@ export async function POST(req: Request) {
                                 deadlineYear: row.deadlineYear || 2026,
                                 deadlineMonth: row.deadlineMonth || 11,
                                 monthlyData: row.monthlyData ? JSON.stringify(row.monthlyData) : null,
+                                order: row.order !== undefined ? row.order : 0,
                                 sharedTribes: {
                                     connect: row.sharedTribeIds?.map((id: string) => ({ id })) || []
                                 }
@@ -369,7 +377,8 @@ export async function POST(req: Request) {
                                         status: dbStatus,
                                         // Update week if dragged (handled by handleMoveAction usually, but here for full save)
                                         weekDate: weekDate,
-                                        dueDate: weekDate
+                                        dueDate: weekDate,
+                                        order: actionCard.order !== undefined ? actionCard.order : undefined
                                     }
                                 }).catch(e => console.warn("Failed to update action (might have been deleted):", e));
                             } else {
@@ -382,6 +391,7 @@ export async function POST(req: Request) {
                                         status: dbStatus,
                                         weekDate: weekDate,
                                         dueDate: weekDate,
+                                        order: actionCard.order !== undefined ? actionCard.order : 0
                                     }
                                 });
                             }
