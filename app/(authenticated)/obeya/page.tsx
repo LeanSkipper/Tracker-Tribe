@@ -497,18 +497,18 @@ const GoalModal = ({ goal, onClose, onSave, onDelete }: { goal?: GoalCategory, o
     );
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm p-4 overflow-y-auto">
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[100] backdrop-blur-sm p-4 overflow-y-auto">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 my-8">
                 <div className="flex justify-between items-center mb-4">
                     <h3 className="text-xl font-bold text-[var(--primary)]">{goal ? 'Edit Goal' : 'New Strategic Goal'}</h3>
                     {/* Share Toggle */}
                     <button
                         onClick={() => setIsShared(!isShared)}
-                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border-2
-                            ${isShared ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-gray-50 text-gray-400 border-gray-100'}
+                        className={`px-3 py-1.5 rounded-full text-[10px] font-black uppercase transition-all flex items-center gap-1.5 border-2 shadow-sm
+                            ${isShared ? 'bg-indigo-600 text-white border-indigo-700' : 'bg-slate-100 text-slate-600 border-slate-300'}
                         `}
                     >
-                        <Users size={12} />
+                        {isShared ? <Users size={12} className="text-white" /> : <Lock size={12} className="text-slate-500" />}
                         {isShared ? 'Shared (Custom)' : 'Private Goal'}
                     </button>
                 </div>
@@ -2061,22 +2061,16 @@ function ObeyaContent() {
                                                 }
                                             }}
                                         >
-                                            <div className="sticky left-0 z-50 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)]">
+                                            <div className={`sticky left-0 z-50 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden shadow-[4px_0_8px_-4px_rgba(0,0,0,0.3)] ${goal.category === 'Health' ? 'bg-teal-600' :
+                                                goal.category === 'Wealth' ? 'bg-emerald-600' :
+                                                    goal.category === 'Family' ? 'bg-indigo-500' :
+                                                        goal.category === 'Leisure' ? 'bg-pink-500' :
+                                                            goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
+                                                }`}>
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     <div className="p-1 cursor-grab active:cursor-grabbing text-white/40 hover:text-white/80 transition-colors">
                                                         <GripVertical size={16} />
                                                     </div>
-                                                    {/* Goal collapse button (Excel-style) */}
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            toggleGoal(goal.id);
-                                                        }}
-                                                        className="text-white/80 hover:text-white transition-colors shrink-0"
-                                                        title={collapsedGoals.has(goal.id) ? "Expand goal" : "Collapse goal"}
-                                                    >
-                                                        <ChevronRight className={`transition-transform ${!collapsedGoals.has(goal.id) ? 'rotate-90' : ''}`} size={20} />
-                                                    </button>
 
                                                     <div className="flex flex-col">
                                                         <span className="text-white font-bold text-[10px] uppercase tracking-wide shrink-0 opacity-80">{goal.category}</span>
@@ -2210,8 +2204,9 @@ function ObeyaContent() {
                                                                             <div
                                                                                 key={row.id}
                                                                                 className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative transition-colors hover:bg-gray-50/50 ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
-                                                                                draggable
+                                                                                draggable={isOKR}
                                                                                 onDragStart={(e) => {
+                                                                                    if (!isOKR) return;
                                                                                     setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
                                                                                     e.dataTransfer.effectAllowed = 'move';
                                                                                 }}
@@ -2231,10 +2226,17 @@ function ObeyaContent() {
                                                                                     }
                                                                                 }}
                                                                             >
-                                                                                <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
-                                                                                    <div className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0">
-                                                                                        <GripVertical size={14} />
-                                                                                    </div>
+                                                                                <div className={`w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full border-l-4 ${goal.category === 'Health' ? 'border-teal-600' :
+                                                                                        goal.category === 'Wealth' ? 'border-emerald-600' :
+                                                                                            goal.category === 'Family' ? 'border-indigo-500' :
+                                                                                                goal.category === 'Leisure' ? 'border-pink-500' :
+                                                                                                    goal.category === 'Business/Career' ? 'border-blue-700' : 'border-gray-500'
+                                                                                    }`}>
+                                                                                    {isOKR && (
+                                                                                        <div className="p-1 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors shrink-0">
+                                                                                            <GripVertical size={14} />
+                                                                                        </div>
+                                                                                    )}
                                                                                     <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                                         {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
                                                                                         {row.label}
