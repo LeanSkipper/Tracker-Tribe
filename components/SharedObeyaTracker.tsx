@@ -54,7 +54,8 @@ export default function SharedObeyaTracker({
     const [goals, setGoals] = useState<GoalData[]>(initialGoals);
     const [collapsedOKRs, setCollapsedOKRs] = useState<Set<string>>(new Set());
     const [collapsedGoals, setCollapsedGoals] = useState<Set<string>>(new Set());
-    const [editingCell, setEditingCell] = useState<{ id: string; value: string } | null>(null);
+    const [draggedRowInfo, setDraggedRowInfo] = useState<{ goalId: string; rowId: string } | null>(null);
+    const [editingCell, setEditingCell] = useState<{ id: string, value: string | number } | null>(null);
     const [groupBy, setGroupBy] = useState<GroupBy>('none');
     const [draggedTask, setDraggedTask] = useState<{ id: string; goalId: string; sourceWeek: string } | null>(null);
 
@@ -69,7 +70,7 @@ export default function SharedObeyaTracker({
             const allGoalIds = initialGoals.map(g => g.id);
             setCollapsedGoals(new Set(allGoalIds));
         }
-    }, []);
+    }, [initialGoals]);
 
     const handleSaveGoal = async (updatedGoal: GoalData) => {
         try {
@@ -208,6 +209,32 @@ export default function SharedObeyaTracker({
             });
 
             const updatedG = { ...g, rows: updatedRows };
+            updatedGoalToSave = updatedG;
+            return updatedG;
+        }));
+
+        if (updatedGoalToSave) handleSaveGoal(updatedGoalToSave);
+    };
+
+    const handleMoveRow = async (goalId: string, sourceRowId: string, targetRowId: string) => {
+        if (readOnly) return;
+        if (sourceRowId === targetRowId) return;
+
+        let updatedGoalToSave: GoalData | undefined;
+
+        setGoals(prev => prev.map(g => {
+            if (g.id !== goalId) return g;
+
+            const newRows = [...g.rows];
+            const sourceIdx = newRows.findIndex(r => r.id === sourceRowId);
+            const targetIdx = newRows.findIndex(r => r.id === targetRowId);
+
+            if (sourceIdx === -1 || targetIdx === -1) return g;
+
+            const [removed] = newRows.splice(sourceIdx, 1);
+            newRows.splice(targetIdx, 0, removed);
+
+            const updatedG = { ...g, rows: newRows };
             updatedGoalToSave = updatedG;
             return updatedG;
         }));
@@ -446,7 +473,32 @@ export default function SharedObeyaTracker({
                                                 }
 
                                                 return (
-                                                    <div key={row.id} className={`flex ${heightClass} border-b border-gray-50 last:border-0 group`}>
+                                                    <div
+                                                        key={row.id}
+                                                        className={`flex ${heightClass} border-b border-gray-50 last:border-0 group transition-colors ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
+                                                        draggable={!readOnly}
+                                                        onDragStart={(e) => {
+                                                            if (!readOnly) {
+                                                                setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
+                                                                e.dataTransfer.effectAllowed = 'move';
+                                                            }
+                                                        }}
+                                                        onDragOver={(e) => {
+                                                            e.preventDefault();
+                                                            if (!readOnly && draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                e.currentTarget.classList.add('bg-blue-50');
+                                                            }
+                                                        }}
+                                                        onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-50')}
+                                                        onDrop={(e) => {
+                                                            e.preventDefault();
+                                                            e.currentTarget.classList.remove('bg-blue-50');
+                                                            if (!readOnly && draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                handleMoveRow(goal.id, draggedRowInfo.rowId, row.id);
+                                                                setDraggedRowInfo(null);
+                                                            }
+                                                        }}
+                                                    >
                                                         {/* Left Sticky Label Column */}
                                                         <div className="sticky left-0 w-[230px] md:w-[400px] shrink-0 bg-white border-r border-gray-200 z-10 flex overflow-hidden">
                                                             <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">

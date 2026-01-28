@@ -892,6 +892,7 @@ function ObeyaContent() {
     const [showWelcomeModal, setShowWelcomeModal] = useState(false);
     const [isCoachOpen, setIsCoachOpen] = useState(false);
     const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+    const [draggedRowInfo, setDraggedRowInfo] = useState<{ goalId: string; rowId: string } | null>(null);
     const [showPitStopTutorial, setShowPitStopTutorial] = useState(false);
     const [isRestricted, setIsRestricted] = useState(false);
     const [showLockModal, setShowLockModal] = useState(false);
@@ -1372,6 +1373,31 @@ function ObeyaContent() {
             });
             const updatedGoal = next.find(g => g.id === goalId);
             if (updatedGoal) handleSaveGoal(updatedGoal);
+            return next;
+        });
+    };
+
+    const handleMoveRow = async (goalId: string, sourceRowId: string, targetRowId: string) => {
+        if (isRestricted) { setShowLockModal(true); return; }
+        if (sourceRowId === targetRowId) return;
+
+        setGoals(prev => {
+            const next = prev.map(g => {
+                if (g.id !== goalId) return g;
+
+                const newRows = [...g.rows];
+                const sourceIdx = newRows.findIndex(r => r.id === sourceRowId);
+                const targetIdx = newRows.findIndex(r => r.id === targetRowId);
+
+                if (sourceIdx === -1 || targetIdx === -1) return g;
+
+                const [removed] = newRows.splice(sourceIdx, 1);
+                newRows.splice(targetIdx, 0, removed);
+
+                const updatedGoal = { ...g, rows: newRows };
+                handleSaveGoal(updatedGoal);
+                return updatedGoal;
+            });
             return next;
         });
     };
@@ -1927,23 +1953,22 @@ function ObeyaContent() {
                             .sort((a, b) => LIFE_AREAS.indexOf(a.category) - LIFE_AREAS.indexOf(b.category))
                             .map((goal, gIdx, allGoals) => {
                                 const isFirstInCat = gIdx === 0 || allGoals[gIdx - 1].category !== goal.category;
-                                const okrRowsCount = goal.rows.filter(r => 'type' in r && r.type === 'OKR').length;
+                                // Removed unused okrRowsCount
 
                                 return (
                                     <div key={goal.id} className="bg-white border-b-2 border-gray-100">
                                         {isFirstInCat && gIdx > 0 && <div className="h-4 bg-gray-100 border-t border-b border-gray-200" />}
 
-                                        {/* Horizontal Vision Band - Full Width Sticky */}
+                                        {/* Horizontal Vision Band - Sticky Content on Left */}
                                         <div
-                                            className={`sticky left-0 z-40 min-h-[52px] ${goal.category === 'Health' ? 'bg-teal-600' :
+                                            className={`min-h-[52px] ${goal.category === 'Health' ? 'bg-teal-600' :
                                                 goal.category === 'Wealth' ? 'bg-emerald-600' :
                                                     goal.category === 'Family' ? 'bg-indigo-500' :
                                                         goal.category === 'Leisure' ? 'bg-pink-500' :
                                                             goal.category === 'Business/Career' ? 'bg-blue-700' : 'bg-gray-500'
                                                 } flex items-stretch shadow-md`}
-                                            style={{ width: '98vw', maxWidth: '100vw' }}
                                         >
-                                            <div className="w-full px-3 py-2 flex items-center justify-between">
+                                            <div className="sticky left-0 z-40 w-[230px] md:w-[400px] px-3 py-2 flex items-center justify-between overflow-hidden">
                                                 <div className="flex items-center gap-3 overflow-hidden">
                                                     {/* Goal collapse button (Excel-style) */}
                                                     <button
@@ -1958,8 +1983,8 @@ function ObeyaContent() {
                                                     </button>
 
                                                     <div className="flex flex-col">
-                                                        <span className="text-white font-bold text-xs uppercase tracking-wide opacity-80 shrink-0">{goal.category}</span>
-                                                        <span className="text-white font-bold text-sm md:text-lg leading-tight whitespace-normal break-words">{goal.title}</span>
+                                                        <span className="text-white font-bold text-[10px] uppercase tracking-wide shrink-0 opacity-80">{goal.category}</span>
+                                                        <span className="text-white font-bold text-xs md:text-sm leading-tight whitespace-normal break-words">{goal.title}</span>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-2">
@@ -2029,13 +2054,11 @@ function ObeyaContent() {
                                                 {/* Labels Column */}
                                                 <div className="flex-1 flex flex-col w-full">
                                                     {(() => {
-                                                        const okrRows = goal.rows.filter(r => 'type' in r && (r as MetricRow).type === 'OKR');
-                                                        const kpiRows = goal.rows.filter(r => 'type' in r && (r as MetricRow).type === 'KPI');
+                                                        const metricRows = goal.rows.filter(r => 'type' in r);
                                                         const actionRows = goal.rows.filter(r => !('type' in r));
 
                                                         const sections = [
-                                                            { id: 'OKR', title: 'OKRs', rows: okrRows },
-                                                            { id: 'KPI', title: 'KPIs', rows: kpiRows },
+                                                            { id: 'METRIC', title: 'Results & KPIs', rows: metricRows },
                                                             { id: 'ACTION', title: 'Action Plan', rows: actionRows }
                                                         ];
 
@@ -2069,7 +2092,7 @@ function ObeyaContent() {
                                                                     {!isCollapsed && section.rows.map((row, rIdx) => {
                                                                         const isOKR = 'type' in row;
                                                                         const isKPI = isOKR && (row as MetricRow).type === 'KPI';
-                                                                        const isActionRow = !isOKR && !isKPI;
+                                                                        // Removed unused isActionRow
 
                                                                         // Determine exact height
                                                                         let heightClass = 'h-[45px]';
@@ -2088,18 +2111,35 @@ function ObeyaContent() {
                                                                         const okrRowsCount = goal.rows.filter(r => 'type' in r).length;
 
                                                                         return (
-                                                                            <div key={row.id} className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative`}>
+                                                                            <div
+                                                                                key={row.id}
+                                                                                className={`${heightClass} w-full flex items-center border-b border-gray-50 last:border-0 group relative transition-colors cursor-grab active:cursor-grabbing hover:bg-gray-50/50 ${draggedRowInfo?.rowId === row.id ? 'opacity-40' : ''}`}
+                                                                                draggable
+                                                                                onDragStart={(e) => {
+                                                                                    setDraggedRowInfo({ goalId: goal.id, rowId: row.id });
+                                                                                    e.dataTransfer.effectAllowed = 'move';
+                                                                                }}
+                                                                                onDragOver={(e) => {
+                                                                                    e.preventDefault();
+                                                                                    if (draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                                        e.currentTarget.classList.add('bg-blue-50');
+                                                                                    }
+                                                                                }}
+                                                                                onDragLeave={(e) => e.currentTarget.classList.remove('bg-blue-50')}
+                                                                                onDrop={(e) => {
+                                                                                    e.preventDefault();
+                                                                                    e.currentTarget.classList.remove('bg-blue-50');
+                                                                                    if (draggedRowInfo && draggedRowInfo.goalId === goal.id && draggedRowInfo.rowId !== row.id) {
+                                                                                        handleMoveRow(goal.id, draggedRowInfo.rowId, row.id);
+                                                                                        setDraggedRowInfo(null);
+                                                                                    }
+                                                                                }}
+                                                                            >
                                                                                 <div className="w-[150px] md:w-[320px] p-3 flex items-center gap-2 border-r border-gray-100 relative h-full">
-                                                                                    {rIdx === 0 && <button onClick={() => setEditingGoal(goal)} className="p-1 hover:bg-gray-100 rounded text-gray-400 hover:text-[var(--primary)] absolute right-1 top-1 z-20"><Edit2 size={12} /></button>}
                                                                                     <span className={`text-xs whitespace-normal break-words leading-tight flex-1 ${isKPI ? 'text-gray-400 pl-4 italic text-[10px] font-medium' : (!isKPI && rIdx > 0 ? 'text-gray-600 pl-1 font-bold' : (okrRowsCount > 1 ? 'text-gray-600 pl-1 font-bold' : 'hidden'))} ${isOKR ? 'font-bold' : ''}`}>
                                                                                         {isKPI && <span className="inline-block w-1 h-1 bg-gray-300 rounded-full mr-2 mb-0.5" />}
                                                                                         {row.label}
                                                                                     </span>
-                                                                                    {isOKR && (
-                                                                                        <button onClick={() => setActiveGraphModal(row as MetricRow)} className="p-1 text-gray-300 hover:text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                                            <TrendingUp size={14} />
-                                                                                        </button>
-                                                                                    )}
                                                                                 </div>
                                                                                 <div className="w-20 p-2 flex flex-col items-center justify-center bg-gray-50 text-[10px] font-bold text-gray-400 border-l border-gray-100 h-full">
                                                                                     <span>{isOKR ? (isKPI ? 'KPI' : 'RESULT') : 'ACTION'}</span>
@@ -2127,13 +2167,11 @@ function ObeyaContent() {
                                             {/* 2. Data Columns (Right Side) */}
                                             <div className="flex-1 flex flex-col min-w-0">
                                                 {(() => {
-                                                    const okrRows = goal.rows.filter(r => 'type' in r && (r as MetricRow).type === 'OKR');
-                                                    const kpiRows = goal.rows.filter(r => 'type' in r && (r as MetricRow).type === 'KPI');
+                                                    const metricRows = goal.rows.filter(r => 'type' in r);
                                                     const actionRows = goal.rows.filter(r => !('type' in r));
 
                                                     const sections = [
-                                                        { id: 'OKR', title: 'OKRs', rows: okrRows },
-                                                        { id: 'KPI', title: 'KPIs', rows: kpiRows },
+                                                        { id: 'METRIC', title: 'Results & KPIs', rows: metricRows },
                                                         { id: 'ACTION', title: 'Action Plan', rows: actionRows }
                                                     ];
 
@@ -2373,8 +2411,9 @@ function ObeyaContent() {
                                 );
                             })}
                     </div>
-                </div>)}
-            </main>
+                </div>)
+                }
+            </main >
 
 
             <div onClick={() => isRestricted && setShowLockModal(true)} className="contents">
